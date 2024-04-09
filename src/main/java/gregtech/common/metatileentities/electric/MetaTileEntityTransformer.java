@@ -116,14 +116,6 @@ public class MetaTileEntityTransformer extends TieredMetaTileEntity {
         SimpleOverlayRenderer otherFaceRender = isTransformUp ? Textures.ENERGY_IN : Textures.ENERGY_OUT;
         SimpleOverlayRenderer frontFaceRender = isTransformUp ? Textures.ENERGY_OUT_MULTI : Textures.ENERGY_IN_MULTI;
 
-//        if (isTransformUp) {
-//            Textures.ENERGY_OUT_MULTI.renderSided(getFrontFacing(), renderState, translation, PipelineUtil.color(pipeline, GTValues.VC[getTier() - 1]));
-//            Textures.ENERGY_IN.renderSided(getFrontFacing().getOpposite(), renderState, translation, PipelineUtil.color(pipeline, GTValues.VC[getTier()]));
-//        } else {
-//            Textures.ENERGY_IN_MULTI.renderSided(getFrontFacing(), renderState, translation, PipelineUtil.color(pipeline, GTValues.VC[getTier()]));
-//            Textures.ENERGY_OUT.renderSided(getFrontFacing().getOpposite(), renderState, translation, PipelineUtil.color(pipeline, GTValues.VC[getTier() - 1]));
-//        }
-
         frontFaceRender.renderSided(frontFacing, renderState, translation, PipelineUtil.color(pipeline, GTValues.VC[getTier()]));
         Arrays.stream(EnumFacing.values()).filter(f -> f != frontFacing)
                 .forEach((f -> otherFaceRender.renderSided(f, renderState, translation, PipelineUtil.color(pipeline, GTValues.VC[getTier() - 1]))));
