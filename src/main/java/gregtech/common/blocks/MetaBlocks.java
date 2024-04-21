@@ -278,7 +278,7 @@ public class MetaBlocks {
     }
 
     private static void createOreBlock(DustMaterial material, StoneType[] stoneTypes, int index) {
-        BlockOre block = new BlockOre(material, stoneTypes);
+        BlockOre block = new BlockOre(material, OrePrefix.ore, stoneTypes);
         block.setRegistryName("ore_" + material + "_" + index);
         for (StoneType stoneType : stoneTypes) {
             GregTechAPI.oreBlockTable.computeIfAbsent(material, m -> new HashMap<>()).put(stoneType, block);

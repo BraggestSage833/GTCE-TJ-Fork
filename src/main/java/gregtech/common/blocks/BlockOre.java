@@ -1,7 +1,9 @@
 package gregtech.common.blocks;
 
 import gregtech.api.GregTechAPI;
+import gregtech.api.unification.OreDictUnifier;
 import gregtech.api.unification.material.type.DustMaterial;
+import gregtech.api.unification.ore.OrePrefix;
 import gregtech.api.unification.ore.StoneType;
 import gregtech.api.unification.ore.StoneTypes;
 import gregtech.api.util.IBlockOre;
@@ -33,14 +35,16 @@ public class BlockOre extends BlockFalling implements IBlockOre {
 
     public final PropertyStoneType STONE_TYPE;
     public final DustMaterial material;
+    public OrePrefix orePrefix;
 
-    public BlockOre(DustMaterial material, StoneType[] allowedValues) {
+    public BlockOre(DustMaterial material, OrePrefix orePrefix, StoneType[] allowedValues) {
         super(net.minecraft.block.material.Material.ROCK);
         setTranslationKey("ore_block");
         setSoundType(SoundType.STONE);
         setHardness(3.0f);
         setResistance(5.0f);
         this.material = material;
+        this.orePrefix = orePrefix;
         STONE_TYPE = PropertyStoneType.create("stone_type", allowedValues);
         initBlockState();
     }
@@ -133,10 +137,12 @@ public class BlockOre extends BlockFalling implements IBlockOre {
 
         if(type == StoneTypes.ENDSTONE || type == StoneTypes.NETHERRACK) {
             return super.getItemDropped(state, rand, fortune);
-
         }
-        IBlockState ore = OreConfigUtils.getOreForMaterial(this.material).get(StoneTypes.STONE);
-        return Item.getItemFromBlock(ore.getBlock());
+
+        IBlockState originalOre = OreConfigUtils.getOreForMaterial(this.material).get(type);
+        Item oreItem = Item.getItemFromBlock(originalOre.getBlock());
+
+        return oreItem;
     }
 
     @Override

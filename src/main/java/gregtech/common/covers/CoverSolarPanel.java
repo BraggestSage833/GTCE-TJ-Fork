@@ -45,7 +45,7 @@ public class CoverSolarPanel extends CoverBehavior implements ITickable {
     public void update() {
         World world = coverHolder.getWorld();
         BlockPos blockPos = coverHolder.getPos().up();
-        if (canSeeSunClearly(world, blockPos)) {
+        if (canSeeSunClearly(world, blockPos) || world.provider.getDimension() == -1) {
             IEnergyContainer energyContainer = coverHolder.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, null);
             if(energyContainer != null) {
                 energyContainer.acceptEnergyFromNetwork(null, EUt, 1);
