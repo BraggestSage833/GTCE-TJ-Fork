@@ -298,8 +298,8 @@ public class BlockMachine extends BlockCustomParticle implements ITileEntityProv
         }
 
         if(playerIn.getHeldItemMainhand().isItemEqual(MetaItems.SAW.getStackForm())){
-            if (!worldIn.isRemote && playerIn.isSneaking()) {
-                metaTileEntity.OnSawToolCLick(playerIn, hand, rayTraceResult);
+            if (!worldIn.isRemote) {
+                metaTileEntity.onSawToolClick(playerIn, hand, rayTraceResult);
             }
             return true;
         }

@@ -142,7 +142,7 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
     }
 
     @Override
-    public boolean OnSawToolCLick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
+    public boolean onSawToolClick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
         if (playerIn.isSneaking()) {
             this.workable.previousRecipe.clear();
             markDirty();

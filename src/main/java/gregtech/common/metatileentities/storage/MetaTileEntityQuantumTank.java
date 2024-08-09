@@ -25,10 +25,9 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
-import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
 import net.minecraftforge.items.ItemStackHandler;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -108,7 +107,9 @@ public class MetaTileEntityQuantumTank extends MetaTileEntity implements ITiered
     @Override
     public void initFromItemStackData(NBTTagCompound itemStack) {
         super.initFromItemStackData(itemStack);
-        fluidTank.readFromNBT(itemStack);
+        if (itemStack.hasKey("FluidName", Constants.NBT.TAG_COMPOUND)) {
+            this.fluidTank.setFluid(FluidStack.loadFluidStackFromNBT(itemStack.getCompoundTag("FluidName")));
+        }
         if (itemStack.getBoolean("IsVoiding")) {
             setVoiding(true);
         }
@@ -121,7 +122,7 @@ public class MetaTileEntityQuantumTank extends MetaTileEntity implements ITiered
         if (fluidStack != null && fluidStack.amount > 0) {
             NBTTagCompound tagCompound = new NBTTagCompound();
             fluidStack.writeToNBT(tagCompound);
-            itemStack.setTag(FluidHandlerItemStack.FLUID_NBT_KEY, tagCompound);
+            itemStack.setTag("FluidName", tagCompound);
         }
         if (this.voiding) {
             itemStack.setBoolean("IsVoiding", true);
@@ -180,10 +181,12 @@ public class MetaTileEntityQuantumTank extends MetaTileEntity implements ITiered
         tooltip.add(I18n.format("gregtech.machine.quantum_tank.capacity", maxFluidCapacity));
         NBTTagCompound compound = stack.getTagCompound();
         if (compound != null) {
-            if (compound.hasKey("FluidName")) {
-                FluidStack fluidStack = new FluidStack(FluidRegistry.getFluid(compound.getString("FluidName")), 1000);
-                tooltip.add(I18n.format("gregtech.machine.quantum_tank.tooltip.name", fluidStack.getLocalizedName()));
-                tooltip.add(I18n.format("gregtech.machine.quantum_tank.tooltip.count", compound.getInteger("Amount")));
+            if (compound.hasKey("FluidName", Constants.NBT.TAG_COMPOUND)) {
+                FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(compound.getCompoundTag("FluidName"));
+                if (fluidStack != null) {
+                    tooltip.add(I18n.format("gregtech.machine.quantum_tank.tooltip.name", fluidStack.getLocalizedName()));
+                    tooltip.add(I18n.format("gregtech.machine.quantum_tank.tooltip.count", fluidStack.amount));
+                }
             }
             if (compound.getBoolean("IsVoiding")) {
                 tooltip.add(I18n.format("gregtech.machine.quantum_tank.tooltip.voiding_enabled"));

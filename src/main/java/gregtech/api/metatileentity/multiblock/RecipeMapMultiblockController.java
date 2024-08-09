@@ -174,7 +174,7 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
     }
 
     @Override
-    public boolean OnSawToolCLick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
+    public boolean onSawToolClick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
         if (playerIn.isSneaking()) {
             this.recipeMapWorkable.previousRecipe.clear();
             markDirty();

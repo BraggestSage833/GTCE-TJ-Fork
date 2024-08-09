@@ -127,7 +127,7 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
     }
 
     @Override
-    public boolean OnSawToolCLick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
+    public boolean onSawToolClick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
         if (playerIn.isSneaking()) {
             this.workableHandler.previousRecipe.clear();
             markDirty();

@@ -46,6 +46,9 @@ public class RecipeLRUCache {
     }
 
     public void clear() {
+        this.cacheHit = 0;
+        this.cacheMiss = 0;
+        this.lastAccessedRecipe = null;
         this.recipeCaches.clear();
     }
 
@@ -77,6 +80,9 @@ public class RecipeLRUCache {
     }
 
     public int cacheUtilized() {
+        if (this.lastAccessedRecipe == null) {
+            return this.cacheHit;
+        }
         this.recipeCaches.remove(this.lastAccessedRecipe);
         this.recipeCaches.addFirst(this.lastAccessedRecipe);
         this.cacheHit++;

@@ -383,11 +383,11 @@ public abstract class MetaTileEntity implements ICoverable {
     }
 
     /**
-     * Called when player right clicks minecraft stick on this meta tile entity
+     * Called when player right clicks saw tool on this meta tile entity
      *
      * @return true if something happened
      */
-    public boolean OnSawToolCLick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
+    public boolean onSawToolClick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
         return false;
     }
 
