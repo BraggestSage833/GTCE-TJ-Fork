@@ -350,6 +350,10 @@ public class RecipeMap<R extends RecipeBuilder<R>> {
                 if (leftOverIngredients > 0) {
                     continue;
                 }
+                int v = recipe.getEUt();
+                if (voltage < v) {
+                    continue;
+                }
                 boolean isMatch = recipe.matches(false, inputs, fluidInputs, matchingMode);
                 if (isMatch) {
                     return recipe;
