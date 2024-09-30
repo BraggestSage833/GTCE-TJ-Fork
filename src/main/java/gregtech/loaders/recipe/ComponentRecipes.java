@@ -446,7 +446,7 @@ public class ComponentRecipes {
                     .duration(100).EUt(7680).buildAndRegister();
         }
 
-        Material[] circuitTiers = new Material[] {MarkerMaterials.Tier.Basic, MarkerMaterials.Tier.Good, MarkerMaterials.Tier.Advanced, MarkerMaterials.Tier.Extreme, MarkerMaterials.Tier.Elite};
+        Material[] circuitTiers = new Material[] {MarkerMaterials.Tier.Basic, MarkerMaterials.Tier.Good, MarkerMaterials.Tier.Advanced, MarkerMaterials.Tier.Extreme, MarkerMaterials.Tier.Elite, MarkerMaterials.Tier.Master, MarkerMaterials.Tier.Ultimate, MarkerMaterials.Tier.Superconductor};
 
         for (int i = 0; i < circuitTiers.length; i++) {
             RecipeMaps.ASSEMBLER_RECIPES.recipeBuilder()
