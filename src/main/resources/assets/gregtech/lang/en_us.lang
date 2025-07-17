@@ -2358,6 +2358,25 @@ gregtech.machine.fisher.tooltip=Costs string to fish. Consumes one string each t
 gregtech.machine.fisher.speed=Catches something every %,d ticks
 gregtech.machine.fisher.requirement=Requires a square of water with size of %,d blocks directly below.
 
+#ME hatches and busses
+gregtech.machine.me_output_hatch.name=ME Output Hatch
+
+gregtech.machine.me.fluid_export.tooltip=Stores fluids directly into the ME network
+gregtech.machine.me.fluid_export.tooltip.2=Can cache an infinite amount of fluid
+gregtech.machine.me.extra_connections.tooltip=Right-click with wire cutters to allow connecting to AE2 on all sides
+
+gregtech.gui.me_network.online=Network Status: §2Online§r
+gregtech.gui.me_network.offline=Network Status: §4Offline§r
+gregtech.gui.waiting_list=Sending Queue:
+gregtech.gui.config_slot=§fConfig Slot§r
+gregtech.gui.config_slot.set=§7Click to §bset/select§7 config slot.§r
+gregtech.gui.config_slot.set_only=§7Click to §bset§7 config slot.§r
+gregtech.gui.config_slot.scroll=§7Scroll wheel to §achange§7 config amount.§r
+gregtech.gui.config_slot.remove=§7Right click to §4clear§7 config slot.§r
+gregtech.gui.config_slot.auto_pull_managed=§4Disabled:§7 Managed by Auto-Pull
+gregtech.gui.me_bus.extra_slot=Extra Slot/n§7Put extra items for recipes here, like Molds or Lenses
+gregtech.gui.me_bus.auto_pull_button=Click to toggle automatic item pulling from ME
+
 # General machinery
 gregtech.machine.basic.input_from_output_side.allow=Allow Input from Output Side
 gregtech.machine.basic.input_from_output_side.disallow=Disallow Input from Output Side

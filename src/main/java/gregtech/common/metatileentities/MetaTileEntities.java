@@ -13,6 +13,7 @@ import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityEn
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityFluidHatch;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityItemBus;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityRotorHolder;
+import gregtech.common.metatileentities.electric.multiblockpart.appeng.MetaTileEntityMEOutputHatch;
 import gregtech.common.metatileentities.multi.MetaTileEntityCokeOven;
 import gregtech.common.metatileentities.multi.MetaTileEntityCokeOvenHatch;
 import gregtech.common.metatileentities.multi.MetaTileEntityLargeBoiler;
@@ -152,6 +153,8 @@ public class MetaTileEntities {
     public static MetaTileEntityTank STAINLESS_STEEL_TANK;
     public static MetaTileEntityTank TITANIUM_TANK;
     public static MetaTileEntityTank TUNGSTENSTEEL_TANK;
+
+    public static MetaTileEntityMEOutputHatch ME_OUTPUT_HATCH;
 
 
     //MISC MACHINES SECTION
@@ -522,7 +525,8 @@ public class MetaTileEntities {
         GregTechAPI.registerMetaTileEntity(835, Super_tank[4]);
 
 
-
+        // ME hatches and buses
+        ME_OUTPUT_HATCH = GregTechAPI.registerMetaTileEntity(1100, new MetaTileEntityMEOutputHatch(gregtechId("me_output_hatch")));
 
 
         for (int i = 1; i < 5; i++) {
