@@ -19,8 +19,8 @@ import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
-import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.render.Textures;
+import gregtech.common.gui.widget.appeng.AEFluidGridWidget;
 import gregtech.common.inventory.appeng.SerializableFluidList;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
@@ -38,7 +38,6 @@ import net.minecraftforge.fluids.IFluidTank;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IAEFluidStack> implements IMultiblockAbilityPart<IFluidTank> {
@@ -105,7 +104,7 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
         builder.label(10, 25, "gregtech.gui.waiting_list", 0xFFFFFFFF);
-        //builder.widget(new AEFluidGridWidget(10, 35, 3, this.internalBuffer));
+        builder.widget(new AEFluidGridWidget(10, 35, 3, this.internalBuffer));
 
         builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 + 18 * 4 + 12);
         return builder.build(this.getHolder(), entityPlayer);
@@ -199,7 +198,7 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
 
     @Override
     public void registerAbilities(List<IFluidTank> abilityList) {
-        abilityList.add(new InaccessibleInfiniteTank(this, this.internalBuffer, this.getController()));
+        abilityList.add(new InaccessibleInfiniteTank(this, this.internalBuffer));
     }
 
     // TODO implement recipe voiding
@@ -214,14 +213,11 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
     private static class InaccessibleInfiniteTank implements IFluidTank {
 
         private final IItemList<IAEFluidStack> internalBuffer;
-        private final List<MetaTileEntity> notifiableEntities = new ArrayList<>();
         private final MetaTileEntity holder;
 
-        public InaccessibleInfiniteTank(MetaTileEntity holder, IItemList<IAEFluidStack> internalBuffer,
-                                        MetaTileEntity mte) {
+        public InaccessibleInfiniteTank(MetaTileEntity holder, IItemList<IAEFluidStack> internalBuffer) {
             this.holder = holder;
             this.internalBuffer = internalBuffer;
-            this.notifiableEntities.add(mte);
         }
 
         @Nullable
