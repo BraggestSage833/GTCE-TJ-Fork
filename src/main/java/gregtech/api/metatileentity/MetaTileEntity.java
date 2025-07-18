@@ -12,6 +12,7 @@ import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Matrix4;
 import com.google.common.base.Preconditions;
+import gregtech.api.GTValues;
 import gregtech.api.GregTechAPI;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.capability.IEnergyContainer;
@@ -1255,17 +1256,17 @@ public abstract class MetaTileEntity implements ICoverable {
     }
 
     @NotNull
-    @Optional.Method(modid = "appliedenergistics2")
+    @Optional.Method(modid = GTValues.MODID_AE2)
     public AECableType getCableConnectionType(@NotNull AEPartLocation part) {
         return AECableType.NONE;
     }
 
     @org.jetbrains.annotations.Nullable
-    @Optional.Method(modid = "appliedenergistics2")
+    @Optional.Method(modid = GTValues.MODID_AE2)
     public AENetworkProxy getProxy() {
         return null;
     }
 
-    @Optional.Method(modid = "appliedenergistics2")
+    @Optional.Method(modid = GTValues.MODID_AE2)
     public void gridChanged() {}
 }

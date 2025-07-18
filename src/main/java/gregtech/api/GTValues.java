@@ -76,7 +76,8 @@ public class GTValues {
         MODID_TOP = "theoneprobe",
         MODID_CTM = "ctm",
         MODID_CC = "cubicchunks",
-        MODID_AR = "advancedrocketry";
+        MODID_AR = "advancedrocketry",
+        MODID_AE2 = "appliedenergistics2";
 
     //because forge is too fucking retarded to cache results or at least do not create fucking
     //immutable collections every time you retrieve indexed mod list
