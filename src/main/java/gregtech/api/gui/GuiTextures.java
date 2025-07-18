@@ -139,6 +139,7 @@ public class GuiTextures {
     public static final TextureArea ARROW_DOUBLE = TextureArea.fullImage("textures/gui/widget/arrow_double.png");
     public static final TextureArea SELECT_BOX = TextureArea.fullImage("textures/gui/widget/select_box.png");
     public static final TextureArea SLOT_DARK = TextureArea.fullImage("textures/gui/base/slot_dark.png");
-    public static final TextureArea CONFIG_ARROW = TextureArea.fullImage("textures/gui/widget/config_arrow_dark.png");
+    public static final TextureArea CONFIG_ARROW = TextureArea.fullImage("textures/gui/widget/config_arrow.png");
+    public static final TextureArea CONFIG_ARROW_DARK = TextureArea.fullImage("textures/gui/widget/config_arrow_dark.png");
     public static final TextureArea BUTTON_AUTO_PULL = TextureArea.fullImage("textures/gui/widget/button_me_auto_pull.png");
 }

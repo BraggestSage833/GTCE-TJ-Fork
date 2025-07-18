@@ -20,6 +20,7 @@ import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
+import gregtech.common.gui.widget.appeng.AEItemConfigWidget;
 import gregtech.common.gui.widget.appeng.slot.ExportOnlyAEItemList;
 import gregtech.common.gui.widget.appeng.slot.ExportOnlyAEItemSlot;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.stack.WrappedItemStack;
@@ -165,7 +166,7 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
                 0x404040);
 
         // Config slots
-        //builder.widget(new AEItemConfigWidget(7, 25, this.getAEItemHandler()));
+        builder.widget(new AEItemConfigWidget(7, 25, this.getAEItemHandler()));
 
         // Ghost circuit slot
 //        SlotWidget circuitSlot = new GhostCircuitSlotWidget(circuitInventory, 0, 7 + 18 * 4, 25 + 18 * 3)
