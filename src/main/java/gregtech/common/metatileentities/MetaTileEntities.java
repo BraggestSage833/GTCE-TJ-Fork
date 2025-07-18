@@ -159,6 +159,7 @@ public class MetaTileEntities {
     public static MetaTileEntityMEStockingHatch ME_STOCKING_HATCH;
     public static MetaTileEntityMEOutputHatch ME_OUTPUT_HATCH;
     public static MetaTileEntityMEInputBus ME_INPUT_BUS;
+    //public static MetaTileEntityMEStockingBus ME_STOCKING_BUS;
     public static MetaTileEntityMEOutputBus ME_OUTPUT_BUS;
 
 
@@ -535,7 +536,8 @@ public class MetaTileEntities {
         ME_STOCKING_HATCH = GregTechAPI.registerMetaTileEntity(1101, new MetaTileEntityMEStockingHatch(gregtechId("me_stocking_hatch")));
         ME_OUTPUT_HATCH = GregTechAPI.registerMetaTileEntity(1102, new MetaTileEntityMEOutputHatch(gregtechId("me_output_hatch")));
         ME_INPUT_BUS = GregTechAPI.registerMetaTileEntity(1103, new MetaTileEntityMEInputBus(gregtechId("me_input_bus")));
-        ME_OUTPUT_BUS = GregTechAPI.registerMetaTileEntity(1104, new MetaTileEntityMEOutputBus(gregtechId("me_output_bus")));
+        //ME_STOCKING_BUS = GregTechAPI.registerMetaTileEntity(1104, new MetaTileEntityMEStockingBus(gregtechId("me_stocking_bus")));
+        ME_OUTPUT_BUS = GregTechAPI.registerMetaTileEntity(1105, new MetaTileEntityMEOutputBus(gregtechId("me_output_bus")));
 
         for (int i = 1; i < 5; i++) {
             String voltageName = GTValues.VN[i].toLowerCase();
