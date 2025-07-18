@@ -2360,11 +2360,14 @@ gregtech.machine.fisher.requirement=Requires a square of water with size of %,d 
 
 #ME hatches and busses
 gregtech.machine.me_input_hatch.name=ME Input Hatch
+gregtech.machine.me_stocking_hatch.name=ME stocking hatch
 gregtech.machine.me_output_hatch.name=ME Output Hatch
 gregtech.machine.me_output_bus.name=ME Output Bus
 
 gregtech.machine.me.fluid_import.tooltip=Extracts specified fluids from ME network
 gregtech.machine.me_import_fluid_hatch.configs.tooltip=Keeps 16 fluid types in stock
+gregtech.machine.me.stocking_fluid.tooltip=Retrieves fluids directly from the ME network
+gregtech.machine.me.stocking_fluid.tooltip.2=Auto-Pull from ME mode will automatically stock the first 16 fluids in the ME system, updated every 5 seconds.
 gregtech.machine.me.copy_paste.tooltip=Left-click with Data Stick to copy settings, right-click to apply
 gregtech.machine.me.fluid_export.tooltip=Stores fluids directly into the ME network
 gregtech.machine.me.fluid_export.tooltip.2=Can cache an infinite amount of fluid
