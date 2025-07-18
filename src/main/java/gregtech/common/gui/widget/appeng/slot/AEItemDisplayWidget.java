@@ -42,7 +42,7 @@ public class AEItemDisplayWidget extends Widget {
             realStack.setCount(1);
             drawItemStack(realStack, stackX, stackY, null);
             String amountStr = String.format("x%,d", item.getStackSize());
-            drawStringSized(amountStr, stackX + 20, stackY + 20, 0xFFFFFFFF, false, 1, false);
+            drawStringSized(amountStr, stackX + 20, stackY + 5, 0xFFFFFFFF, false, 1, false);
         }
         if (isMouseOverElement(mouseX, mouseY)) {
             drawSelectionOverlay(stackX, stackY, 16, 16);
