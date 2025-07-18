@@ -10,6 +10,8 @@ import gregtech.api.util.Position;
 import gregtech.api.util.Size;
 import gregtech.common.gui.widget.appeng.AEListGridWidget;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +34,7 @@ public class AEFluidDisplayWidget extends Widget {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void drawInBackground(int mouseX, int mouseY, IRenderContext context) {
         super.drawInBackground(mouseX, mouseY, context);
         Position position = getPosition();
@@ -51,6 +54,7 @@ public class AEFluidDisplayWidget extends Widget {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void drawInForeground(int mouseX, int mouseY) {
         if (isMouseOverElement(mouseX, mouseY)) {
             IAEFluidStack fluid = this.gridWidget.getAt(this.index);

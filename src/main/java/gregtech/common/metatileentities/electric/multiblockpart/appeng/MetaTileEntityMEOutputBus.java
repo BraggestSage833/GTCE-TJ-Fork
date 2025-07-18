@@ -20,6 +20,7 @@ import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.Textures;
+import gregtech.common.gui.widget.appeng.AEItemGridWidget;
 import gregtech.common.inventory.appeng.SerializableItemList;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
@@ -101,7 +102,7 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
         builder.label(10, 25, "gregtech.gui.waiting_list", 0xFFFFFFFF);
-        //builder.widget(new AEItemGridWidget(10, 35, 3, this.internalBuffer));
+        builder.widget(new AEItemGridWidget(10, 35, 3, this.internalBuffer));
 
         builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 + 18 * 4 + 12);
         return builder.build(this.getHolder(), entityPlayer);
