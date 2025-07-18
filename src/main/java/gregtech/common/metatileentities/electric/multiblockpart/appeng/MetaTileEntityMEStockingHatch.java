@@ -8,6 +8,7 @@ import codechicken.lib.raytracer.CuboidRayTraceResult;
 import gregtech.api.GTValues;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
+import gregtech.api.gui.widgets.ToggleButtonWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
@@ -221,8 +222,8 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
     @Override
     protected ModularUI.Builder createUITemplate(EntityPlayer player) {
         ModularUI.Builder builder = super.createUITemplate(player);
-        //builder.widget(new ImageCycleButtonWidget(7 + 18 * 4 + 1, 26, 16, 16, GuiTextures.BUTTON_AUTO_PULL,
-                //() -> autoPull, this::setAutoPull).setTooltipHoverString("gregtech.gui.me_bus.auto_pull_button"));
+        builder.widget(new ToggleButtonWidget(7 + 18 * 4 + 1, 26, 16, 16, GuiTextures.BUTTON_AUTO_PULL, () -> autoPull, this::setAutoPull)
+                .setTooltipText("gregtech.gui.me_bus.auto_pull_button"));
         return builder;
     }
 
