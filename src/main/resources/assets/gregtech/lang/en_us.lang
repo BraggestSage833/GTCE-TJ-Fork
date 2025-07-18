@@ -2362,6 +2362,7 @@ gregtech.machine.fisher.requirement=Requires a square of water with size of %,d 
 gregtech.machine.me_input_hatch.name=ME Input Hatch
 gregtech.machine.me_stocking_hatch.name=ME stocking hatch
 gregtech.machine.me_output_hatch.name=ME Output Hatch
+gregtech.machine.me_input_bus.name=ME Input Bus
 gregtech.machine.me_output_bus.name=ME Output Bus
 
 gregtech.machine.me.fluid_import.tooltip=Extracts specified fluids from ME network
@@ -2374,6 +2375,8 @@ gregtech.machine.me.fluid_export.tooltip.2=Can cache an infinite amount of fluid
 gregtech.machine.me.extra_connections.tooltip=Right-click with wire cutters to allow connecting to AE2 on all sides
 gregtech.machine.me.item_export.tooltip=Stores items directly into the ME network
 gregtech.machine.me.item_export.tooltip.2=Can cache an infinite amount of items
+gregtech.machine.me.item_import.tooltip=Extracts specified items from the ME network
+gregtech.machine.me_import_item_hatch.configs.tooltip=Keeps 16 item types in stock
 
 gregtech.gui.me_network.online=Network Status: §2Online§r
 gregtech.gui.me_network.offline=Network Status: §4Offline§r
