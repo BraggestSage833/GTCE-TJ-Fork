@@ -139,6 +139,7 @@ public class Textures {
     public static OrientedOverlayRenderer GAS_TURBINE_OVERLAY = new OrientedOverlayRenderer("generators/gas_turbine", SIDE);
     public static OrientedOverlayRenderer STEAM_TURBINE_OVERLAY = new OrientedOverlayRenderer("generators/steam_turbine", SIDE);
 
+    public static OrientedOverlayRenderer ME_INPUT_HATCH_OVERLAY = new OrientedOverlayRenderer("overlay/appeng/me_input_hatch", FRONT);
     public static OrientedOverlayRenderer ME_OUTPUT_HATCH_OVERLAY = new OrientedOverlayRenderer("overlay/appeng/me_output_hatch", FRONT);
     public static OrientedOverlayRenderer ME_OUTPUT_BUS_OVERLAY = new OrientedOverlayRenderer("overlay/appeng/me_output_bus", FRONT);
 

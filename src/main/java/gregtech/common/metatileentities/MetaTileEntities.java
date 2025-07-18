@@ -13,6 +13,7 @@ import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityEn
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityFluidHatch;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityItemBus;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityRotorHolder;
+import gregtech.common.metatileentities.electric.multiblockpart.appeng.MetaTileEntityMEInputHatch;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.MetaTileEntityMEOutputBus;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.MetaTileEntityMEOutputHatch;
 import gregtech.common.metatileentities.multi.MetaTileEntityCokeOven;
@@ -155,6 +156,8 @@ public class MetaTileEntities {
     public static MetaTileEntityTank TITANIUM_TANK;
     public static MetaTileEntityTank TUNGSTENSTEEL_TANK;
 
+    // ME hatches and buses
+    public static MetaTileEntityMEInputHatch ME_INPUT_HATCH;
     public static MetaTileEntityMEOutputHatch ME_OUTPUT_HATCH;
     public static MetaTileEntityMEOutputBus ME_OUTPUT_BUS;
 
@@ -528,8 +531,9 @@ public class MetaTileEntities {
 
 
         // ME hatches and buses
-        ME_OUTPUT_HATCH = GregTechAPI.registerMetaTileEntity(1100, new MetaTileEntityMEOutputHatch(gregtechId("me_output_hatch")));
-        ME_OUTPUT_BUS = GregTechAPI.registerMetaTileEntity(1101, new MetaTileEntityMEOutputBus(gregtechId("me_output_bus")));
+        ME_INPUT_HATCH = GregTechAPI.registerMetaTileEntity(1100, new MetaTileEntityMEInputHatch(gregtechId("me_input_hatch")));
+        ME_OUTPUT_HATCH = GregTechAPI.registerMetaTileEntity(1101, new MetaTileEntityMEOutputHatch(gregtechId("me_output_hatch")));
+        ME_OUTPUT_BUS = GregTechAPI.registerMetaTileEntity(1102, new MetaTileEntityMEOutputBus(gregtechId("me_output_bus")));
 
         for (int i = 1; i < 5; i++) {
             String voltageName = GTValues.VN[i].toLowerCase();

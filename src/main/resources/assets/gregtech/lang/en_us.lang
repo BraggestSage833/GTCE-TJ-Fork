@@ -2359,9 +2359,13 @@ gregtech.machine.fisher.speed=Catches something every %,d ticks
 gregtech.machine.fisher.requirement=Requires a square of water with size of %,d blocks directly below.
 
 #ME hatches and busses
+gregtech.machine.me_input_hatch.name=ME Input Hatch
 gregtech.machine.me_output_hatch.name=ME Output Hatch
 gregtech.machine.me_output_bus.name=ME Output Bus
 
+gregtech.machine.me.fluid_import.tooltip=Extracts specified fluids from ME network
+gregtech.machine.me_import_fluid_hatch.configs.tooltip=Keeps 16 fluid types in stock
+gregtech.machine.me.copy_paste.tooltip=Left-click with Data Stick to copy settings, right-click to apply
 gregtech.machine.me.fluid_export.tooltip=Stores fluids directly into the ME network
 gregtech.machine.me.fluid_export.tooltip.2=Can cache an infinite amount of fluid
 gregtech.machine.me.extra_connections.tooltip=Right-click with wire cutters to allow connecting to AE2 on all sides

@@ -134,4 +134,5 @@ public class GuiTextures {
     public static final TextureArea INFO_ICON = TextureArea.fullImage("textures/gui/widget/information.png");
 
     public static final TextureArea NUMBER_BACKGROUND = TextureArea.fullImage("textures/gui/widget/number_background.png");
+    public static final TextureArea ARROW_DOUBLE = TextureArea.fullImage("textures/gui/widget/arrow_double.png");
 }
