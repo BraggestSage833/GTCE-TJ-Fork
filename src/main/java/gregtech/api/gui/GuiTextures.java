@@ -6,6 +6,8 @@ import gregtech.api.gui.resources.TextureArea;
 
 public class GuiTextures {
 
+    public static final TextureArea GT_LOGO = TextureArea.fullImage("textures/gt_logo.png");
+
     //BASE TEXTURES
     public static final TextureArea BACKGROUND = AdoptableTextureArea.fullImage("textures/gui/base/background.png", 176, 166, 3, 3);
     public static final TextureArea BORDERED_BACKGROUND = AdoptableTextureArea.fullImage("textures/gui/base/bordered_background.png", 195, 136, 4, 4);
@@ -135,4 +137,7 @@ public class GuiTextures {
 
     public static final TextureArea NUMBER_BACKGROUND = TextureArea.fullImage("textures/gui/widget/number_background.png");
     public static final TextureArea ARROW_DOUBLE = TextureArea.fullImage("textures/gui/widget/arrow_double.png");
+    public static final TextureArea SELECT_BOX = TextureArea.fullImage("textures/gui/widget/select_box.png");
+    public static final TextureArea SLOT_DARK = TextureArea.fullImage("textures/gui/base/slot_dark.png");
+    public static final TextureArea CONFIG_ARROW = TextureArea.fullImage("textures/gui/widget/config_arrow_dark.png");
 }

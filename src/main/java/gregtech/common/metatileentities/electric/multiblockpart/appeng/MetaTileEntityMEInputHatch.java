@@ -19,6 +19,7 @@ import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.render.Textures;
+import gregtech.common.gui.widget.appeng.AEFluidConfigWidget;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.slot.ExportOnlyAEFluidList;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.slot.ExportOnlyAEFluidSlot;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.stack.WrappedFluidStack;
@@ -155,15 +156,13 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
                 0x404040);
 
         // Config slots
-        //builder.widget(new AEFluidConfigWidget(7, 25, this.getAEFluidHandler()));
+        builder.widget(new AEFluidConfigWidget(7, 25, this.getAEFluidHandler()));
 
         // Arrow image
         builder.image(7 + 18 * 4, 25 + 18, 18, 18, GuiTextures.ARROW_DOUBLE);
 
         // GT Logo, cause there's some free real estate
-        //builder.widget(new ImageWidget(7 + 18 * 4, 25 + 18 * 3, 17, 17,
-        //        GTValues.XMAS.get() ? GuiTextures.GREGTECH_LOGO_XMAS : GuiTextures.GREGTECH_LOGO)
-        //        .setIgnoreColor(true));
+        builder.widget(new ImageWidget(7 + 18 * 4, 25 + 18 * 3, 17, 17, GuiTextures.GT_LOGO));
 
         builder.bindPlayerInventory(player.inventory, GuiTextures.SLOT, 7, 18 + 18 * 4 + 12);
         return builder;
