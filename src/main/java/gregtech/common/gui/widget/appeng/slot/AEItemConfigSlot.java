@@ -35,6 +35,7 @@ public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void drawInBackground(int mouseX, int mouseY, IRenderContext context) {
         super.drawInBackground(mouseX, mouseY, context);
         AEItemConfigWidget pw = getParentWidget();
@@ -85,6 +86,7 @@ public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void drawInForeground(int mouseX, int mouseY) {
         super.drawInForeground(mouseX, mouseY);
         IAEItemStack item = null;
@@ -100,6 +102,7 @@ public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     protected void addHoverText(List<String> hoverText) {
         if (getParentWidget().isAutoPull()) {
             hoverText.add(I18n.format("gregtech.gui.config_slot"));
@@ -110,6 +113,7 @@ public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
         AEItemConfigWidget pw = getParentWidget();
         // don't allow manual interaction with config slots when auto pull is enabled
@@ -174,6 +178,7 @@ public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void readUpdateInfo(int id, PacketBuffer buffer) {
         super.readUpdateInfo(id, buffer);
         IConfigurableSlot<IAEItemStack> slot = this.parentWidget.getDisplay(this.index);
@@ -224,30 +229,5 @@ public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> {
                 }
             }
         });
-    }
-
-    @SideOnly(Side.CLIENT)
-    public boolean mouseWheelMove(int mouseX, int mouseY, int wheelDelta) {
-        // Only allow the amount scrolling if not stocking, as amount is useless for stocking
-        if (parentWidget.isStocking()) return false;
-        IConfigurableSlot<IAEItemStack> slot = this.parentWidget.getDisplay(this.index);
-        Rectangle rectangle = toRectangleBox();
-        rectangle.width /= 6;
-        if (slot.getConfig() == null || wheelDelta == 0 || !rectangle.contains(mouseX, mouseY)) {
-            return false;
-        }
-        ItemStack stack = slot.getConfig().createItemStack();
-        long amt;
-        if (isCtrlDown()) {
-            amt = wheelDelta > 0 ? stack.getCount() * 2L : stack.getCount() / 2L;
-        } else {
-            amt = wheelDelta > 0 ? stack.getCount() + 1L : stack.getCount() - 1L;
-        }
-        if (amt > 0 && amt < Integer.MAX_VALUE + 1L) {
-            int finalAmt = (int) amt;
-            writeClientAction(AMOUNT_CHANGE_ID, buf -> buf.writeInt(finalAmt));
-            return true;
-        }
-        return false;
     }
 }

@@ -216,6 +216,7 @@ public class AEFluidConfigSlot extends AEConfigSlot<IAEFluidStack> {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void readUpdateInfo(int id, PacketBuffer buffer) {
         super.readUpdateInfo(id, buffer);
         IConfigurableSlot<IAEFluidStack> slot = this.parentWidget.getDisplay(this.index);
@@ -267,30 +268,5 @@ public class AEFluidConfigSlot extends AEConfigSlot<IAEFluidStack> {
                 }
             }
         });
-    }
-
-    @SideOnly(Side.CLIENT)
-    public boolean mouseWheelMove(int mouseX, int mouseY, int wheelDelta) {
-        if (parentWidget.isStocking()) return false;
-        IConfigurableSlot<IAEFluidStack> slot = this.parentWidget.getDisplay(this.index);
-        Rectangle rectangle = toRectangleBox();
-        rectangle.width /= 6;
-        if (slot.getConfig() == null || wheelDelta == 0 || !rectangle.contains(mouseX, mouseY)) {
-            return false;
-        }
-        FluidStack fluid = slot.getConfig().getFluidStack();
-        long amt;
-        if (isCtrlDown()) {
-            amt = wheelDelta > 0 ? fluid.amount * 2L : fluid.amount / 2L;
-        } else {
-            amt = wheelDelta > 0 ? fluid.amount + 1L : fluid.amount - 1L;
-        }
-
-        if (amt > 0 && amt < Integer.MAX_VALUE + 1L) {
-            int finalAmt = (int) amt;
-            writeClientAction(AMOUNT_CHANGE_ID, buf -> buf.writeInt(finalAmt));
-            return true;
-        }
-        return false;
     }
 }

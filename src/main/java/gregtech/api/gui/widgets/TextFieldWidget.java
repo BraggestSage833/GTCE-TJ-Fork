@@ -42,6 +42,11 @@ public class TextFieldWidget extends Widget {
     }
 
     @SideOnly(Side.CLIENT)
+    public String getText() {
+        return this.textField.getText();
+    }
+
+    @SideOnly(Side.CLIENT)
     public void setEnableTextBox(boolean enable) {
         this.textField.setEnabled(enable);
         this.textField.setVisible(enable);

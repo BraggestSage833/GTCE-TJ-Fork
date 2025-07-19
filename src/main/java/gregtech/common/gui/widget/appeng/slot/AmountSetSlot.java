@@ -35,6 +35,7 @@ public class AmountSetSlot<T extends IAEStack<T>> extends Widget {
             this.amountText.setEnableTextBox(false);
     }
 
+    @SideOnly(Side.CLIENT)
     public void setSlotIndex(int slotIndex) {
         this.index = slotIndex;
         this.amountText.setEnableTextBox(slotIndex >= 0);
@@ -76,14 +77,14 @@ public class AmountSetSlot<T extends IAEStack<T>> extends Widget {
     public void handleClientAction(int id, PacketBuffer buffer) {
         super.handleClientAction(id, buffer);
         if (id == 0) {
-            this.index = buffer.readVarInt();;
+            this.index = buffer.readVarInt();
         } else if (id == 1) {
             if (this.index < 0) {
                 return;
             }
             IConfigurableSlot<T> slot = this.parentWidget.getConfig(this.index);
             long newAmt = buffer.readVarLong();
-            if (newAmt > 0 && slot.getConfig() != null) {
+            if (slot.getConfig() != null) {
                 slot.getConfig().setStackSize(newAmt);
             }
         }
@@ -99,5 +100,25 @@ public class AmountSetSlot<T extends IAEStack<T>> extends Widget {
             drawStringSized("Amount", position.x + 3, position.y + 3, 0x404040, false, 1f, false);
             GuiTextures.DISPLAY.draw(position.x + 3, position.y + 11, 65, 14);
         }
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public boolean mouseWheelMove(int mouseX, int mouseY, int wheelDelta) {
+        if (this.index < 0) {
+            return false;
+        }
+        try {
+            long amt = Long.parseLong(this.amountText.getText());
+            if (isCtrlDown()) {
+                amt = wheelDelta > 0 ? amt * 2L : amt / 2L;
+            } else {
+                amt = wheelDelta > 0 ? amt + 1L : amt - 1L;
+            }
+            long finalAmt = Math.min(Math.max(1, amt), Integer.MAX_VALUE);
+            writeClientAction(1, buf -> buf.writeVarLong(finalAmt));
+            return true;
+        } catch (NumberFormatException ignored) {}
+        return false;
     }
 }
