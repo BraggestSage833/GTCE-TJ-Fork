@@ -6,6 +6,7 @@ import gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.capability.IWorkable;
 import gregtech.api.metatileentity.MTETrait;
 import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeMap;
 import gregtech.api.util.GTUtility;
@@ -22,6 +23,7 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -293,10 +295,12 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         IItemHandlerModifiable exportInventory = getOutputInventory();
         IMultipleTankHandler importFluids = getInputTank();
         IMultipleTankHandler exportFluids = getOutputTank();
+        boolean ignoreOutputItemSpace = this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isItemInfSink();
+        boolean ignoreOutputFluidSpace = this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isFluidInfSink();
         return (totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
                 (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())) &&
-                MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
-                MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs()) &&
+                ignoreOutputItemSpace || MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
+                ignoreOutputFluidSpace || MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs()) &&
                 recipe.matches(true, importInventory, importFluids);
     }
 
@@ -367,7 +371,10 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected void completeRecipe() {
-        MetaTileEntity.addItemsToItemHandler(getOutputInventory(), false, itemOutputs);
+        if (this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isItemInfSink())
+            for (ItemStack itemOutput : this.itemOutputs)
+                ItemHandlerHelper.insertItemStacked(getOutputInventory(), itemOutput, false);
+        else MetaTileEntity.addItemsToItemHandler(getOutputInventory(), false, itemOutputs);
         MetaTileEntity.addFluidsToFluidHandler(getOutputTank(), false, fluidOutputs);
         this.progressTime = 0;
         setMaxProgress(0);

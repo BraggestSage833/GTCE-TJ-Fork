@@ -19,6 +19,7 @@ import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
+import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.render.Textures;
 import gregtech.common.gui.widget.appeng.AEItemGridWidget;
 import gregtech.common.inventory.appeng.SerializableItemList;
@@ -190,13 +191,12 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
         abilityList.add(new InaccessibleInfiniteSlot(this, this.internalBuffer, this.getController()));
     }
 
-    //TODO implement recipe voiding
     @Override
     public void addToMultiBlock(MultiblockControllerBase controllerBase) {
         super.addToMultiBlock(controllerBase);
-        //if (controllerBase instanceof MultiblockWithDisplayBase) {
-            //((MultiblockWithDisplayBase) controllerBase).enableItemInfSink();
-        //}
+        if (controllerBase instanceof MultiblockWithDisplayBase) {
+            ((MultiblockWithDisplayBase) controllerBase).enableItemInfSink();
+        }
     }
 
     private static class InaccessibleInfiniteSlot implements IItemHandlerModifiable {

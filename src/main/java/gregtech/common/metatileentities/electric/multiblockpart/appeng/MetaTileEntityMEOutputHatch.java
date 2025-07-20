@@ -19,6 +19,7 @@ import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
+import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.render.Textures;
 import gregtech.common.gui.widget.appeng.AEFluidGridWidget;
 import gregtech.common.inventory.appeng.SerializableFluidList;
@@ -201,13 +202,11 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
         abilityList.add(new InaccessibleInfiniteTank(this, this.internalBuffer));
     }
 
-    // TODO implement recipe voiding
     @Override
     public void addToMultiBlock(MultiblockControllerBase controllerBase) {
         super.addToMultiBlock(controllerBase);
-        //f (controllerBase instanceof MultiblockWithDisplayBase) {
-        //    ((MultiblockWithDisplayBase) controllerBase).enableFluidInfSink();
-        //}
+        if (controllerBase instanceof MultiblockWithDisplayBase)
+            ((MultiblockWithDisplayBase) controllerBase).enableFluidInfSink();
     }
 
     private static class InaccessibleInfiniteTank implements IFluidTank {
