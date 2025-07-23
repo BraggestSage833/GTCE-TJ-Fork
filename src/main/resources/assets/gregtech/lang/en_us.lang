@@ -2380,6 +2380,10 @@ gregtech.machine.me.item_import.tooltip=Extracts specified items from the ME net
 gregtech.machine.me_import_item_hatch.configs.tooltip=Keeps 16 item types in stock
 gregtech.machine.me.stocking_item.tooltip=Retrieves items directly from the ME network
 gregtech.machine.me.stocking_item.tooltip.2=Auto-Pull from ME mode will automatically stock the first 16 items in the ME system, updated every 5 seconds.
+gregtech.machine.me.import_copy_settings=Saved settings to Data Stick
+gregtech.machine.me.import_paste_settings=Applied settings from Data Stick
+gregtech.machine.me.item_import.data_stick.name=§oME Input Bus Configuration Data
+gregtech.machine.me.fluid_import.data_stick.name=§oME Input Hatch Configuration Data
 
 gregtech.gui.me_network.online=Network Status: §2Online§r
 gregtech.gui.me_network.offline=Network Status: §4Offline§r

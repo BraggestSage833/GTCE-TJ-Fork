@@ -4,6 +4,7 @@ import appeng.api.config.Actionable;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.channels.IFluidStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
@@ -31,6 +32,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -41,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static gregtech.common.items.MetaItems.TOOL_DATA_STICK;
 
 public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAEFluidStack> implements IMultiblockAbilityPart<IFluidTank> {
 
@@ -262,6 +266,28 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
     @Override
     public void registerAbilities(List<IFluidTank> abilityList) {
         abilityList.addAll(Arrays.asList(this.getAEFluidHandler().getInventory()));
+    }
+
+    @Override
+    public boolean onRightClick(EntityPlayer playerIn, EnumHand hand, EnumFacing facing, CuboidRayTraceResult hitResult) {
+        ItemStack stack = playerIn.getHeldItem(hand);
+        if (stack.isItemEqual(TOOL_DATA_STICK.getStackForm())) {
+            if (!this.getWorld().isRemote)
+                this.onDataStickLeftClick(playerIn, stack);
+            return true;
+        }
+        return super.onRightClick(playerIn, hand, facing, hitResult);
+    }
+
+    @Override
+    public void onLeftClick(EntityPlayer player, EnumFacing facing, CuboidRayTraceResult hitResult) {
+        ItemStack stack = player.getHeldItemMainhand();
+        if (stack.isItemEqual(TOOL_DATA_STICK.getStackForm())) {
+            if (!this.getWorld().isRemote)
+                this.onDataStickRightClick(player, stack);
+            return;
+        }
+        super.onLeftClick(player, facing, hitResult);
     }
 
     public final void onDataStickLeftClick(EntityPlayer player, ItemStack dataStick) {
