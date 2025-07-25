@@ -298,24 +298,15 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
         ItemStack stack = playerIn.getHeldItem(hand);
         if (stack.isItemEqual(TOOL_DATA_STICK.getStackForm())) {
             if (!this.getWorld().isRemote)
-                this.onDataStickLeftClick(playerIn, stack);
+                if (playerIn.isSneaking())
+                    this.onDataStickCopy(playerIn, stack);
+                else this.onDataStickPaste(playerIn, stack);
             return true;
         }
         return super.onRightClick(playerIn, hand, facing, hitResult);
     }
 
-    @Override
-    public void onLeftClick(EntityPlayer player, EnumFacing facing, CuboidRayTraceResult hitResult) {
-        ItemStack stack = player.getHeldItemMainhand();
-        if (stack.isItemEqual(TOOL_DATA_STICK.getStackForm())) {
-            if (!this.getWorld().isRemote)
-                this.onDataStickRightClick(player, stack);
-            return;
-        }
-        super.onLeftClick(player, facing, hitResult);
-    }
-
-    public final void onDataStickLeftClick(EntityPlayer player, ItemStack dataStick) {
+    public final void onDataStickCopy(EntityPlayer player, ItemStack dataStick) {
         NBTTagCompound tag = new NBTTagCompound();
         tag.setTag("MEInputBus", writeConfigToTag());
         dataStick.setTagCompound(tag);
@@ -341,15 +332,14 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
         return tag;
     }
 
-    public final boolean onDataStickRightClick(EntityPlayer player, ItemStack dataStick) {
+    public final void onDataStickPaste(EntityPlayer player, ItemStack dataStick) {
         NBTTagCompound tag = dataStick.getTagCompound();
         if (tag == null || !tag.hasKey("MEInputBus")) {
-            return false;
+            return;
         }
         readConfigFromTag(tag.getCompoundTag("MEInputBus"));
         syncME();
         player.sendStatusMessage(new TextComponentTranslation("gregtech.machine.me.import_paste_settings"), true);
-        return true;
     }
 
     protected void readConfigFromTag(NBTTagCompound tag) {
