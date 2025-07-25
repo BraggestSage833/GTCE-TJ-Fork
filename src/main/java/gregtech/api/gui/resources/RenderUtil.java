@@ -50,7 +50,7 @@ public class RenderUtil {
         ResourceLocation fluidStill = fluid.getStill();
         TextureAtlasSprite fluidStillSprite = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(fluidStill.toString());
         int fluidColor = fluid.getColor(contents);
-        int scaledAmount = contents.amount * heightT / tankCapacity;
+        int scaledAmount = contents.amount * heightT / tankCapacity == 0 ? 1 : tankCapacity;
         if (contents.amount > 0 && scaledAmount < 1) {
             scaledAmount = 1;
         }
