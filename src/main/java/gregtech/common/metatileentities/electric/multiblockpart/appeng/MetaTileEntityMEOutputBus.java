@@ -10,10 +10,10 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechDataCodes;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
+import gregtech.api.gui.widgets.ToggleButtonWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
@@ -43,7 +43,6 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
 
     public final static String ITEM_BUFFER_TAG = "ItemBuffer";
     public final static String WORKING_TAG = "WorkingEnabled";
-    private boolean workingEnabled = true;
     private SerializableItemList internalBuffer;
 
     public MetaTileEntityMEOutputBus(ResourceLocation metaTileEntityId) {
@@ -103,6 +102,9 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
         builder.label(10, 25, "gregtech.gui.waiting_list", 0xFFFFFFFF);
+
+        builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_POWER, this::isWorkingEnabled, this::setWorkingEnabled));
+
         builder.widget(new AEItemGridWidget(10, 35, 3, this.internalBuffer));
 
         builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 + 18 * 4 + 12);
@@ -112,15 +114,6 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
     @Override
     public boolean isWorkingEnabled() {
         return this.workingEnabled;
-    }
-
-    @Override
-    public void setWorkingEnabled(boolean workingEnabled) {
-        this.workingEnabled = workingEnabled;
-        World world = this.getWorld();
-        if (world != null && !world.isRemote) {
-            writeCustomData(GregtechDataCodes.WORKING_ENABLED, buf -> buf.writeBoolean(workingEnabled));
-        }
     }
 
     @Override

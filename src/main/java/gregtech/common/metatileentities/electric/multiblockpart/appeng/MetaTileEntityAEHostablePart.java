@@ -6,7 +6,6 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IStorageChannel;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEPartLocation;
@@ -27,6 +26,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +35,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static gregtech.api.capability.GregtechDataCodes.UPDATE_ONLINE_STATUS;
+import static gregtech.api.capability.GregtechDataCodes.WORKING_ENABLED;
 
 public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extends MetaTileEntityMultiblockPart implements IControllable {
 
@@ -44,6 +45,7 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
     protected boolean isOnline;
     private boolean allowExtraConnections;
     protected boolean meStatusChanged = false;
+    protected boolean workingEnabled = true;
 
     public MetaTileEntityAEHostablePart(ResourceLocation metaTileEntityId, int tier, Class<? extends IStorageChannel<T>> storageChannel) {
         super(metaTileEntityId, tier);
@@ -111,6 +113,19 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
                 this.isOnline = isOnline;
                 scheduleRenderUpdate();
             }
+        } else if (dataId == WORKING_ENABLED) {
+            this.workingEnabled = buf.readBoolean();
+            this.scheduleRenderUpdate();
+        }
+    }
+
+    @Override
+    public void setWorkingEnabled(boolean workingEnabled) {
+        this.workingEnabled = workingEnabled;
+        World world = this.getWorld();
+        if (world != null && !world.isRemote) {
+            writeCustomData(WORKING_ENABLED, buf -> buf.writeBoolean(workingEnabled));
+            this.markDirty();
         }
     }
 

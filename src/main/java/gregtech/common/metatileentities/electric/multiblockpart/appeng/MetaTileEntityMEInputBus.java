@@ -9,12 +9,12 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechDataCodes;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.capability.impl.ItemHandlerList;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.SlotWidget;
+import gregtech.api.gui.widgets.ToggleButtonWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
@@ -53,7 +53,6 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
     public final static String ITEM_BUFFER_TAG = "ItemSlots";
     public final static String WORKING_TAG = "WorkingEnabled";
     private final static int CONFIG_SIZE = 16;
-    private boolean workingEnabled = true;
     protected ExportOnlyAEItemList aeItemHandler;
     //TODO implement ghost circuit
     //protected GhostCircuitItemStackHandler circuitInventory;
@@ -169,6 +168,8 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
 
+        builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_POWER, this::isWorkingEnabled, this::setWorkingEnabled));
+
         // Config slots
         builder.widget(new AEItemConfigWidget(7, 25, this.getAEItemHandler()));
 
@@ -202,15 +203,6 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
     @Override
     public boolean isWorkingEnabled() {
         return this.workingEnabled;
-    }
-
-    @Override
-    public void setWorkingEnabled(boolean workingEnabled) {
-        this.workingEnabled = workingEnabled;
-        World world = this.getWorld();
-        if (world != null && !world.isRemote) {
-            writeCustomData(GregtechDataCodes.WORKING_ENABLED, buf -> buf.writeBoolean(workingEnabled));
-        }
     }
 
     @Override

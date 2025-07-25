@@ -14,6 +14,7 @@ import gregtech.api.capability.GregtechDataCodes;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
+import gregtech.api.gui.widgets.ToggleButtonWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
@@ -45,7 +46,6 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
 
     public final static String FLUID_BUFFER_TAG = "FluidBuffer";
     public final static String WORKING_TAG = "WorkingEnabled";
-    private boolean workingEnabled = true;
     private SerializableFluidList internalBuffer;
 
     public MetaTileEntityMEOutputHatch(ResourceLocation metaTileEntityId) {
@@ -105,6 +105,9 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
         builder.label(10, 25, "gregtech.gui.waiting_list", 0xFFFFFFFF);
+
+        builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_POWER, this::isWorkingEnabled, this::setWorkingEnabled));
+
         builder.widget(new AEFluidGridWidget(10, 35, 3, this.internalBuffer));
 
         builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 + 18 * 4 + 12);
@@ -114,15 +117,6 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
     @Override
     public boolean isWorkingEnabled() {
         return this.workingEnabled;
-    }
-
-    @Override
-    public void setWorkingEnabled(boolean workingEnabled) {
-        this.workingEnabled = workingEnabled;
-        World world = this.getWorld();
-        if (world != null && !world.isRemote) {
-            writeCustomData(GregtechDataCodes.WORKING_ENABLED, buf -> buf.writeBoolean(workingEnabled));
-        }
     }
 
     @Override

@@ -9,12 +9,12 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechDataCodes;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.capability.impl.FluidTankList;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.ImageWidget;
+import gregtech.api.gui.widgets.ToggleButtonWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
@@ -51,7 +51,6 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
     public final static String FLUID_BUFFER_TAG = "FluidTanks";
     public final static String WORKING_TAG = "WorkingEnabled";
     private final static int CONFIG_SIZE = 16;
-    private boolean workingEnabled = true;
     protected ExportOnlyAEFluidList aeFluidHandler;
 
     public MetaTileEntityMEInputHatch(ResourceLocation metaTileEntityId) {
@@ -159,6 +158,8 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
 
+        builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_POWER, this::isWorkingEnabled, this::setWorkingEnabled));
+
         // Config slots
         builder.widget(new AEFluidConfigWidget(7, 25, this.getAEFluidHandler()));
 
@@ -175,15 +176,6 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
     @Override
     public boolean isWorkingEnabled() {
         return this.workingEnabled;
-    }
-
-    @Override
-    public void setWorkingEnabled(boolean workingEnabled) {
-        this.workingEnabled = workingEnabled;
-        World world = this.getWorld();
-        if (world != null && !world.isRemote) {
-            writeCustomData(GregtechDataCodes.WORKING_ENABLED, buf -> buf.writeBoolean(workingEnabled));
-        }
     }
 
     @Override
