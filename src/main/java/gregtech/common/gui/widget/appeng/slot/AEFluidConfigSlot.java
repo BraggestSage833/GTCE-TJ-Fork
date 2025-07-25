@@ -110,11 +110,9 @@ public class AEFluidConfigSlot extends AEConfigSlot<IAEFluidStack> {
                 hoverStringList.add(String.format("%,d L", fluid.getStackSize()));
             }
             List<String> formula = Collections.singletonList(FluidTooltipUtil.getFluidTooltip(fluid.getFluidStack()));
-            if (formula != null) {
-                for (String s : formula) {
-                    if (s.isEmpty()) continue;
-                    hoverStringList.add(s);
-                }
+            for (String s : formula) {
+                if (s == null || s.isEmpty()) continue;
+                hoverStringList.add(s);
             }
             drawHoveringText(ItemStack.EMPTY, hoverStringList, -1, mouseX, mouseY);
         }
