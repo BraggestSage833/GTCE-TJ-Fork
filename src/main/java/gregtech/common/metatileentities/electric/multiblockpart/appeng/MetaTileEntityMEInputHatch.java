@@ -158,16 +158,13 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
 
-        builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_POWER, this::isWorkingEnabled, this::setWorkingEnabled));
+        builder.widget(new ToggleButtonWidget(79, 79, 17, 17, GuiTextures.BUTTON_GT_LOGO, this::isWorkingEnabled, this::setWorkingEnabled));
 
         // Config slots
         builder.widget(new AEFluidConfigWidget(7, 25, this.getAEFluidHandler()));
 
         // Arrow image
         builder.image(7 + 18 * 4, 25 + 18, 18, 18, GuiTextures.ARROW_DOUBLE);
-
-        // GT Logo, cause there's some free real estate
-        builder.widget(new ImageWidget(7 + 18 * 4, 25 + 18 * 3, 17, 17, GuiTextures.GT_LOGO));
 
         builder.bindPlayerInventory(player.inventory, GuiTextures.SLOT, 7, 18 + 18 * 4 + 12);
         return builder;

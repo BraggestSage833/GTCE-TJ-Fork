@@ -168,8 +168,7 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
 
-        builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_POWER, this::isWorkingEnabled, this::setWorkingEnabled));
-
+        builder.widget(new ToggleButtonWidget(79, 79, 18, 18, GuiTextures.BUTTON_GT_LOGO, this::isWorkingEnabled, this::setWorkingEnabled));
         // Config slots
         builder.widget(new AEItemConfigWidget(7, 25, this.getAEItemHandler()));
 
