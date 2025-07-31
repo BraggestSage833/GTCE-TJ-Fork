@@ -158,7 +158,7 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
                         I18n.format("gregtech.gui.me_network.offline"),
                 0x404040);
 
-        builder.widget(new ToggleButtonWidget(79, 79, 17, 17, GuiTextures.BUTTON_GT_LOGO, this::isWorkingEnabled, this::setWorkingEnabled));
+        builder.widget(new ToggleButtonWidget(151, 5, 17, 17, GuiTextures.BUTTON_GT_LOGO, this::isWorkingEnabled, this::setWorkingEnabled));
 
         // Config slots
         builder.widget(new AEFluidConfigWidget(7, 25, this.getAEFluidHandler()));
