@@ -35,6 +35,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.BiomeDictionary;
@@ -77,6 +78,24 @@ public class GTUtility {
             }
         };
     }
+
+    public static final String[] TIER_COLOR = new String[] {
+    TextFormatting.RED.toString(), // ULV, 0
+    TextFormatting.GRAY.toString(), // LV, 1
+    TextFormatting.GOLD.toString(), // MV, 2
+    TextFormatting.YELLOW.toString(), // HV, 3
+    TextFormatting.DARK_GRAY.toString(), // EV, 4
+    TextFormatting.GREEN.toString(), // IV, 5
+    TextFormatting.LIGHT_PURPLE.toString(), // LuV, 6
+    TextFormatting.AQUA.toString(), // ZPM, 7
+    TextFormatting.DARK_GREEN.toString(), // UV, 8
+    TextFormatting.DARK_RED.toString(), // UHV, 9
+    TextFormatting.DARK_PURPLE.toString(), // UEV, 10
+    TextFormatting.DARK_BLUE.toString() + TextFormatting.BOLD, // UIV, 11
+    TextFormatting.RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UMV, 12
+    TextFormatting.DARK_RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UXV, 13
+    TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
+    };
 
     public static Stream<Object> flatten(Object[] array) {
         return Arrays.stream(array).flatMap(o -> o instanceof Object[] ? flatten((Object[]) o): Stream.of(o));

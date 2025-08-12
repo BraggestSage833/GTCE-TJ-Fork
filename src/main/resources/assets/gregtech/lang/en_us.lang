@@ -2929,8 +2929,8 @@ gregtech.machine.item_controller.tooltip.redstone=Requires Redstone Input To Wor
 gregtech.machine.item_controller.tooltip.consumption=While working, constantly consumes %,d EU/t
 
 # Universal tooltips
-gregtech.universal.tooltip.voltage_in=Voltage IN: §a%,d §7(§a%s§7)
-gregtech.universal.tooltip.voltage_out=Voltage OUT: §a%,d §7(§a%s§7)
+gregtech.universal.tooltip.voltage_in=Voltage IN: §a%,d §7(%s%s§7)
+gregtech.universal.tooltip.voltage_out=Voltage OUT: §a%,d §7(%s%s§7)
 gregtech.universal.tooltip.energy_storage_capacity=Internal Energy Capacity: §9%,d
 gregtech.universal.tooltip.amperage_in=Amperage IN: §e%,d
 gregtech.universal.tooltip.amperage_in_till=Amperage IN up to: §e%,d

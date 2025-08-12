@@ -2802,8 +2802,8 @@ gregtech.machine.item_controller.tooltip.redstone=Требует подачи р
 gregtech.machine.item_controller.tooltip.consumption=Пока работает, постоянно потребляет %d EU/тик
 
 # Универсальные подсказки
-gregtech.universal.tooltip.voltage_in=Потребляемое напряжение: §a%d §7(§a%s§7)
-gregtech.universal.tooltip.voltage_out=Выдаваемое напряжение: §a%d §7(§a%s§7)
+gregtech.universal.tooltip.voltage_in=Потребляемое напряжение: §a%d §7(%s%s§7)
+gregtech.universal.tooltip.voltage_out=Выдаваемое напряжение: §a%d §7(%s%s§7)
 gregtech.universal.tooltip.energy_storage_capacity=Внутренняя энергетическая емкость: §9%d
 gregtech.universal.tooltip.amperage_in=Сила потребляемого тока: §e%d
 gregtech.universal.tooltip.amperage_in_till=Потребляемый ток до: §e%d

@@ -2781,8 +2781,8 @@ gregtech.machine.item_controller.tooltip.redstone=需要输入红石信号才能
 gregtech.machine.item_controller.tooltip.consumption=工作时稳定消耗 %d EU/t
 
 # Universal tooltips
-gregtech.universal.tooltip.voltage_in=输入电压: §a%d §7(§a%s§7)
-gregtech.universal.tooltip.voltage_out=输出电压: §a%d §7(§a%s§7)
+gregtech.universal.tooltip.voltage_in=输入电压: §a%d §7(%s%s§7)
+gregtech.universal.tooltip.voltage_out=输出电压: §a%d §7(%s%s§7)
 gregtech.universal.tooltip.energy_storage_capacity=电能缓存: §9%d
 gregtech.universal.tooltip.amperage_in=输入电流: §e%d
 gregtech.universal.tooltip.amperage_in_till=最大输入电流: §e%d
