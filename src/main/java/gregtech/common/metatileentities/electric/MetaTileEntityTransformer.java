@@ -178,11 +178,11 @@ public class MetaTileEntityTransformer extends TieredMetaTileEntity {
         tooltip.add(I18n.format("gregtech.universal.tooltip.energy_storage_capacity", energyContainer.getEnergyCapacity()));
         tooltip.add(I18n.format("gregtech.machine.transformer.tooltip_transform_down"));
         tooltip.add(I18n.format("gregtech.universal.tooltip.voltage_in", higherVoltage, GTUtility.TIER_COLOR[getTier()], higherTierName));
-        tooltip.add(I18n.format("gregtech.universal.tooltip.voltage_out", lowerVoltage, GTUtility.TIER_COLOR[getTier()], lowerTierName));
+        tooltip.add(I18n.format("gregtech.universal.tooltip.voltage_out", lowerVoltage, GTUtility.TIER_COLOR[getTier()-1], lowerTierName));
         tooltip.add(I18n.format("gregtech.universal.tooltip.amperage_in", lowerAmperage));
         tooltip.add(I18n.format("gregtech.universal.tooltip.amperage_out", higherAmperage));
         tooltip.add(I18n.format("gregtech.machine.transformer.tooltip_transform_up"));
-        tooltip.add(I18n.format("gregtech.universal.tooltip.voltage_in", lowerVoltage, GTUtility.TIER_COLOR[getTier()], lowerTierName));
+        tooltip.add(I18n.format("gregtech.universal.tooltip.voltage_in", lowerVoltage, GTUtility.TIER_COLOR[getTier()-1], lowerTierName));
         tooltip.add(I18n.format("gregtech.universal.tooltip.voltage_out", higherVoltage, GTUtility.TIER_COLOR[getTier()], higherTierName));
         tooltip.add(I18n.format("gregtech.universal.tooltip.amperage_in", higherAmperage));
         tooltip.add(I18n.format("gregtech.universal.tooltip.amperage_out", lowerAmperage));

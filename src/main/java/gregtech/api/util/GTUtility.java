@@ -89,7 +89,7 @@ public class GTUtility {
     TextFormatting.LIGHT_PURPLE.toString(), // LuV, 6
     TextFormatting.AQUA.toString(), // ZPM, 7
     TextFormatting.DARK_GREEN.toString(), // UV, 8
-    TextFormatting.DARK_RED.toString(), // UHV, 9
+    TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
     TextFormatting.DARK_PURPLE.toString(), // UEV, 10
     TextFormatting.DARK_BLUE.toString() + TextFormatting.BOLD, // UIV, 11
     TextFormatting.RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UMV, 12
