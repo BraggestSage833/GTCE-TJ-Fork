@@ -38,7 +38,7 @@ public class BlockFireboxCasing extends VariantBlock<FireboxCasingType> {
 
     @Override
     public IBlockState getStateFromMeta(int meta) {
-        return super.getStateFromMeta(meta % 8).withProperty(ACTIVE, meta / 8 >= 1);
+        return super.getStateFromMeta(meta % 9).withProperty(ACTIVE, meta / 8 >= 1);
     }
 
     @Override

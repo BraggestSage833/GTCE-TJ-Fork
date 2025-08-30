@@ -4,6 +4,8 @@ import gregtech.api.unification.material.MarkerMaterials.Tier;
 import gregtech.api.unification.material.Materials;
 import gregtech.api.unification.material.type.Material;
 import net.minecraft.block.SoundType;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
@@ -21,6 +23,8 @@ import java.util.List;
 
 public class BlockWireCoil extends VariantBlock<BlockWireCoil.CoilType> {
 
+    public static final PropertyBool ACTIVE = PropertyBool.create("active");
+
     public BlockWireCoil() {
         super(net.minecraft.block.material.Material.IRON);
         setTranslationKey("wire_coil");
@@ -29,6 +33,32 @@ public class BlockWireCoil extends VariantBlock<BlockWireCoil.CoilType> {
         setSoundType(SoundType.METAL);
         setHarvestLevel("wrench", 2);
         setDefaultState(getState(CoilType.CUPRONICKEL));
+    }
+
+    @Override
+    public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+        return state.getValue(ACTIVE) ? 15 : 0;
+    }
+
+    @Override
+    protected BlockStateContainer createBlockState() {
+        super.createBlockState();
+        return new BlockStateContainer(this, VARIANT, ACTIVE);
+    }
+
+    @Override
+    public IBlockState getStateFromMeta(int meta) {
+        return super.getStateFromMeta(meta % 9).withProperty(ACTIVE, meta / 9 >= 1);
+    }
+
+    @Override
+    public int getMetaFromState(IBlockState state) {
+        return Math.min(15, super.getMetaFromState(state) + (state.getValue(ACTIVE) ? 9 : 0));
+    }
+
+    @Override
+    public int damageDropped(IBlockState state) {
+        return super.damageDropped(state) - (state.getValue(ACTIVE) ? 9 : 0);
     }
 
     @Override
