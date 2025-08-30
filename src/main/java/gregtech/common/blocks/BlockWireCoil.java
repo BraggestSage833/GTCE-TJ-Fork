@@ -47,6 +47,11 @@ public class BlockWireCoil extends VariantBlock<BlockWireCoil.CoilType> {
     }
 
     @Override
+    public IBlockState getState(CoilType variant) {
+        return super.getState(variant).withProperty(ACTIVE, false);
+    }
+
+    @Override
     public IBlockState getStateFromMeta(int meta) {
         return super.getStateFromMeta(meta % 9).withProperty(ACTIVE, meta / 9 >= 1);
     }
