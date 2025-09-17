@@ -21,6 +21,7 @@ import gregtech.api.metatileentity.multiblock.IMultiblockPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.multiblock.BlockPattern;
+import gregtech.api.multiblock.BlockWorldState;
 import gregtech.api.multiblock.FactoryBlockPattern;
 import gregtech.api.multiblock.PatternMatchContext;
 import gregtech.api.recipes.ModHandler;
@@ -54,13 +55,11 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
+import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Predicate;
 
 import static gregtech.api.gui.widgets.AdvancedTextWidget.withButton;
 import static gregtech.api.gui.widgets.AdvancedTextWidget.withHoverTextTranslate;
@@ -149,6 +148,7 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
     }
 
     public final BoilerType boilerType;
+    private final Set<BlockPos> activeStates = new HashSet<>();
 
     private int currentTemperature;
     private int fuelBurnTicksLeft;
@@ -386,17 +386,13 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
     }
 
     private void replaceFireboxAsActive(boolean isActive) {
-        BlockPos centerPos = getPos().offset(getFrontFacing().getOpposite()).down();
-        for (int x = -1; x <= 1; x++) {
-            for (int z = -1; z <= 1; z++) {
-                BlockPos blockPos = centerPos.add(x, 0, z);
-                IBlockState blockState = getWorld().getBlockState(blockPos);
-                if (blockState.getBlock() instanceof BlockFireboxCasing) {
-                    blockState = blockState.withProperty(BlockFireboxCasing.ACTIVE, isActive);
-                    getWorld().setBlockState(blockPos, blockState);
-                }
+        this.activeStates.forEach(pos -> {
+            IBlockState state = this.getWorld().getBlockState(pos);
+            if (state.getBlock() instanceof BlockFireboxCasing) {
+                state = state.withProperty(BlockFireboxCasing.ACTIVE, isActive);
+                this.getWorld().setBlockState(pos, state);
             }
-        }
+        });
     }
 
     @Override
@@ -434,11 +430,23 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
             .setAmountAtLeast('C', 20)
             .where('S', selfPredicate())
             .where('P', statePredicate(boilerType.pipeState))
-            .where('X', state -> statePredicate(GTUtility.getAllPropertyValues(boilerType.fireboxState, BlockFireboxCasing.ACTIVE))
+            .where('X', state -> fireboxStatePredicate(GTUtility.getAllPropertyValues(boilerType.fireboxState, BlockFireboxCasing.ACTIVE))
                 .or(abilityPartPredicate(MultiblockAbility.IMPORT_FLUIDS, MultiblockAbility.IMPORT_ITEMS)).test(state))
             .where('C', statePredicate(boilerType.casingState).or(abilityPartPredicate(
                 MultiblockAbility.EXPORT_FLUIDS)))
             .build();
+    }
+
+    public Predicate<BlockWorldState> fireboxStatePredicate(IBlockState... allowedStates) {
+        return (blockWorldState) -> {
+            IBlockState state = blockWorldState.getBlockState();
+            if (ArrayUtils.contains(allowedStates, state)) {
+                if (blockWorldState.getWorld() != null)
+                    this.activeStates.add(blockWorldState.getPos());
+                return true;
+            }
+            return false;
+        };
     }
 
     @Override
