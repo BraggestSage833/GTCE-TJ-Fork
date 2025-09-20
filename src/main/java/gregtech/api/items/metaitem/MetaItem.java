@@ -22,6 +22,7 @@ import gregtech.api.unification.OreDictUnifier;
 import gregtech.api.unification.material.type.Material;
 import gregtech.api.unification.ore.OrePrefix;
 import gregtech.api.unification.stack.ItemMaterialInfo;
+import gregtech.api.util.GTUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -514,6 +515,7 @@ public abstract class MetaItem<T extends MetaItem<?>.MetaValueItem> extends Item
             lines.add(I18n.format("metaitem.generic.electric_item.tooltip",
                 electricItem.getCharge(),
                 electricItem.getMaxCharge(),
+                GTUtility.TIER_COLOR[electricItem.getTier()],
                 GTValues.VN[electricItem.getTier()]));
         }
 
