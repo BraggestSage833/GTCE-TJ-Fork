@@ -6,10 +6,7 @@ import gregtech.api.gui.Widget;
 import gregtech.api.gui.igredient.IIngredientSlot;
 import gregtech.api.gui.resources.RenderUtil;
 import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.FluidTooltipUtil;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
-import gregtech.api.util.TextFormattingUtil;
+import gregtech.api.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -103,6 +100,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void drawInBackground(int mouseX, int mouseY, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
@@ -137,6 +135,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void drawInForeground(int mouseX, int mouseY) {
         if (!hideTooltip && !gui.isJEIHandled && isMouseOverElement(mouseX, mouseY)) {
             List<String> tooltips = new ArrayList<>();
@@ -195,6 +194,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void readUpdateInfo(int id, PacketBuffer buffer) {
         if (id == 0) {
             this.lastTankCapacity = buffer.readVarInt();
@@ -213,10 +213,12 @@ public class TankWidget extends Widget implements IIngredientSlot {
         }
 
         if (id == 4) {
-            ItemStack currentStack = gui.entityPlayer.inventory.getItemStack();
-            int newStackSize = buffer.readVarInt();
-            currentStack.setCount(newStackSize);
-            gui.entityPlayer.inventory.setItemStack(currentStack);
+            try {
+                ItemStack stack = buffer.readItemStack();
+                this.gui.entityPlayer.inventory.setItemStack(stack);
+            } catch (IOException e) {
+                GTLog.logger.info(e.getMessage());
+            }
         }
     }
 
@@ -225,79 +227,87 @@ public class TankWidget extends Widget implements IIngredientSlot {
         super.handleClientAction(id, buffer);
         if (id == 1) {
             boolean isShiftKeyDown = buffer.readBoolean();
-            int clickResult = tryClickContainer(isShiftKeyDown);
-            if (clickResult >= 0) {
-                writeUpdateInfo(4, buf -> buf.writeVarInt(clickResult));
+            int button = buffer.readInt();
+            ItemStack clickStack = this.tryClickContainer(isShiftKeyDown, button);
+            if (!clickStack.isEmpty()) {
+                this.writeUpdateInfo(4, buf -> buf.writeItemStack(clickStack));
             }
         }
     }
 
-    private int tryClickContainer(boolean isShiftKeyDown) {
-        EntityPlayer player = gui.entityPlayer;
+    private ItemStack tryClickContainer(boolean isShiftKeyDown, int button) {
+        EntityPlayer player = this.gui.entityPlayer;
         ItemStack currentStack = player.inventory.getItemStack();
         if (!currentStack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null))
-            return -1;
+            return ItemStack.EMPTY;
         int maxAttempts = isShiftKeyDown ? currentStack.getCount() : 1;
 
-        if (allowClickFilling && fluidTank.getFluidAmount() > 0) {
+        if (button == 1 && this.allowClickFilling && this.fluidTank.getFluidAmount() > 0) {
             boolean performedFill = false;
-            FluidStack initialFluid = fluidTank.getFluid();
+            FluidStack initialFluid = this.fluidTank.getFluid();
             for (int i = 0; i < maxAttempts; i++) {
                 FluidActionResult result = FluidUtil.tryFillContainer(currentStack,
-                    (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, false);
+                        (IFluidHandler) this.fluidTank, Integer.MAX_VALUE, null, false);
                 if (!result.isSuccess()) break;
                 ItemStack remainingStack = result.getResult();
-                if (!remainingStack.isEmpty() && !player.inventory.addItemStackToInventory(remainingStack))
+                if (!remainingStack.isEmpty() && currentStack.getCount() > 1 && !player.inventory.addItemStackToInventory(remainingStack))
                     break; //do not continue if we can't add resulting container into inventory
-                FluidUtil.tryFillContainer(currentStack, (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, true);
-                currentStack.shrink(1);
+                FluidActionResult fillResult = FluidUtil.tryFillContainer(currentStack, (IFluidHandler) this.fluidTank, Integer.MAX_VALUE, null, true);
+                ItemStack fillStack = fillResult.getResult();
+                if (currentStack.getCount() > 1) {
+                    currentStack.shrink(1);
+                } else currentStack = fillStack;
                 performedFill = true;
             }
             if (performedFill) {
                 SoundEvent soundevent = initialFluid.getFluid().getFillSound(initialFluid);
                 player.world.playSound(null, player.posX, player.posY + 0.5, player.posZ,
-                    soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                gui.entityPlayer.inventory.setItemStack(currentStack);
-                return currentStack.getCount();
+                        soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                player.inventory.setItemStack(currentStack);
+                return currentStack;
             }
         }
 
-        if (allowClickEmptying) {
+        if (button == 0 && this.allowClickEmptying) {
             boolean performedEmptying = false;
             for (int i = 0; i < maxAttempts; i++) {
                 FluidActionResult result = FluidUtil.tryEmptyContainer(currentStack,
-                    (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, false);
+                        (IFluidHandler) this.fluidTank, Integer.MAX_VALUE, null, false);
                 if (!result.isSuccess()) break;
                 ItemStack remainingStack = result.getResult();
-                if (!remainingStack.isEmpty() && !player.inventory.addItemStackToInventory(remainingStack))
+                if (!remainingStack.isEmpty() && currentStack.getCount() > 1 && !player.inventory.addItemStackToInventory(remainingStack))
                     break; //do not continue if we can't add resulting container into inventory
-                FluidUtil.tryEmptyContainer(currentStack, (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, true);
-                currentStack.shrink(1);
+                FluidActionResult emptyResult = FluidUtil.tryEmptyContainer(currentStack, (IFluidHandler) this.fluidTank, Integer.MAX_VALUE, null, true);
+                ItemStack emptyStack = emptyResult.getResult();
+                if (currentStack.getCount() > 1)
+                    currentStack.shrink(1);
+                else currentStack = emptyStack;
                 performedEmptying = true;
             }
-            FluidStack filledFluid = fluidTank.getFluid();
+            FluidStack filledFluid = this.fluidTank.getFluid();
             if (performedEmptying) {
                 SoundEvent soundevent = filledFluid.getFluid().getEmptySound(filledFluid);
                 player.world.playSound(null, player.posX, player.posY + 0.5, player.posZ,
-                    soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                gui.entityPlayer.inventory.setItemStack(currentStack);
-                return currentStack.getCount();
+                        soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                player.inventory.setItemStack(currentStack);
+                return currentStack;
             }
         }
-
-        return -1;
+        return ItemStack.EMPTY;
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY)) {
-            ItemStack currentStack = gui.entityPlayer.inventory.getItemStack();
-            if (button == 0 && (allowClickEmptying || allowClickFilling) &&
-                currentStack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null)) {
+            ItemStack stack = this.gui.entityPlayer.inventory.getItemStack();
+            if (stack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null)) {
                 boolean isShiftKeyDown = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
-                writeClientAction(1, writer -> writer.writeBoolean(isShiftKeyDown));
-                playButtonClickSound();
+                this.writeClientAction(1, buffer -> {
+                    buffer.writeBoolean(isShiftKeyDown);
+                    buffer.writeInt(button);
+                });
+                this.playButtonClickSound();
                 return true;
             }
         }
