@@ -250,7 +250,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
                         (IFluidHandler) this.fluidTank, Integer.MAX_VALUE, null, false);
                 if (!result.isSuccess()) break;
                 ItemStack remainingStack = result.getResult();
-                if (!remainingStack.isEmpty() && currentStack.getCount() > 1 && !player.inventory.addItemStackToInventory(remainingStack))
+                if (!remainingStack.isEmpty() && currentStack.getCount() > 1 && !GTUtility.insertInPlayerInventory(player.inventory, remainingStack, true, false, false).isEmpty())
                     break; //do not continue if we can't add resulting container into inventory
                 FluidActionResult fillResult = FluidUtil.tryFillContainer(currentStack, (IFluidHandler) this.fluidTank, Integer.MAX_VALUE, null, true);
                 ItemStack fillStack = fillResult.getResult();
@@ -275,7 +275,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
                         (IFluidHandler) this.fluidTank, Integer.MAX_VALUE, null, false);
                 if (!result.isSuccess()) break;
                 ItemStack remainingStack = result.getResult();
-                if (!remainingStack.isEmpty() && currentStack.getCount() > 1 && !player.inventory.addItemStackToInventory(remainingStack))
+                if (!remainingStack.isEmpty() && currentStack.getCount() > 1 && !GTUtility.insertInPlayerInventory(player.inventory, remainingStack, true, false, false).isEmpty())
                     break; //do not continue if we can't add resulting container into inventory
                 FluidActionResult emptyResult = FluidUtil.tryEmptyContainer(currentStack, (IFluidHandler) this.fluidTank, Integer.MAX_VALUE, null, true);
                 ItemStack emptyStack = emptyResult.getResult();
