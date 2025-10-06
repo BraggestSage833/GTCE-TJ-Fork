@@ -2323,9 +2323,9 @@ gregtech.machine.quantum_chestuv.name=Quantum Chest IV
 #Quantum tanks
 gregtech.machine.quantum_tank.tooltip=Compact place to store all your fluids.
 gregtech.machine.quantum_tank.tooltip.voiding_enabled=Excess Fluid Voiding §aEnabled
-gregtech.machine.quantum_tank.capacity=Fluid Capacity: %,d mb
+gregtech.machine.quantum_tank.capacity=Fluid Capacity: §3%,d mb
 gregtech.machine.quantum_tank.tooltip.name=Fluid Stored: §b%s
-gregtech.machine.quantum_tank.tooltip.count=Fluid Amount: §e%,d mb
+gregtech.machine.quantum_tank.tooltip.count=Fluid Amount: §3%,d mb
 
 gregtech.machine.quantum_tanklv.name=Super Tank I
 gregtech.machine.quantum_tank.mv.name=Super Tank II
