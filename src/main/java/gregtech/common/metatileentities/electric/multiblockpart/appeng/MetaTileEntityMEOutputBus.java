@@ -211,7 +211,7 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
 
         @Override
         public int getSlots() {
-            return 1;
+            return 16;
         }
 
         @NotNull
