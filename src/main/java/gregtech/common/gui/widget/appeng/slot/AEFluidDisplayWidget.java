@@ -65,7 +65,7 @@ public class AEFluidDisplayWidget extends Widget {
                 List<String> formula = Collections.singletonList(FluidTooltipUtil.getFluidTooltip(fluid.getFluidStack()));
                 if (formula != null) {
                     for (String s : formula) {
-                        if (s.isEmpty()) continue;
+                        if (s == null || s.isEmpty()) continue;
                         hoverStringList.add(s);
                     }
                 }
