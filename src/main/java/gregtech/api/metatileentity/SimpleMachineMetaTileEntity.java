@@ -6,11 +6,7 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.capability.IActiveOutputSide;
-import gregtech.api.capability.impl.EnergyContainerHandler;
-import gregtech.api.capability.impl.FluidHandlerProxy;
-import gregtech.api.capability.impl.FluidTankList;
-import gregtech.api.capability.impl.ItemHandlerProxy;
-import gregtech.api.capability.impl.RecipeLogicEnergy;
+import gregtech.api.capability.impl.*;
 import gregtech.api.cover.CoverBehavior;
 import gregtech.api.cover.CoverDefinition;
 import gregtech.api.cover.ICoverable;
@@ -24,6 +20,7 @@ import gregtech.api.gui.widgets.ToggleButtonWidget;
 import gregtech.api.recipes.RecipeMap;
 import gregtech.api.render.OrientedOverlayRenderer;
 import gregtech.api.render.Textures;
+import gregtech.common.gui.widget.GhostCircuitWidget;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -40,7 +37,12 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity implements IActiveOutputSide {
 
@@ -330,6 +332,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
                 .setBackgroundTexture(GuiTextures.SLOT, GuiTextures.CHARGER_OVERLAY))
             .widget(new ImageWidget(79, 42, 18, 18, GuiTextures.INDICATOR_NO_ENERGY)
                 .setPredicate(workable::isHasNotEnoughEnergy))
+            .widget(new GhostCircuitWidget(ghostCircuitInventory, 151, 62))
             .bindPlayerInventory(player.inventory);
 
         int leftButtonStartX = 7;

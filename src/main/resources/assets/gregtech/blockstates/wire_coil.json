@@ -1,55 +1,123 @@
 {
   "forge_marker": 1,
   "defaults": {
-    "model": "minecraft:cube_all"
+    "model": "minecraft:cube_all",
+    "textures": {
+      "all": "gregtech:blocks/rendering_error"
+    }
   },
   "variants": {
-    "variant": {
-      "cupronickel": {
+    "active=false,variant=cupronickel": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/coils/machine_coil_cupronickel"
         }
-      },
-      "kanthal": {
+      }
+    ],
+    "active=true,variant=cupronickel": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/coils/machine_coil_cupronickel_active"
+        }
+      }
+    ],
+    "active=false,variant=kanthal": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/coils/machine_coil_kanthal"
         }
-      },
-      "nichrome": {
+      }
+    ],
+    "active=true,variant=kanthal": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/coils/machine_coil_kanthal_active"
+        }
+      }
+    ],
+    "active=false,variant=nichrome": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/coils/machine_coil_nichrome"
         }
-      },
-      "tungstensteel": {
+      }
+    ],
+    "active=true,variant=nichrome": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/coils/machine_coil_nichrome_active"
+        }
+      }
+    ],
+    "active=false,variant=tungstensteel": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/coils/machine_coil_tungstensteel"
         }
-      },
-      "hss_g": {
+      }
+    ],
+    "active=true,variant=tungstensteel": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/coils/machine_coil_tungstensteel_active"
+        }
+      }
+    ],
+    "active=false,variant=hss_g": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/coils/machine_coil_hssg"
         }
-      },
-      "naquadah": {
+      }
+    ],
+    "active=true,variant=hss_g": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/coils/machine_coil_hssg_active"
+        }
+      }
+    ],
+    "active=false,variant=naquadah": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/coils/machine_coil_naquadah"
         }
-      },
-      "naquadah_alloy": {
+      }
+    ],
+    "active=true,variant=naquadah": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/coils/machine_coil_naquadah_active"
+        }
+      }
+    ],
+    "active=false,variant=naquadah_alloy": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/coils/machine_coil_naquadahalloy"
         }
-      },
-      "superconductor": {
+      }
+    ],
+    "active=true,variant=naquadah_alloy": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/coils/machine_coil_naquadahalloy_active"
+        }
+      }
+    ],
+    "active=false,variant=superconductor": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/coils/machine_coil_superconductor"
         }
-      },
-      "fusion_coil": {
+      }
+    ],
+    "active=false,variant=fusion_coil": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/fusion/machine_casing_fusion_coil"
         }
       }
-    }
+    ]
   }
 }
