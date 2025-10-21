@@ -16,9 +16,14 @@ import appeng.me.helpers.IGridProxyable;
 import appeng.me.helpers.MachineSource;
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import gregtech.api.capability.IControllable;
+import gregtech.api.items.metaitem.MetaItem;
+import gregtech.api.items.toolitem.ToolMetaItem;
 import gregtech.common.ConfigHolder;
+import gregtech.common.items.MetaItems;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityMultiblockPart;
+import gregtech.common.tools.ToolWireCutter;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
@@ -31,11 +36,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
-import static gregtech.api.capability.GregtechDataCodes.UPDATE_ONLINE_STATUS;
-import static gregtech.api.capability.GregtechDataCodes.WORKING_ENABLED;
+import static gregtech.api.capability.GregtechDataCodes.*;
 
 public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extends MetaTileEntityMultiblockPart implements IControllable {
 
@@ -115,6 +120,9 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
             }
         } else if (dataId == WORKING_ENABLED) {
             this.workingEnabled = buf.readBoolean();
+            this.scheduleRenderUpdate();
+        } else if (dataId == ALLOW_EXTRA_CONNECTIONS) {
+            this.allowExtraConnections = buf.readBoolean();
             this.scheduleRenderUpdate();
         }
     }
@@ -230,18 +238,26 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
         }
     }
 
-    public boolean onWireCutterClick(EntityPlayer playerIn, EnumHand hand, EnumFacing facing,
-                                     CuboidRayTraceResult hitResult) {
-        this.allowExtraConnections = !this.allowExtraConnections;
-        updateConnectableSides();
-
-        if (!getWorld().isRemote) {
-            playerIn.sendStatusMessage(new TextComponentTranslation(this.allowExtraConnections ?
-                            "gregtech.machine.me.extra_connections.enabled" : "gregtech.machine.me.extra_connections.disabled"),
-                    true);
+    @Override
+    public boolean onRightClick(EntityPlayer playerIn, EnumHand hand, EnumFacing facing, CuboidRayTraceResult hitResult) {
+        ItemStack stack = playerIn.getHeldItem(hand);
+        Item item = stack.getItem();
+        if (item instanceof ToolMetaItem<?>) {
+            ToolMetaItem<?>.MetaToolValueItem toolValueItem = ((ToolMetaItem<?>)item).getItem(stack);
+            if (toolValueItem.getToolStats() instanceof ToolWireCutter) {
+                if (!playerIn.isCreative())
+                    ((ToolMetaItem<?>) item).damageItem(stack, 1, false);
+                this.allowExtraConnections = !this.allowExtraConnections;
+                this.updateConnectableSides();
+                if (!getWorld().isRemote) {
+                    playerIn.sendStatusMessage(new TextComponentTranslation(this.allowExtraConnections ? "gregtech.machine.me.extra_connections.enabled" : "gregtech.machine.me.extra_connections.disabled"), true);
+                    this.writeCustomData(ALLOW_EXTRA_CONNECTIONS, buf -> buf.writeBoolean(this.allowExtraConnections));
+                    this.markDirty();
+                }
+                return true;
+            }
         }
-
-        return true;
+        return super.onRightClick(playerIn, hand, facing, hitResult);
     }
 
     @Override

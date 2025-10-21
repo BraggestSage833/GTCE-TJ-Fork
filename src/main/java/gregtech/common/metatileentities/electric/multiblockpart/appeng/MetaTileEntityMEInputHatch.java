@@ -231,13 +231,13 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
         super.renderMetaTileEntity(renderState, translation, pipeline);
         if (this.shouldRenderOverlay()) {
-            Textures.ME_INPUT_HATCH_OVERLAY.render(renderState, translation, pipeline, this.frontFacing, this.isOnline);
+            for (EnumFacing facing : this.getConnectableSides())
+                Textures.ME_INPUT_HATCH_OVERLAY.render(renderState, translation, pipeline, facing, this.isOnline);
         }
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, @NotNull List<String> tooltip,
-                               boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable World player, @NotNull List<String> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(I18n.format("gregtech.machine.fluid_hatch.import.tooltip"));
         tooltip.add(I18n.format("gregtech.machine.me.fluid_import.tooltip"));

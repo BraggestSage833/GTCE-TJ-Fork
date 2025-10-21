@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 import static gregtech.common.items.MetaItems.TOOL_DATA_STICK;
@@ -251,13 +252,13 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
         super.renderMetaTileEntity(renderState, translation, pipeline);
         if (this.shouldRenderOverlay()) {
-            Textures.ME_INPUT_BUS_OVERLAY.render(renderState, translation, pipeline, this.frontFacing, this.isOnline);
+            for (EnumFacing facing : this.getConnectableSides())
+                Textures.ME_INPUT_BUS_OVERLAY.render(renderState, translation, pipeline, facing, this.isOnline);
         }
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, @NotNull List<String> tooltip,
-                               boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable World player, @NotNull List<String> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(I18n.format("gregtech.machine.item_bus.import.tooltip"));
         tooltip.add(I18n.format("gregtech.machine.me.item_import.tooltip"));
