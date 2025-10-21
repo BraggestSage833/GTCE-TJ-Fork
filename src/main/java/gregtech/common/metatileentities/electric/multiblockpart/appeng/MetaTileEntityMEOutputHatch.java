@@ -120,15 +120,6 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
     }
 
     @Override
-    public void receiveCustomData(int dataId, PacketBuffer buf) {
-        super.receiveCustomData(dataId, buf);
-        if (dataId == GregtechDataCodes.WORKING_ENABLED) {
-            this.workingEnabled = buf.readBoolean();
-            this.scheduleRenderUpdate();
-        }
-    }
-
-    @Override
     public <T> T getCapability(Capability<T> capability, EnumFacing side) {
         if (capability == GregtechTileCapabilities.CAPABILITY_CONTROLLABLE) {
             return GregtechTileCapabilities.CAPABILITY_CONTROLLABLE.cast(this);
