@@ -81,10 +81,12 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private float rotationYaw;
     private float rotationPitch;
     private float zoom;
+    private boolean isCameraFree;
 
     private GuiButton buttonPreviousPattern;
     private GuiButton buttonNextPattern;
     private GuiButton nextLayerButton;
+    private GuiButton cameraModeButton;
 
     private IDrawable slot;
     private IDrawable infoIcon;
@@ -124,9 +126,11 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.nextLayerButton = new GuiButton(0, border.getWidth() - (ICON_SIZE + RIGHT_PADDING), 70, ICON_SIZE, ICON_SIZE, "");
         this.buttonPreviousPattern = new GuiButton(0, border.getWidth() - ((2 * ICON_SIZE) + RIGHT_PADDING + 1), 90, ICON_SIZE, ICON_SIZE, "<");
         this.buttonNextPattern = new GuiButton(0, border.getWidth() - (ICON_SIZE + RIGHT_PADDING), 90, ICON_SIZE, ICON_SIZE, ">");
+        this.cameraModeButton = new GuiButton(0, border.getWidth() - ((2 * ICON_SIZE) + RIGHT_PADDING + 1), 70, ICON_SIZE, ICON_SIZE, this.isCameraFree ? "↺" : "↔");
         this.buttons.put(nextLayerButton, this::toggleNextLayer);
         this.buttons.put(buttonPreviousPattern, () -> switchRenderPage(-1));
         this.buttons.put(buttonNextPattern, () -> switchRenderPage(1));
+        this.buttons.put(cameraModeButton, this::setCameraFree);
 
         boolean isPagesDisabled = patterns.length == 1;
         this.buttonPreviousPattern.visible = !isPagesDisabled;
@@ -147,6 +151,11 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     public WorldSceneRenderer getCurrentRenderer() {
         return patterns[currentRendererPage].sceneRenderer;
+    }
+
+    private void setCameraFree() {
+        this.isCameraFree = !this.isCameraFree;
+        this.cameraModeButton.displayString = this.isCameraFree ? "↺" : "↔";
     }
 
     public int getLayerIndex() {
@@ -267,11 +276,14 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
         if (insideView) {
             if (leftClickHeld) {
-                if (isHoldingShift) {
-                    int mouseDeltaY = mouseY - lastMouseY;
+                int mouseDeltaY = mouseY - this.lastMouseY;
+                int mouseDeltaX = mouseX - this.lastMouseX;
+                if (this.isCameraFree) {
+                    this.rotationPitch += mouseDeltaY * 2.0f;
+                    this.rotationYaw += mouseDeltaX * 2.0f;
+                } else if (isHoldingShift) {
                     this.rotationPitch += mouseDeltaY * 2.0f;
                 } else {
-                    int mouseDeltaX = mouseX - lastMouseX;
                     this.rotationYaw += mouseDeltaX * 2.0f;
                 }
             } else if (rightClickHeld) {
