@@ -4,6 +4,7 @@ import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Vector3;
+import gregtech.api.GTValues;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -72,7 +73,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private final List<ItemStack> allItemStackInputs = new ArrayList<>();
     private final ItemStack controllerStack;
 
-    private int layerIndex = -1;
+    private int layerIndex;
     private int currentRendererPage = 0;
     private int lastMouseX;
     private int lastMouseY;
@@ -82,6 +83,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private float rotationPitch;
     private float zoom;
     private boolean isCameraFree;
+    private boolean hasVoltagePages;
 
     private GuiButton buttonPreviousPattern;
     private GuiButton buttonNextPattern;
@@ -98,10 +100,13 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.controllerStack = infoPage.getController().getStackForm();
         HashSet<ItemStackKey> drops = new HashSet<>();
         drops.add(new ItemStackKey(controllerStack));
-        this.patterns = infoPage.getMatchingShapes().stream()
+        List<MultiblockShapeInfo> shapeInfos = infoPage.getMatchingShapes();
+        this.patterns = shapeInfos.stream()
                 .map(it -> initializePattern(it, drops))
                 .toArray(MBPattern[]::new);
         drops.forEach(it -> allItemStackInputs.add(it.getItemStack()));
+        if (shapeInfos.size() == 15)
+            this.hasVoltagePages = true;
     }
 
     @Override
@@ -145,7 +150,8 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.rotationPitch = 0.0f;
         this.currentRendererPage = 0;
 
-        setNextLayer(-1);
+        this.layerIndex = -1;
+        this.nextLayerButton.displayString = "L:" + "A";
         updateParts();
     }
 
@@ -165,10 +171,13 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private void setNextLayer(int newLayer) {
         WorldSceneRenderer renderer = getCurrentRenderer();
         int height = (int) renderer.getSize().getY() - 1;
+        newLayer = this.layerIndex + newLayer;
         if (newLayer > height) {
             //if current layer index is more than max height, reset it
             //to display all layers
             newLayer = -1;
+        } else if (newLayer < -1) {
+            newLayer = height;
         }
         this.layerIndex = Math.max(-1, newLayer);
         this.nextLayerButton.displayString = "L:" + (layerIndex == -1 ? "A" : Integer.toString(layerIndex + 1));
@@ -249,6 +258,11 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
         this.infoIcon.draw(minecraft, recipeWidth - (ICON_SIZE + RIGHT_PADDING), 49);
+        if (this.hasVoltagePages) {
+            GuiTextures.DISPLAY.draw(recipeWidth - (ICON_SIZE + ICON_SIZE + RIGHT_PADDING), 110, 40, 20);
+            String text = (this.currentRendererPage == 9 ? TextFormatting.DARK_RED.toString() : GTUtility.TIER_COLOR[this.currentRendererPage]) + GTValues.VN2[this.currentRendererPage];
+            Minecraft.getMinecraft().fontRenderer.drawString(text, recipeWidth - 30 - (GTValues.VN2[this.currentRendererPage].length() > 2 ? 4 : 0), 116, 0xFFFFFF);
+        }
 
         for (int i = 0; i < MAX_PARTS; ++i) {
             this.slot.draw(minecraft, SLOT_SIZE * i - (SLOTS_PER_ROW * SLOT_SIZE) * (i / SLOTS_PER_ROW), sceneHeight + SLOT_SIZE * (i / SLOTS_PER_ROW));
