@@ -66,11 +66,11 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     }
 
     private final MultiblockInfoPage infoPage;
-    private MBPattern[] patterns;
-    private Map<GuiButton, Runnable> buttons = new HashMap<>();
+    private final MBPattern[] patterns;
+    private final Map<GuiButton, Runnable> buttons = new HashMap<>();
     private RecipeLayout recipeLayout;
-    private List<ItemStack> allItemStackInputs = new ArrayList<>();
-    private ItemStack controllerStack;
+    private final List<ItemStack> allItemStackInputs = new ArrayList<>();
+    private final ItemStack controllerStack;
 
     private int layerIndex = -1;
     private int currentRendererPage = 0;
@@ -127,7 +127,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.buttonPreviousPattern = new GuiButton(0, border.getWidth() - ((2 * ICON_SIZE) + RIGHT_PADDING + 1), 90, ICON_SIZE, ICON_SIZE, "<");
         this.buttonNextPattern = new GuiButton(0, border.getWidth() - (ICON_SIZE + RIGHT_PADDING), 90, ICON_SIZE, ICON_SIZE, ">");
         this.cameraModeButton = new GuiButton(0, border.getWidth() - ((2 * ICON_SIZE) + RIGHT_PADDING + 1), 70, ICON_SIZE, ICON_SIZE, this.isCameraFree ? "↺" : "↔");
-        this.buttons.put(nextLayerButton, this::toggleNextLayer);
+        this.buttons.put(nextLayerButton, () -> setNextLayer(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(buttonPreviousPattern, () -> switchRenderPage(-1));
         this.buttons.put(buttonNextPattern, () -> switchRenderPage(1));
         this.buttons.put(cameraModeButton, this::setCameraFree);
@@ -162,19 +162,15 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         return layerIndex;
     }
 
-    private void toggleNextLayer() {
+    private void setNextLayer(int newLayer) {
         WorldSceneRenderer renderer = getCurrentRenderer();
         int height = (int) renderer.getSize().getY() - 1;
-        if (++this.layerIndex > height) {
+        if (newLayer > height) {
             //if current layer index is more than max height, reset it
             //to display all layers
-            this.layerIndex = -1;
+            newLayer = -1;
         }
-        setNextLayer(layerIndex);
-    }
-
-    private void setNextLayer(int newLayer) {
-        this.layerIndex = newLayer;
+        this.layerIndex = Math.max(-1, newLayer);
         this.nextLayerButton.displayString = "L:" + (layerIndex == -1 ? "A" : Integer.toString(layerIndex + 1));
     }
 
