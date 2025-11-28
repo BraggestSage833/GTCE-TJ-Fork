@@ -13,9 +13,11 @@ import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.render.SimpleOverlayRenderer;
 import gregtech.api.render.Textures;
+import gregtech.common.gui.widget.GhostCircuitWidget;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandlerModifiable;
@@ -27,6 +29,7 @@ import java.util.List;
 public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implements IMultiblockAbilityPart<IItemHandlerModifiable> {
 
     private static final int[] INVENTORY_SIZES = {1, 4, 9, 16, 25, 36, 49};
+    private final ItemStackHandler ghostCircuitInventory = new ItemStackHandler(1);
     private final boolean isExportHatch;
 
     public MetaTileEntityItemBus(ResourceLocation metaTileEntityId, int tier, boolean isExportHatch) {
@@ -85,6 +88,8 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
 
     @Override
     public void registerAbilities(List<IItemHandlerModifiable> abilityList) {
+        if (!this.isExportHatch)
+            abilityList.add(this.ghostCircuitInventory);
         abilityList.add(isExportHatch ? this.exportItems : this.importItems);
     }
 
@@ -108,6 +113,8 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
                         .setBackgroundTexture(GuiTextures.SLOT));
             }
         }
+        if (!this.isExportHatch)
+            builder.widget(new GhostCircuitWidget(this.ghostCircuitInventory, 151 + xOffset, 12 + 18 * rowSize));
         return builder.bindPlayerInventory(player.inventory, GuiTextures.SLOT, 7 + xOffset, 18 + 18 * rowSize + 12);
     }
 
@@ -116,5 +123,19 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
         tooltip.add(I18n.format("gregtech.universal.tooltip.item_storage_capacity", getInventorySize()));
         tooltip.add(I18n.format("gregtech.universal.enabled"));
 
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound data) {
+        super.writeToNBT(data);
+        data.setTag("GhostCircuit", this.ghostCircuitInventory.serializeNBT());
+        return data;
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound data) {
+        super.readFromNBT(data);
+        if (data.hasKey("GhostCircuit"))
+            this.ghostCircuitInventory.deserializeNBT(data.getCompoundTag("GhostCircuit"));
     }
 }

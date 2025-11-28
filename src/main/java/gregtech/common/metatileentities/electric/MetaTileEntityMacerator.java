@@ -1,6 +1,7 @@
 package gregtech.common.metatileentities.electric;
 
 import gregtech.api.GTValues;
+import gregtech.api.capability.impl.ItemHandlerList;
 import gregtech.api.capability.impl.RecipeLogicEnergy;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -13,6 +14,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
 
+import java.util.Arrays;
+
 public class MetaTileEntityMacerator extends SimpleMachineMetaTileEntity {
 
     private int outputAmount;
@@ -21,6 +24,7 @@ public class MetaTileEntityMacerator extends SimpleMachineMetaTileEntity {
         super(metaTileEntityId, recipeMap, renderer, tier);
         this.outputAmount = outputAmount;
         initializeInventory();
+        this.combinedInputInventory = new ItemHandlerList(Arrays.asList(this.ghostCircuitInventory, this.importItems));
     }
 
     @Override
@@ -33,6 +37,11 @@ public class MetaTileEntityMacerator extends SimpleMachineMetaTileEntity {
                     return tier - GTValues.MV;
                 }
                 return 0;
+            }
+
+            @Override
+            protected IItemHandlerModifiable getInputInventory() {
+                return combinedInputInventory;
             }
         };
         result.enableOverclockVoltage();
