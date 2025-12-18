@@ -25,6 +25,7 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.play.client.CPacketPlayerDigging;
@@ -51,7 +52,10 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -770,5 +774,53 @@ public class GTUtility {
                 return fluidHandler.drain(Integer.MAX_VALUE, false);
         }
         return null;
+    }
+
+    /**
+     * Tries to extract from container inventory or item handler with ingredients
+     * @param itemHandler container inventory
+     * @param ingredient the ItemStack to extract
+     * @param amount the amount of items to extract and will be added to ItemStack count
+     * @param simulate test to see if the item can be extracted without actually extracting the item for real.
+     * @return The amount extracted
+     */
+    public static int extractFromItemHandlerByIngredient(IItemHandler itemHandler, @Nonnull Ingredient ingredient, int amount, boolean simulate) {
+        if (itemHandler == null)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < itemHandler.getSlots(); i++) {
+            ItemStack slotStack = itemHandler.getStackInSlot(i);
+            if (!slotStack.isEmpty() && ingredient.apply(slotStack)) {
+                int extracted = Math.min(slotStack.getCount(), amount);
+                itemHandler.extractItem(i, extracted, simulate);
+                count += extracted;
+                amount -= extracted;
+                if (amount < 1)
+                    break;
+            }
+        }
+        return count;
+    }
+
+    public static IItemHandlerModifiable createItemHandlerFromList(List<ItemStack> itemStacks) {
+        return new ItemStackHandler(itemStacks.size()) {
+            @Override
+            public @NotNull ItemStack getStackInSlot(int slot) {
+                return itemStacks.get(slot);
+            }
+
+            @Override
+            public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+                itemStacks.set(slot, stack);
+            }
+
+            @Override
+            public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+                ItemStack stack = simulate ? itemStacks.get(slot).copy() : itemStacks.get(slot);
+                stack.shrink(amount);
+                return stack;
+            }
+        };
     }
 }

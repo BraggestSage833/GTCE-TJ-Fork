@@ -5,7 +5,10 @@ import gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.recipes.recipeproperties.RecipeProperty;
 import gregtech.api.recipes.recipeproperties.RecipePropertyStorage;
 import gregtech.api.util.GTUtility;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.NonNullList;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
@@ -92,15 +95,15 @@ public class Recipe {
         recipePropertyStorage.storeOldFormat(recipeProperties);
     }
 
-    public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, MatchingMode matchingMode) {
-        return matches(consumeIfSuccessful, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), matchingMode);
-    }
+//    public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, MatchingMode matchingMode) {
+//        return matches(consumeIfSuccessful, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), matchingMode);
+//    }
 
-    public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
-        return matches(consumeIfSuccessful, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), MatchingMode.DEFAULT);
-    }
+//    public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+//        return matches(consumeIfSuccessful, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), MatchingMode.DEFAULT);
+//    }
 
-    public boolean matches(boolean consumeIfSuccessful, List<ItemStack> inputs, List<FluidStack> fluidInputs) {
+    public boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
         return matches(consumeIfSuccessful, inputs, fluidInputs, MatchingMode.DEFAULT);
     }
 
@@ -113,9 +116,9 @@ public class Recipe {
      * @param matchingMode        How this method should check if inputs matches according to {@link MatchingMode} description.
      * @return true if the recipe matches the given inputs false otherwise.
      */
-    public boolean matches(boolean consumeIfSuccessful, List<ItemStack> inputs, List<FluidStack> fluidInputs, MatchingMode matchingMode) {
-        Pair<Boolean, Integer[]> fluids = null;
-        Pair<Boolean, Integer[]> items = null;
+    public boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, MatchingMode matchingMode) {
+        Pair<Boolean, Object2ObjectMap<FluidStack, Counter>> fluids = null;
+        Pair<Boolean, Object2ObjectMap<String, Pair<Ingredient, Counter>>> items = null;
 
         if (matchingMode == MatchingMode.IGNORE_FLUIDS) {
             if (getInputs().isEmpty()) {
@@ -140,88 +143,43 @@ public class Recipe {
         }
 
         if (consumeIfSuccessful && matchingMode == MatchingMode.DEFAULT) {
-            Integer[] fluidAmountInTank = fluids.getValue();
-            Integer[] itemAmountInSlot = items.getValue();
-            for (int i = 0; i < fluidAmountInTank.length; i++) {
-                FluidStack fluidStack = fluidInputs.get(i);
-                int fluidAmount = fluidAmountInTank[i];
-                if (fluidStack == null || fluidStack.amount == fluidAmount)
-                    continue;
-                fluidStack.amount = fluidAmount;
-                if (fluidStack.amount == 0)
-                    fluidInputs.set(i, null);
+            for (Object2ObjectMap.Entry<FluidStack, Counter> entry : fluids.getRight().object2ObjectEntrySet()) {
+              fluidInputs.drain(entry.getKey(), true);
             }
-            for (int i = 0; i < itemAmountInSlot.length; i++) {
-                ItemStack itemInSlot = inputs.get(i);
-                int itemAmount = itemAmountInSlot[i];
-                if (itemInSlot.isEmpty() || itemInSlot.getCount() == itemAmount)
-                    continue;
-                itemInSlot.setCount(itemAmountInSlot[i]);
+            for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : items.getRight().object2ObjectEntrySet()) {
+                GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), false);
             }
         }
-
         return true;
     }
 
-    private Pair<Boolean, Integer[]> matchesItems(List<ItemStack> inputs) {
-        Integer[] itemAmountInSlot = new Integer[inputs.size()];
-
-        for (int i = 0; i < itemAmountInSlot.length; i++) {
-            ItemStack itemInSlot = inputs.get(i);
-            itemAmountInSlot[i] = itemInSlot.isEmpty() ? 0 : itemInSlot.getCount();
-        }
+    private Pair<Boolean, Object2ObjectMap<String, Pair<Ingredient, Counter>>> matchesItems(IItemHandlerModifiable inputs) {
+        Object2ObjectMap<String, Pair<Ingredient, Counter>> ingredientMap = new Object2ObjectOpenHashMap<>();
 
         for (CountableIngredient ingredient : this.inputs) {
-            int ingredientAmount = ingredient.getCount();
-            boolean isNotConsumed = false;
-            if (ingredientAmount == 0) {
-                ingredientAmount = 1;
-                isNotConsumed = true;
-            }
-            for (int i = 0; i < inputs.size(); i++) {
-                ItemStack inputStack = inputs.get(i);
-                if (inputStack.isEmpty() || !ingredient.getIngredient().apply(inputStack))
-                    continue;
-                int itemAmountToConsume = Math.min(itemAmountInSlot[i], ingredientAmount);
-                ingredientAmount -= itemAmountToConsume;
-                if (!isNotConsumed) itemAmountInSlot[i] -= itemAmountToConsume;
-                if (ingredientAmount == 0) break;
-            }
-            if (ingredientAmount > 0)
-                return Pair.of(false, itemAmountInSlot);
+            Counter count = ingredientMap.computeIfAbsent(Arrays.toString(ingredient.getIngredient().getMatchingStacks()), k -> Pair.of(ingredient.getIngredient(), new Counter(0))).getValue();
+            count.increment(ingredient.getCount());
         }
-
-        return Pair.of(true, itemAmountInSlot);
+        for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : ingredientMap.object2ObjectEntrySet()) {
+            if (GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), true) != entry.getValue().getValue().getValue())
+                return Pair.of(false, null);
+        }
+        return Pair.of(true, ingredientMap);
     }
 
-    private Pair<Boolean, Integer[]> matchesFluid(List<FluidStack> fluidInputs) {
-        Integer[] fluidAmountInTank = new Integer[fluidInputs.size()];
-
-        for (int i = 0; i < fluidAmountInTank.length; i++) {
-            FluidStack fluidInTank = fluidInputs.get(i);
-            fluidAmountInTank[i] = fluidInTank == null ? 0 : fluidInTank.amount;
-        }
+    private Pair<Boolean, Object2ObjectMap<FluidStack, Counter>> matchesFluid(IMultipleTankHandler fluidInputs) {
+        Object2ObjectMap<FluidStack, Counter> fluidStackMap = new Object2ObjectOpenHashMap<>();
 
         for (FluidStack fluid : this.fluidInputs) {
-            int fluidAmount = fluid.amount;
-            boolean isNotConsumed = false;
-            if (fluidAmount == 0) {
-                fluidAmount = 1;
-                isNotConsumed = true;
-            }
-            for (int i = 0; i < fluidInputs.size(); i++) {
-                FluidStack tankFluid = fluidInputs.get(i);
-                if (tankFluid == null || !tankFluid.isFluidEqual(fluid))
-                    continue;
-                int fluidAmountToConsume = Math.min(fluidAmountInTank[i], fluidAmount);
-                fluidAmount -= fluidAmountToConsume;
-                if (!isNotConsumed) fluidAmountInTank[i] -= fluidAmountToConsume;
-                if (fluidAmount == 0) break;
-            }
-            if (fluidAmount > 0)
-                return Pair.of(false, fluidAmountInTank);
+            Counter count = fluidStackMap.computeIfAbsent(fluid, k -> new Counter(0));
+            count.increment(fluid.amount);
         }
-        return Pair.of(true, fluidAmountInTank);
+        for (Object2ObjectMap.Entry<FluidStack, Counter> entry : fluidStackMap.object2ObjectEntrySet()) {
+            FluidStack drained = fluidInputs.drain(entry.getKey(), false);
+            if (drained == null || drained.amount != entry.getValue().getValue())
+                return Pair.of(false, null);
+        }
+        return Pair.of(true, fluidStackMap);
     }
 
     ///////////////////
@@ -380,6 +338,23 @@ public class Recipe {
 
         public int getBoostPerTier() {
             return boostPerTier;
+        }
+    }
+
+    public static class Counter {
+
+        private int value;
+
+        public Counter(int initialValue) {
+            this.value = initialValue;
+        }
+
+        public void increment(int amount) {
+            this.value += amount;
+        }
+
+        public int getValue() {
+            return this.value;
         }
     }
 }

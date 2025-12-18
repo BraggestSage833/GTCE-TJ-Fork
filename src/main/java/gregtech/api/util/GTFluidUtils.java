@@ -1,10 +1,15 @@
 package gregtech.api.util;
 
+import gregtech.api.capability.IMultipleTankHandler;
+import gregtech.api.capability.impl.FluidTankList;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidTank;
+import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -71,5 +76,13 @@ public class GTFluidUtils {
             if (!filledAll) return false;
         }
         return filledAll;
+    }
+
+    public static IMultipleTankHandler createTankHandlerFromList(List<FluidStack> fluidStacks) {
+        List<IFluidTank> tanks = new ArrayList<>();
+        for (FluidStack fluidStack : fluidStacks) {
+            tanks.add(new FluidTank(fluidStack, Integer.MAX_VALUE));
+        }
+        return new FluidTankList(true, tanks);
     }
 }
