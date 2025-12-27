@@ -261,6 +261,13 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
     }
 
     @Override
+    public void onAttached() {
+        super.onAttached();
+        this.updateConnectableSides();
+        this.markDirty();
+    }
+
+    @Override
     public NBTTagCompound writeToNBT(NBTTagCompound data) {
         super.writeToNBT(data);
         data.setBoolean("AllowExtraConnections", this.allowExtraConnections);

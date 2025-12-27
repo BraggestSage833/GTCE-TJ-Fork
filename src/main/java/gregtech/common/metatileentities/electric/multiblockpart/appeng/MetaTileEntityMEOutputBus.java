@@ -187,6 +187,8 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
     @Override
     public void addToMultiBlock(MultiblockControllerBase controllerBase) {
         super.addToMultiBlock(controllerBase);
+        this.updateConnectableSides();
+        this.markDirty();
         if (controllerBase instanceof MultiblockWithDisplayBase) {
             ((MultiblockWithDisplayBase) controllerBase).enableItemInfSink();
         }
