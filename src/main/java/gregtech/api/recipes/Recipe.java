@@ -49,6 +49,9 @@ public class Recipe {
     private final List<FluidStack> fluidInputs;
     private final List<FluidStack> fluidOutputs;
 
+    private final Object2ObjectMap<String, Pair<Ingredient, Counter>> itemIngredientsMerged = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<FluidStack, Counter> fluidInputsMerged = new Object2ObjectOpenHashMap<>();
+
     private final int duration;
 
     /**
@@ -79,6 +82,15 @@ public class Recipe {
         this.hidden = hidden;
         //sort input elements in descending order (i.e not consumables inputs are last)
         this.inputs.sort(Comparator.comparing(CountableIngredient::getCount).reversed());
+
+        for (CountableIngredient ingredient : this.inputs) {
+            Counter count = this.itemIngredientsMerged.computeIfAbsent(Arrays.toString(ingredient.getIngredient().getMatchingStacks()), k -> Pair.of(ingredient.getIngredient(), new Counter(0))).getValue();
+            count.increment(ingredient.getCount());
+        }
+        for (FluidStack fluid : this.fluidInputs) {
+            Counter count = this.fluidInputsMerged.computeIfAbsent(fluid, k -> new Counter(0));
+            count.increment(fluid.amount);
+        }
     }
 
     /**
@@ -117,16 +129,12 @@ public class Recipe {
      * @return true if the recipe matches the given inputs false otherwise.
      */
     public boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, MatchingMode matchingMode) {
-        Pair<Boolean, Object2ObjectMap<FluidStack, Counter>> fluids = null;
-        Pair<Boolean, Object2ObjectMap<String, Pair<Ingredient, Counter>>> items = null;
-
         if (matchingMode == MatchingMode.IGNORE_FLUIDS) {
             if (getInputs().isEmpty()) {
                 return false;
             }
         } else {
-            fluids = matchesFluid(fluidInputs);
-            if (!fluids.getKey()) {
+            if (!matchesFluid(fluidInputs)) {
                 return false;
             }
         }
@@ -136,50 +144,37 @@ public class Recipe {
                 return false;
             }
         } else {
-            items = matchesItems(inputs);
-            if (!items.getKey()) {
+            if (!matchesItems(inputs)) {
                 return false;
             }
         }
 
         if (consumeIfSuccessful && matchingMode == MatchingMode.DEFAULT) {
-            for (Object2ObjectMap.Entry<FluidStack, Counter> entry : fluids.getRight().object2ObjectEntrySet()) {
+            for (Object2ObjectMap.Entry<FluidStack, Counter> entry : this.fluidInputsMerged.object2ObjectEntrySet()) {
               fluidInputs.drain(entry.getKey(), true);
             }
-            for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : items.getRight().object2ObjectEntrySet()) {
+            for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : this.itemIngredientsMerged.object2ObjectEntrySet()) {
                 GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), false);
             }
         }
         return true;
     }
 
-    private Pair<Boolean, Object2ObjectMap<String, Pair<Ingredient, Counter>>> matchesItems(IItemHandlerModifiable inputs) {
-        Object2ObjectMap<String, Pair<Ingredient, Counter>> ingredientMap = new Object2ObjectOpenHashMap<>();
-
-        for (CountableIngredient ingredient : this.inputs) {
-            Counter count = ingredientMap.computeIfAbsent(Arrays.toString(ingredient.getIngredient().getMatchingStacks()), k -> Pair.of(ingredient.getIngredient(), new Counter(0))).getValue();
-            count.increment(ingredient.getCount());
-        }
-        for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : ingredientMap.object2ObjectEntrySet()) {
+    private boolean matchesItems(IItemHandlerModifiable inputs) {
+        for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : this.itemIngredientsMerged.object2ObjectEntrySet()) {
             if (GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), true) != entry.getValue().getValue().getValue())
-                return Pair.of(false, null);
+                return false;
         }
-        return Pair.of(true, ingredientMap);
+        return true;
     }
 
-    private Pair<Boolean, Object2ObjectMap<FluidStack, Counter>> matchesFluid(IMultipleTankHandler fluidInputs) {
-        Object2ObjectMap<FluidStack, Counter> fluidStackMap = new Object2ObjectOpenHashMap<>();
-
-        for (FluidStack fluid : this.fluidInputs) {
-            Counter count = fluidStackMap.computeIfAbsent(fluid, k -> new Counter(0));
-            count.increment(fluid.amount);
-        }
-        for (Object2ObjectMap.Entry<FluidStack, Counter> entry : fluidStackMap.object2ObjectEntrySet()) {
+    private boolean matchesFluid(IMultipleTankHandler fluidInputs) {
+        for (Object2ObjectMap.Entry<FluidStack, Counter> entry : this.fluidInputsMerged.object2ObjectEntrySet()) {
             FluidStack drained = fluidInputs.drain(entry.getKey(), false);
             if (drained == null || drained.amount != entry.getValue().getValue())
-                return Pair.of(false, null);
+                return false;
         }
-        return Pair.of(true, fluidStackMap);
+        return true;
     }
 
     ///////////////////
