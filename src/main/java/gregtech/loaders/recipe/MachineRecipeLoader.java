@@ -56,6 +56,7 @@ import java.util.List;
 import static gregtech.api.GTValues.L;
 import static gregtech.api.GTValues.M;
 import static gregtech.api.recipes.RecipeMaps.ASSEMBLER_RECIPES;
+import static gregtech.api.unification.material.MarkerMaterials.Tier.Master;
 import static gregtech.api.unification.material.Materials.*;
 import static gregtech.api.unification.ore.OrePrefix.*;
 import static gregtech.api.util.DyeUtil.getOrdictColorName;
@@ -777,6 +778,14 @@ public class MachineRecipeLoader {
                         .duration(300).EUt(1920)
                         .buildAndRegister();
             }
+            ASSEMBLER_RECIPES.recipeBuilder()
+                    .input(circuit, Master, 2)
+                    .inputs(ME_INPUT_HATCH.getStackForm(), SENSOR_IV.getStackForm(), EMITTER_IV.getStackForm(),
+                            new ItemStack(Item.getByNameOrId("appliedenergistics2:material"), 4, 30), // acceleration card
+                            new ItemStack(Item.getByNameOrId("appliedenergistics2:material"), 2, 44)) // annihilation cores
+                    .outputs(ME_STOCKING_HATCH.getStackForm())
+                    .duration(300).EUt(7680)
+                    .buildAndRegister();
         }
     }
 
