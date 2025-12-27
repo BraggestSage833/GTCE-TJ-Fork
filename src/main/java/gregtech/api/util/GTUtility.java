@@ -792,8 +792,7 @@ public class GTUtility {
         for (int i = 0; i < itemHandler.getSlots(); i++) {
             ItemStack slotStack = itemHandler.getStackInSlot(i);
             if (!slotStack.isEmpty() && ingredient.apply(slotStack)) {
-                int extracted = Math.min(slotStack.getCount(), amount);
-                itemHandler.extractItem(i, extracted, simulate);
+                int extracted = itemHandler.extractItem(i, amount, simulate).getCount();
                 count += extracted;
                 amount -= extracted;
                 if (amount < 1)
