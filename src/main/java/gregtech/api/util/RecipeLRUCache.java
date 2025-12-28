@@ -57,7 +57,7 @@ public class RecipeLRUCache {
             return getReverse(inputItems, inputFluids);
         }
         for (Recipe recipeCache : this.recipeCaches) {
-            boolean foundMatches = recipeCache.matches(false, inputItems, inputFluids);
+            boolean foundMatches = recipeCache.matchesFound(false, inputItems, inputFluids);
             if (foundMatches) {
                 this.lastAccessedRecipe = recipeCache;
                 return recipeCache;
@@ -70,7 +70,7 @@ public class RecipeLRUCache {
         Iterator<Recipe> recipeCachesIterator = this.recipeCaches.descendingIterator();
         while (recipeCachesIterator.hasNext()) {
             Recipe recipeCache = recipeCachesIterator.next();
-            boolean foundMatches = recipeCache.matches(false, inputItems, inputFluids);
+            boolean foundMatches = recipeCache.matchesFound(false, inputItems, inputFluids);
             if (foundMatches) {
                 this.lastAccessedRecipe = recipeCache;
                 return recipeCache;

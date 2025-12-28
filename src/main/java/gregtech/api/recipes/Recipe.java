@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.recipes.recipeproperties.RecipeProperty;
 import gregtech.api.recipes.recipeproperties.RecipePropertyStorage;
-import gregtech.api.util.GTFluidUtils;
 import gregtech.api.util.GTUtility;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -108,15 +107,15 @@ public class Recipe {
         recipePropertyStorage.storeOldFormat(recipeProperties);
     }
 
-    public final boolean matches(boolean consumeIfSuccessful, List<ItemStack> inputs, List<FluidStack> fluidInputs, MatchingMode matchingMode) {
-        return matches(consumeIfSuccessful, GTUtility.createItemHandlerFromList(inputs), GTFluidUtils.createTankHandlerFromList(fluidInputs), matchingMode);
+    public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, MatchingMode matchingMode) {
+        return matches(consumeIfSuccessful, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), matchingMode);
     }
 
-    public final boolean matches(boolean consumeIfSuccessful, List<ItemStack> inputs, List<FluidStack> fluidInputs) {
-        return matches(consumeIfSuccessful, GTUtility.createItemHandlerFromList(inputs), GTFluidUtils.createTankHandlerFromList(fluidInputs), MatchingMode.DEFAULT);
+    public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+        return matches(consumeIfSuccessful, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), MatchingMode.DEFAULT);
     }
 
-    public boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+    public boolean matches(boolean consumeIfSuccessful, List<ItemStack> inputs, List<FluidStack> fluidInputs) {
         return matches(consumeIfSuccessful, inputs, fluidInputs, MatchingMode.DEFAULT);
     }
 
@@ -129,13 +128,17 @@ public class Recipe {
      * @param matchingMode        How this method should check if inputs matches according to {@link MatchingMode} description.
      * @return true if the recipe matches the given inputs false otherwise.
      */
-    public boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, MatchingMode matchingMode) {
+    public boolean matches(boolean consumeIfSuccessful, List<ItemStack> inputs, List<FluidStack> fluidInputs, MatchingMode matchingMode) {
+        Pair<Boolean, Integer[]> fluids = null;
+        Pair<Boolean, Integer[]> items = null;
+
         if (matchingMode == MatchingMode.IGNORE_FLUIDS) {
             if (getInputs().isEmpty()) {
                 return false;
             }
         } else {
-            if (!matchesFluid(fluidInputs)) {
+            fluids = matchesFluid(fluidInputs);
+            if (!fluids.getKey()) {
                 return false;
             }
         }
@@ -145,18 +148,111 @@ public class Recipe {
                 return false;
             }
         } else {
-            if (!matchesItems(inputs)) {
+            items = matchesItems(inputs);
+            if (!items.getKey()) {
                 return false;
             }
         }
 
         if (consumeIfSuccessful && matchingMode == MatchingMode.DEFAULT) {
-            for (Object2ObjectMap.Entry<FluidStack, Counter> entry : this.fluidInputsMerged.object2ObjectEntrySet()) {
-              fluidInputs.drain(entry.getKey(), true);
+            Integer[] fluidAmountInTank = fluids.getValue();
+            Integer[] itemAmountInSlot = items.getValue();
+            for (int i = 0; i < fluidAmountInTank.length; i++) {
+                FluidStack fluidStack = fluidInputs.get(i);
+                int fluidAmount = fluidAmountInTank[i];
+                if (fluidStack == null || fluidStack.amount == fluidAmount)
+                    continue;
+                fluidStack.amount = fluidAmount;
+                if (fluidStack.amount == 0)
+                    fluidInputs.set(i, null);
             }
-            for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : this.itemIngredientsMerged.object2ObjectEntrySet()) {
-                GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), false);
+            for (int i = 0; i < itemAmountInSlot.length; i++) {
+                ItemStack itemInSlot = inputs.get(i);
+                int itemAmount = itemAmountInSlot[i];
+                if (itemInSlot.isEmpty() || itemInSlot.getCount() == itemAmount)
+                    continue;
+                itemInSlot.setCount(itemAmountInSlot[i]);
             }
+        }
+
+        return true;
+    }
+
+    private Pair<Boolean, Integer[]> matchesItems(List<ItemStack> inputs) {
+        Integer[] itemAmountInSlot = new Integer[inputs.size()];
+
+        for (int i = 0; i < itemAmountInSlot.length; i++) {
+            ItemStack itemInSlot = inputs.get(i);
+            itemAmountInSlot[i] = itemInSlot.isEmpty() ? 0 : itemInSlot.getCount();
+        }
+
+        for (CountableIngredient ingredient : this.inputs) {
+            int ingredientAmount = ingredient.getCount();
+            boolean isNotConsumed = false;
+            if (ingredientAmount == 0) {
+                ingredientAmount = 1;
+                isNotConsumed = true;
+            }
+            for (int i = 0; i < inputs.size(); i++) {
+                ItemStack inputStack = inputs.get(i);
+                if (inputStack.isEmpty() || !ingredient.getIngredient().apply(inputStack))
+                    continue;
+                int itemAmountToConsume = Math.min(itemAmountInSlot[i], ingredientAmount);
+                ingredientAmount -= itemAmountToConsume;
+                if (!isNotConsumed) itemAmountInSlot[i] -= itemAmountToConsume;
+                if (ingredientAmount == 0) break;
+            }
+            if (ingredientAmount > 0)
+                return Pair.of(false, itemAmountInSlot);
+        }
+
+        return Pair.of(true, itemAmountInSlot);
+    }
+
+    private Pair<Boolean, Integer[]> matchesFluid(List<FluidStack> fluidInputs) {
+        Integer[] fluidAmountInTank = new Integer[fluidInputs.size()];
+
+        for (int i = 0; i < fluidAmountInTank.length; i++) {
+            FluidStack fluidInTank = fluidInputs.get(i);
+            fluidAmountInTank[i] = fluidInTank == null ? 0 : fluidInTank.amount;
+        }
+
+        for (FluidStack fluid : this.fluidInputs) {
+            int fluidAmount = fluid.amount;
+            boolean isNotConsumed = false;
+            if (fluidAmount == 0) {
+                fluidAmount = 1;
+                isNotConsumed = true;
+            }
+            for (int i = 0; i < fluidInputs.size(); i++) {
+                FluidStack tankFluid = fluidInputs.get(i);
+                if (tankFluid == null || !tankFluid.isFluidEqual(fluid))
+                    continue;
+                int fluidAmountToConsume = Math.min(fluidAmountInTank[i], fluidAmount);
+                fluidAmount -= fluidAmountToConsume;
+                if (!isNotConsumed) fluidAmountInTank[i] -= fluidAmountToConsume;
+                if (fluidAmount == 0) break;
+            }
+            if (fluidAmount > 0)
+                return Pair.of(false, fluidAmountInTank);
+        }
+        return Pair.of(true, fluidAmountInTank);
+    }
+
+    /**
+     * New recipe matcher for recipe logic and LRU cache.
+     */
+    public boolean matchesFound(boolean consume, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+        if (!matchesFluid(fluidInputs) || !matchesItems(inputs)) {
+            return false;
+        }
+        if (!consume)
+            return true;
+        for (Object2ObjectMap.Entry<FluidStack, Counter> entry : this.fluidInputsMerged.object2ObjectEntrySet()) {
+            fluidInputs.drain(entry.getKey(), true);
+        }
+        for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : this.itemIngredientsMerged.object2ObjectEntrySet()) {
+            GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), false);
         }
         return true;
     }

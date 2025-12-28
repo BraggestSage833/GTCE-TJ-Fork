@@ -243,7 +243,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected Recipe findRecipe(long maxVoltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, boolean useOptimizedRecipeLookUp) {
-        return recipeMap.findRecipe(maxVoltage, inputs, fluidInputs, getMinTankCapacity(getOutputTank()), useOptimizedRecipeLookUp);
+        return recipeMap.searchRecipe(maxVoltage, inputs, fluidInputs, getMinTankCapacity(getOutputTank()), useOptimizedRecipeLookUp);
     }
 
     protected boolean checkRecipeInputsDirty(IItemHandler inputs, IMultipleTankHandler fluidInputs) {
@@ -301,7 +301,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
                 (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())) &&
                 (ignoreOutputItemSpace || MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots()))) &&
                 (ignoreOutputFluidSpace || MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs())) &&
-                recipe.matches(true, importInventory, importFluids);
+                recipe.matchesFound(true, importInventory, importFluids);
     }
 
     protected int[] calculateOverclock(int EUt, int duration) {
