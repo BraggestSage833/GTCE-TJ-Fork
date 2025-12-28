@@ -52,6 +52,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -803,7 +804,30 @@ public class GTUtility {
     }
 
     public static IItemHandlerModifiable createItemHandlerFromList(List<ItemStack> itemStacks) {
-        ItemStackHandler handler = new ItemStackHandler(itemStacks.size());
+        ItemStackHandler handler = new ItemStackHandler(itemStacks.size()) {
+            @Override
+            public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+                if (amount == 0)
+                    return ItemStack.EMPTY;
+                validateSlotIndex(slot);
+                ItemStack existing = this.stacks.get(slot);
+                if (existing.isEmpty())
+                    return ItemStack.EMPTY;
+                if (existing.getCount() <= amount) {
+                    if (!simulate) {
+                        this.stacks.set(slot, ItemStack.EMPTY);
+                        onContentsChanged(slot);
+                    }
+                    return existing;
+                } else {
+                    if (!simulate) {
+                        this.stacks.set(slot, ItemHandlerHelper.copyStackWithSize(existing, existing.getCount() - amount));
+                        onContentsChanged(slot);
+                    }
+                    return ItemHandlerHelper.copyStackWithSize(existing, amount);
+                }
+            }
+        };
         for (int i = 0; i < handler.getSlots(); i++) {
             handler.setStackInSlot(i, itemStacks.get(i));
         }
