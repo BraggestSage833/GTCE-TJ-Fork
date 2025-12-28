@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.recipes.recipeproperties.RecipeProperty;
 import gregtech.api.recipes.recipeproperties.RecipePropertyStorage;
+import gregtech.api.util.GTFluidUtils;
 import gregtech.api.util.GTUtility;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -107,13 +108,13 @@ public class Recipe {
         recipePropertyStorage.storeOldFormat(recipeProperties);
     }
 
-//    public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, MatchingMode matchingMode) {
-//        return matches(consumeIfSuccessful, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), matchingMode);
-//    }
+    public final boolean matches(boolean consumeIfSuccessful, List<ItemStack> inputs, List<FluidStack> fluidInputs, MatchingMode matchingMode) {
+        return matches(consumeIfSuccessful, GTUtility.createItemHandlerFromList(inputs), GTFluidUtils.createTankHandlerFromList(fluidInputs), matchingMode);
+    }
 
-//    public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
-//        return matches(consumeIfSuccessful, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), MatchingMode.DEFAULT);
-//    }
+    public final boolean matches(boolean consumeIfSuccessful, List<ItemStack> inputs, List<FluidStack> fluidInputs) {
+        return matches(consumeIfSuccessful, GTUtility.createItemHandlerFromList(inputs), GTFluidUtils.createTankHandlerFromList(fluidInputs), MatchingMode.DEFAULT);
+    }
 
     public boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
         return matches(consumeIfSuccessful, inputs, fluidInputs, MatchingMode.DEFAULT);
