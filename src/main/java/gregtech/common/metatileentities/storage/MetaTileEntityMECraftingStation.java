@@ -31,7 +31,6 @@ import gregtech.common.inventory.itemsource.ItemSourceList;
 import gregtech.common.inventory.itemsource.sources.InventoryItemSource;
 import gregtech.common.inventory.itemsource.sources.TileItemSource;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.MetaTileEntityAEHostablePart;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
@@ -273,11 +272,7 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            IAEItemStack insert = AEItemStack.fromItemStack(stack);
-            if (insert == null || this.monitor.get() == null)
-                return stack;
-            insert = this.monitor.get().injectItems(insert, simulate ? Actionable.SIMULATE : Actionable.MODULATE, this.source.get());
-            return insert != null ? insert.createItemStack() : ItemStack.EMPTY;
+            return stack;
         }
 
         @Override
