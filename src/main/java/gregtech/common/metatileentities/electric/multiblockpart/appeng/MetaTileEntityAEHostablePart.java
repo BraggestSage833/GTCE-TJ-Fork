@@ -16,10 +16,8 @@ import appeng.me.helpers.IGridProxyable;
 import appeng.me.helpers.MachineSource;
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import gregtech.api.capability.IControllable;
-import gregtech.api.items.metaitem.MetaItem;
 import gregtech.api.items.toolitem.ToolMetaItem;
 import gregtech.common.ConfigHolder;
-import gregtech.common.items.MetaItems;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityMultiblockPart;
 import gregtech.common.tools.ToolWireCutter;
 import net.minecraft.entity.player.EntityPlayer;
@@ -36,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 

@@ -38,6 +38,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -86,6 +87,7 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
 
     public MetaTileEntityMECraftingStation(ResourceLocation metaTileEntityId) {
         super(metaTileEntityId, GTValues.MV, IItemStorageChannel.class);
+
     }
 
     @Override
@@ -129,26 +131,11 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
         }
     }
 
-    private void flushItem(ItemStack itemStack) {
-        IAEItemStack stack = AEItemStack.fromItemStack(itemStack);
-        if (stack == null) return;
-        IMEMonitor<IAEItemStack> monitor = this.getMonitor();
-        if (monitor != null) {
-            stack = monitor.injectItems(stack, Actionable.MODULATE, this.getActionSource());
-            if (stack != null)
-                itemStack = stack.createItemStack();
-        }
-        if (!itemStack.isEmpty())
-            this.getWorld().spawnEntity(new EntityItem(this.getWorld(), this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), itemStack));
-    }
-
     @Override
-    public void onRemoval() {
-        for (int i = 0; i < this.toolInventory.getSlots(); i++)
-            this.flushItem(this.toolInventory.getStackInSlot(i));
-        for (int i = 0; i < this.internalInventory.getSlots(); i++)
-            this.flushItem(this.internalInventory.getStackInSlot(i));
-        super.onRemoval();
+    public void clearMachineInventory(NonNullList<ItemStack> itemBuffer) {
+        super.clearMachineInventory(itemBuffer);
+        clearInventory(itemBuffer, internalInventory);
+        clearInventory(itemBuffer, toolInventory);
     }
 
     private void clearMEInventory() {
