@@ -768,7 +768,7 @@ public class MachineRecipeLoader {
 
         if (GTValues.isModLoaded(GTValues.MODID_AE2)) {
             for (int i = 0; i < 4; i++) {
-                RecipeMaps.ASSEMBLER_RECIPES.recipeBuilder()
+                ASSEMBLER_RECIPES.recipeBuilder()
                         .inputs(i == 3 ? FLUID_IMPORT_HATCH[4].getStackForm() : i == 2 ? FLUID_EXPORT_HATCH[4].getStackForm() : i == 1 ? ITEM_IMPORT_BUS[4].getStackForm() : ITEM_EXPORT_BUS[4].getStackForm(),
                                 new ItemStack(Item.getByNameOrId(i == 3 || i == 2 ? "appliedenergistics2:fluid_interface" : "appliedenergistics2:interface"), 2),
                                 new ItemStack(Item.getByNameOrId("appliedenergistics2:material"), 4, 30), // acceleration card

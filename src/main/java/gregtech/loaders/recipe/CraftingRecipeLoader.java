@@ -24,6 +24,7 @@ import net.minecraft.block.BlockPlanks.EnumType;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
@@ -250,6 +251,13 @@ public class CraftingRecipeLoader {
         ModHandler.addShapedRecipe("solar_panel/solar_panel_ulv", MetaItems.COVER_SOLAR_PANEL_ULV.getStackForm(), "SSS", "SXS", "SSS", 'S', MetaItems.COVER_SOLAR_PANEL.getStackForm(), 'X', new UnificationEntry(OrePrefix.circuit, Tier.Basic));
         ModHandler.addShapedRecipe("solar_panel/solar_panel_lv", MetaItems.COVER_SOLAR_PANEL_LV.getStackForm(), "PSP", "SXS", "PSP", 'P', new UnificationEntry(OrePrefix.plate, Materials.Silicon), 'S', MetaItems.COVER_SOLAR_PANEL_ULV.getStackForm(), 'X', new UnificationEntry(OrePrefix.circuit, Tier.Good));
 
+        if (GTValues.isModLoaded(GTValues.MODID_AE2)) {
+               ModHandler.addShapedRecipe("me_crafting_station", MetaTileEntities.ME_CRAFTING_STATION.getStackForm(), "SCS", "PHP", "PhP",
+                       'S', new ItemStack(Item.getByNameOrId("appliedenergistics2:part"), 1, 220), // storage bus
+                       'C', MetaTileEntities.WORKBENCH.getStackForm(),
+                       'P', new UnificationEntry(OrePrefix.plate, Materials.Aluminium),
+                       'H', MetaTileEntities.HULL[2].getStackForm());
+        }
         ///////////////////////////////////////////////////
         //               Shapes and Molds                //
         ///////////////////////////////////////////////////
