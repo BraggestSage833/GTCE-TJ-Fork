@@ -21,6 +21,7 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
@@ -786,7 +787,7 @@ public class GTUtility {
      * @return The amount extracted
      */
     public static int extractFromItemHandlerByIngredient(IItemHandler itemHandler, @Nonnull Ingredient ingredient, int amount, boolean simulate) {
-        if (itemHandler == null)
+        if (itemHandler == null || amount == 0)
             return 0;
 
         int count = 0;
@@ -796,11 +797,25 @@ public class GTUtility {
                 int extracted = itemHandler.extractItem(i, amount, simulate).getCount();
                 count += extracted;
                 amount -= extracted;
-                if (amount < 1)
-                    break;
             }
+            if (amount < 1) break;
         }
         return count;
+    }
+
+    /**
+     * Tries to extract from container inventory or item handler with ingredients.
+     * @param itemHandler container inventory
+     * @param ingredient the ItemStack to check
+     */
+    public static boolean checkItemHandlerForIngredient(IItemHandler itemHandler, @Nonnull Ingredient ingredient) {
+        if (itemHandler == null)
+            return false;
+        for (int i = 0; i < itemHandler.getSlots(); i++) {
+            if (ingredient.apply(itemHandler.getStackInSlot(i)))
+                return true;
+        }
+        return false;
     }
 
     public static IItemHandlerModifiable createItemHandlerFromList(List<ItemStack> itemStacks) {

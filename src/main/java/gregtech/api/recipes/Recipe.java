@@ -259,7 +259,10 @@ public class Recipe {
 
     private boolean matchesItems(IItemHandlerModifiable inputs) {
         for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : this.itemIngredientsMerged.object2ObjectEntrySet()) {
-            if (GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), true) != entry.getValue().getValue().getValue())
+            if (entry.getValue().getValue().getValue() == 0) {
+                if (!GTUtility.checkItemHandlerForIngredient(inputs, entry.getValue().getKey()))
+                    return false;
+            } else if (GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), true) != entry.getValue().getValue().getValue())
                 return false;
         }
         return true;
