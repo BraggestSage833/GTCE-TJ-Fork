@@ -154,6 +154,8 @@ public class MetaTileEntities {
     public static MetaTileEntityTank TITANIUM_TANK;
     public static MetaTileEntityTank TUNGSTENSTEEL_TANK;
 
+    public static MetaTileEntityMECraftingStation ME_CRAFTING_STATION;
+
     // ME hatches and buses
     public static MetaTileEntityMEInputHatch ME_INPUT_HATCH;
     public static MetaTileEntityMEStockingHatch ME_STOCKING_HATCH;
@@ -530,6 +532,7 @@ public class MetaTileEntities {
         GregTechAPI.registerMetaTileEntity(834, Super_tank[3]);
         GregTechAPI.registerMetaTileEntity(835, Super_tank[4]);
 
+        ME_CRAFTING_STATION = GregTechAPI.registerMetaTileEntity(1099, new MetaTileEntityMECraftingStation(gregtechId("me_crafting_station")));
 
         // ME hatches and buses
         ME_INPUT_HATCH = GregTechAPI.registerMetaTileEntity(1100, new MetaTileEntityMEInputHatch(gregtechId("me_input_hatch")));

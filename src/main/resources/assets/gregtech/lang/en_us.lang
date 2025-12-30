@@ -2358,6 +2358,8 @@ gregtech.machine.fisher.tooltip=Costs string to fish. Consumes one string each t
 gregtech.machine.fisher.speed=Catches something every %,d ticks
 gregtech.machine.fisher.requirement=Requires a square of water with size of %,d blocks directly below.
 
+gregtech.machine.me_crafting_station.name=ME Crafting Station
+
 #ME hatches and busses
 gregtech.machine.me_input_hatch.name=ME Input Hatch
 gregtech.machine.me_stocking_hatch.name=ME stocking hatch
