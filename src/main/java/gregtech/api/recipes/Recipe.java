@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.recipes.recipeproperties.RecipeProperty;
 import gregtech.api.recipes.recipeproperties.RecipePropertyStorage;
+import gregtech.api.util.GTFluidUtils;
 import gregtech.api.util.GTUtility;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -270,9 +271,14 @@ public class Recipe {
 
     private boolean matchesFluid(IMultipleTankHandler fluidInputs) {
         for (Object2ObjectMap.Entry<FluidStack, Counter> entry : this.fluidInputsMerged.object2ObjectEntrySet()) {
-            FluidStack drained = fluidInputs.drain(entry.getKey(), false);
-            if (drained == null || drained.amount != entry.getValue().getValue())
-                return false;
+            if (entry.getValue().getValue() == 0) {
+                if (!GTFluidUtils.findFluidFromTanks(fluidInputs, entry.getKey()))
+                    return false;
+            } else {
+                FluidStack drained = fluidInputs.drain(entry.getKey(), false);
+                if (drained == null || drained.amount != entry.getValue().getValue())
+                    return false;
+            }
         }
         return true;
     }

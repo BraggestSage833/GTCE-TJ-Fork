@@ -85,4 +85,13 @@ public class GTFluidUtils {
         }
         return new FluidTankList(true, tanks);
     }
+
+    public static boolean findFluidFromTanks(IMultipleTankHandler tanks, FluidStack fluidStack) {
+        for (int i = 0; i < tanks.getTanks(); i++) {
+            IFluidTank tank = tanks.getTankAt(i);
+            if (tank.getFluid() != null && tank.getFluid().isFluidEqual(fluidStack))
+                return true;
+        }
+        return false;
+    }
 }
