@@ -2362,7 +2362,7 @@ gregtech.machine.me_crafting_station.name=ME Crafting Station
 
 #ME hatches and busses
 gregtech.machine.me_input_hatch.name=ME Input Hatch
-gregtech.machine.me_stocking_hatch.name=ME stocking hatch
+gregtech.machine.me_stocking_hatch.name=ME Stocking Hatch
 gregtech.machine.me_output_hatch.name=ME Output Hatch
 gregtech.machine.me_input_bus.name=ME Input Bus
 gregtech.machine.me_stocking_bus.name=ME Stocking Bus
