@@ -14,8 +14,6 @@ import com.google.common.base.Preconditions;
 import gregtech.api.GTValues;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.TextureArea;
 import gregtech.api.gui.widgets.*;
 import gregtech.api.gui.widgets.tab.ItemTabInfo;
 import gregtech.api.items.toolitem.ToolMetaItem;
@@ -46,14 +44,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.EnumSet;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePart<IAEItemStack> {
 
     private final MEItemStackHandler meInventory = new MEItemStackHandler(this::getMonitor, this::getActionSource);
 
-    private final ItemStackHandler internalInventory = new ItemStackHandler(18);
+    private final ItemStackHandler internalInventory = new ItemStackHandler(27);
 
     private final ItemStackHandler craftingGrid = new ItemStackHandler(9) {
         @Override
@@ -62,7 +59,7 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
         }
     };
 
-    private final ItemStackHandler toolInventory = new ItemStackHandler(9) {
+    private final ItemStackHandler toolInventory = new ItemStackHandler(18) {
         @Override
         public int getSlotLimit(int slot) {
             return 1;
@@ -163,8 +160,8 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
 
     @Override
     protected ModularUI createUI(EntityPlayer entityPlayer) {
-        ModularUI.Builder builder = ModularUI.builder(GuiTextures.BORDERED_BACKGROUND, 176, 221)
-                .bindPlayerInventory(entityPlayer.inventory, 140);
+        ModularUI.Builder builder = ModularUI.builder(GuiTextures.BORDERED_BACKGROUND, 176, 257)
+                .bindPlayerInventory(entityPlayer.inventory, 176);
         builder.label(5, 5, getMetaFullName());
 
         TabGroup tabGroup = new TabGroup(TabGroup.TabLocation.HORIZONTAL_TOP_LEFT, Position.ORIGIN);
@@ -179,36 +176,36 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
         WidgetGroup widgetGroup = new WidgetGroup();
         CraftingRecipeResolver recipeResolver = getRecipeResolver();
 
-        widgetGroup.addWidget(new ImageWidget(88 - 13, 44 - 13, 26, 26, GuiTextures.SLOT));
-        widgetGroup.addWidget(new CraftingSlotWidget(recipeResolver, 0, 88 - 9, 44 - 9));
+        widgetGroup.addWidget(new ImageWidget(87 - 13, 44 - 13, 26, 26, GuiTextures.SLOT));
+        widgetGroup.addWidget(new CraftingSlotWidget(recipeResolver, 0, 87 - 9, 44 - 9));
+
+        widgetGroup.addWidget(new SimpleTextWidget(88, 44 + 20, "", () -> Integer.toString(recipeResolver.getItemsCrafted())));
+
+        widgetGroup.addWidget(new ClickButtonWidget(7 + 18 * 3 + 1, 17, 8, 8, "", clickData -> recipeResolver.clearCraftingGrid())
+                .setButtonTexture(GuiTextures.BUTTON_CLEAR_GRID));
+
+        widgetGroup.addWidget(new ImageWidget(167 - 18 * 3, 44 - 18 * 3 / 2, 18 * 3, 18 * 3, GuiTextures.SLOT_DARKENED));
+
+        for (int i = 0; i < this.recipeMemory.getMemorySize(); i++) {
+            widgetGroup.addWidget(new MemorizedRecipeWidget(this.recipeMemory, i, this.craftingGrid, 113 + (18 * (i % 3)), 17 + (18 * (i / 3))));
+        }
 
         //crafting grid
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                widgetGroup.addWidget(new PhantomSlotWidget(craftingGrid, j + i * 3, 8 + j * 18, 17 + i * 18).setBackgroundTexture(GuiTextures.SLOT));
-            }
+        for (int i = 0; i < this.craftingGrid.getSlots(); i++) {
+            widgetGroup.addWidget(new PhantomSlotWidget(this.craftingGrid, i, 7 + (18 * (i % 3)), 17 + (18 * (i / 3)))
+                    .setBackgroundTexture(GuiTextures.SLOT));
         }
-        Supplier<String> textSupplier = () -> Integer.toString(recipeResolver.getItemsCrafted());
-        widgetGroup.addWidget(new SimpleTextWidget(88, 44 + 20, "", textSupplier));
 
-        Consumer<Widget.ClickData> clearAction = (clickData) -> recipeResolver.clearCraftingGrid();
-        widgetGroup.addWidget(new ClickButtonWidget(8 + 18 * 3 + 1, 17, 8, 8, "", clearAction).setButtonTexture(GuiTextures.BUTTON_CLEAR_GRID));
-
-        widgetGroup.addWidget(new ImageWidget(168 - 18 * 3, 44 - 18 * 3 / 2, 18 * 3, 18 * 3, TextureArea.fullImage("textures/gui/base/darkened_slot.png")));
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                widgetGroup.addWidget(new MemorizedRecipeWidget(recipeMemory, j + i * 3, craftingGrid, 168 - 18 * 3 / 2 - 27 + j * 18, 44 - 27 + i * 18));
-            }
-        }
         //tool inventory
-        for (int i = 0; i < 9; i++) {
-            widgetGroup.addWidget(new SlotWidget(toolInventory, i, 8 + i * 18, 76).setBackgroundTexture(GuiTextures.SLOT, GuiTextures.TOOL_SLOT_OVERLAY));
+        for (int i = 0; i < this.toolInventory.getSlots(); i++) {
+            widgetGroup.addWidget(new SlotWidget(this.toolInventory, i, 7 + (18 * (i % 9)), 76 + (18 * (i / 9)))
+                    .setBackgroundTexture(GuiTextures.SLOT, GuiTextures.TOOL_SLOT_OVERLAY));
         }
+
         //internal inventory
-        for (int i = 0; i < 2; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                widgetGroup.addWidget(new SlotWidget(internalInventory, j + i * 9, 8 + j * 18, 99 + i * 18).setBackgroundTexture(GuiTextures.SLOT));
-            }
+        for (int i = 0; i < this.internalInventory.getSlots(); i++) {
+            widgetGroup.addWidget(new SlotWidget(this.internalInventory, i, 7 + (18 * (i % 9)), 117 + (18 * (i / 9)))
+                    .setBackgroundTexture(GuiTextures.SLOT));
         }
         return widgetGroup;
     }
@@ -219,7 +216,7 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
         widgetGroup.addWidget(new LabelWidget(5, 30, "gregtech.machine.workbench.storage_note_2"));
         CraftingRecipeResolver recipeResolver = getRecipeResolver();
         IItemList itemList = recipeResolver == null ? null : recipeResolver.getItemSourceList();
-        widgetGroup.addWidget(new ItemListGridWidget(2, 45, 9, 5, itemList));
+        widgetGroup.addWidget(new ItemListGridWidget(2, 45, 9, 7, itemList));
         return widgetGroup;
     }
 
