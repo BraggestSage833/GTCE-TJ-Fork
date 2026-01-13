@@ -848,4 +848,32 @@ public class GTUtility {
         }
         return handler;
     }
+
+    /**
+     * Tries to insert into container inventory or item handler
+     * @param itemHandler container inventory
+     * @param stack the ItemStack to insert
+     * @param simulate test to see if the item can be inserted without actually inserting the item for real.
+     * @return ItemStack reminder. returns empty when ItemStack is fully inserted. returns the stack unmodified when unable to insert at all.
+     */
+    public static ItemStack insertIntoItemHandler(IItemHandler itemHandler, @Nonnull ItemStack stack, boolean simulate) {
+        if (itemHandler == null || stack.isEmpty())
+            return stack;
+
+        stack = simulate ? stack.copy() : stack;
+        for (int i = 0; i < itemHandler.getSlots() && !stack.isEmpty(); i++) {
+            ItemStack slotStack = itemHandler.getStackInSlot(i);
+            int maxStackSize = itemHandler.getSlotLimit(i);
+            if (slotStack.isEmpty()) {
+                stack = itemHandler.insertItem(i, stack, simulate);
+            } else if (slotStack.isItemEqual(stack) && ItemStack.areItemStackShareTagsEqual(slotStack, stack)) {
+                int reminder = Math.max(0, maxStackSize - slotStack.getCount());
+                int extracted = Math.min(stack.getCount(), reminder);
+                stack.shrink(extracted);
+                if (!simulate)
+                    slotStack.grow(extracted);
+            }
+        }
+        return stack;
+    }
 }

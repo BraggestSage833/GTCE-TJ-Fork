@@ -143,8 +143,15 @@ public class ConfigHolder {
     @Config.RangeInt(min = 0, max = 400)
     @Config.RequiresMcRestart
     public static int maxSleepTime = 0;
+
     @Config.Comment("should the controller state the cache miss/catch ratio")
     public static boolean debug_options_for_caching =false;
+
+    @Config.Name("Recipe has problems cooldown")
+    @Config.Comment("Set tick duration of cooldown timer")
+    @Config.RequiresMcRestart
+    public static int recipeCooldown = 100;
+
     public static class VanillaRecipes {
 
         @Config.Comment("Whether to nerf the paper crafting recipe. Default: true")
