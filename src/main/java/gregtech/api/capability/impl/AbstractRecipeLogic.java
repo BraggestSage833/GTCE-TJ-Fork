@@ -6,6 +6,7 @@ import gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.capability.IWorkable;
 import gregtech.api.metatileentity.MTETrait;
 import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeMap;
 import gregtech.api.util.GTUtility;
@@ -22,6 +23,7 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +65,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     private int sleepTimer = 0;
     private int sleepTime = 1;
     private int failCount = 0;
+    private int itemOutputIndex;
+    private int fluidOutputIndex;
 
     public AbstractRecipeLogic(MetaTileEntity tileEntity, RecipeMap<?> recipeMap) {
         this(tileEntity, recipeMap, 16);
@@ -160,8 +164,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected void updateRecipeProgress() {
-        boolean drawEnergy = drawEnergy(recipeEUt);
-        if (drawEnergy || (recipeEUt < 0)) {
+        if (this.recipeEUt < 1 || this.drawEnergy(this.recipeEUt)) {
             //as recipe starts with progress on 1 this has to be > only not => to compensate for it
             if (++progressTime > maxProgressTime) {
                 completeRecipe();
@@ -241,7 +244,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected Recipe findRecipe(long maxVoltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, boolean useOptimizedRecipeLookUp) {
-        return recipeMap.findRecipe(maxVoltage, inputs, fluidInputs, getMinTankCapacity(getOutputTank()), useOptimizedRecipeLookUp);
+        return recipeMap.searchRecipe(maxVoltage, inputs, fluidInputs, getMinTankCapacity(getOutputTank()), useOptimizedRecipeLookUp);
     }
 
     protected boolean checkRecipeInputsDirty(IItemHandler inputs, IMultipleTankHandler fluidInputs) {
@@ -288,16 +291,12 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
 
     protected boolean setupAndConsumeRecipeInputs(Recipe recipe) {
         int[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
-        int totalEUt = resultOverclock[0] * resultOverclock[1];
+        long totalEUt = (long) resultOverclock[0] * resultOverclock[1];
         IItemHandlerModifiable importInventory = getInputInventory();
-        IItemHandlerModifiable exportInventory = getOutputInventory();
         IMultipleTankHandler importFluids = getInputTank();
-        IMultipleTankHandler exportFluids = getOutputTank();
         return (totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
                 (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())) &&
-                MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
-                MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs()) &&
-                recipe.matches(true, importInventory, importFluids);
+                recipe.matchesFound(true, importInventory, importFluids);
     }
 
     protected int[] calculateOverclock(int EUt, int duration) {
@@ -367,10 +366,30 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected void completeRecipe() {
-        MetaTileEntity.addItemsToItemHandler(getOutputInventory(), false, itemOutputs);
-        MetaTileEntity.addFluidsToFluidHandler(getOutputTank(), false, fluidOutputs);
+        for (int i = this.itemOutputIndex; i < this.itemOutputs.size(); i++) {
+            ItemStack stack = this.itemOutputs.get(i);
+            if (this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isItemInfSink() || GTUtility.insertIntoItemHandler(this.getOutputInventory(), stack, true).isEmpty()) {
+                GTUtility.insertIntoItemHandler(this.getOutputInventory(), stack, false);
+                this.itemOutputIndex++;
+            } else {
+                this.failRecipe();
+                return;
+            }
+        }
+        for (int i = this.fluidOutputIndex; i < this.fluidOutputs.size(); i++) {
+            FluidStack stack = this.fluidOutputs.get(i);
+            if (this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isFluidInfSink() || this.getOutputTank().fill(stack, false) == stack.amount) {
+                this.getOutputTank().fill(stack, true);
+                this.fluidOutputIndex++;
+            } else {
+                this.failRecipe();
+                return;
+            }
+        }
+        this.itemOutputIndex = 0;
+        this.fluidOutputIndex = 0;
         this.progressTime = 0;
-        setMaxProgress(0);
+        this.setMaxProgress(0);
         this.recipeEUt = 0;
         this.fluidOutputs = null;
         this.itemOutputs = null;
@@ -379,6 +398,12 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         //force recipe recheck because inputs could have changed since last time
         //we checked them before starting our recipe, especially if recipe took long time
         this.forceRecipeRecheck = true;
+    }
+
+    protected void failRecipe() {
+        this.progressTime = 1;
+        this.setMaxProgress(ConfigHolder.recipeCooldown);
+        this.recipeEUt = 0;
     }
 
     public double getProgressPercent() {
@@ -510,6 +535,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         compound.setBoolean("WorkEnabled", workingEnabled);
         compound.setBoolean(ALLOW_OVERCLOCKING, allowOverclocking);
         compound.setLong(OVERCLOCK_VOLTAGE, this.overclockVoltage);
+        compound.setInteger("itemOutputIndex", this.itemOutputIndex);
+        compound.setInteger("fluidOutputIndex", this.fluidOutputIndex);
         if (progressTime > 0) {
             compound.setInteger("Progress", progressTime);
             compound.setInteger("MaxProgress", maxProgressTime);
@@ -532,6 +559,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     public void deserializeNBT(NBTTagCompound compound) {
         this.workingEnabled = compound.getBoolean("WorkEnabled");
         this.progressTime = compound.getInteger("Progress");
+        this.itemOutputIndex = compound.getInteger("itemOutputIndex");
+        this.fluidOutputIndex = compound.getInteger("fluidOutputIndex");
         if (compound.hasKey(ALLOW_OVERCLOCKING)) {
             this.allowOverclocking = compound.getBoolean(ALLOW_OVERCLOCKING);
         }

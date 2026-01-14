@@ -1,0 +1,249 @@
+package gregtech.common.metatileentities.electric.multiblockpart.appeng;
+
+import appeng.api.config.Actionable;
+import appeng.api.storage.IMEMonitor;
+import appeng.api.storage.channels.IItemStorageChannel;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IItemList;
+import appeng.util.item.AEItemStack;
+import codechicken.lib.render.CCRenderState;
+import codechicken.lib.render.pipeline.IVertexOperation;
+import codechicken.lib.vec.Matrix4;
+import gregtech.api.GTValues;
+import gregtech.api.capability.GregtechTileCapabilities;
+import gregtech.api.gui.GuiTextures;
+import gregtech.api.gui.ModularUI;
+import gregtech.api.gui.widgets.ToggleButtonWidget;
+import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
+import gregtech.api.metatileentity.multiblock.MultiblockAbility;
+import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
+import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
+import gregtech.api.render.Textures;
+import gregtech.common.gui.widget.appeng.AEItemGridWidget;
+import gregtech.common.inventory.appeng.SerializableItemList;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEItemStack> implements IMultiblockAbilityPart<IItemHandlerModifiable> {
+
+    public final static String ITEM_BUFFER_TAG = "ItemBuffer";
+    public final static String WORKING_TAG = "WorkingEnabled";
+    private SerializableItemList internalBuffer;
+
+    public MetaTileEntityMEOutputBus(ResourceLocation metaTileEntityId) {
+        super(metaTileEntityId, GTValues.EV, IItemStorageChannel.class);
+    }
+
+    @Override
+    protected void initializeInventory() {
+        this.internalBuffer = new SerializableItemList();
+        super.initializeInventory();
+    }
+
+    @Override
+    public MetaTileEntity createMetaTileEntity(MetaTileEntityHolder holder) {
+        return new MetaTileEntityMEOutputBus(metaTileEntityId);
+    }
+
+    @Override
+    public void update() {
+        super.update();
+        if (!getWorld().isRemote && this.workingEnabled && this.shouldSyncME() && this.updateMEStatus()) {
+            if (this.internalBuffer.isEmpty()) return;
+
+            IMEMonitor<IAEItemStack> monitor = getMonitor();
+            if (monitor == null) return;
+
+            for (IAEItemStack item : this.internalBuffer) {
+                IAEItemStack notInserted = monitor.injectItems(item.copy(), Actionable.MODULATE, getActionSource());
+                if (notInserted != null && notInserted.getStackSize() > 0) {
+                    item.setStackSize(notInserted.getStackSize());
+                } else {
+                    item.reset();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRemoval() {
+        IMEMonitor<IAEItemStack> monitor = getMonitor();
+        if (monitor != null) {
+            for (IAEItemStack item : this.internalBuffer) {
+                monitor.injectItems(item.copy(), Actionable.MODULATE, this.getActionSource());
+            }
+        }
+        super.onRemoval();
+    }
+
+    @Override
+    protected ModularUI createUI(EntityPlayer entityPlayer) {
+        ModularUI.Builder builder = ModularUI
+                .builder(GuiTextures.BACKGROUND, 176, 18 + 18 * 4 + 94)
+                .label(10, 5, getMetaFullName());
+        // ME Network status
+        builder.dynamicLabel(10, 15, () -> this.isOnline ?
+                        I18n.format("gregtech.gui.me_network.online") :
+                        I18n.format("gregtech.gui.me_network.offline"),
+                0x404040);
+        builder.label(10, 25, "gregtech.gui.waiting_list", 0xFFFFFFFF);
+
+        builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_GT_LOGO, this::isWorkingEnabled, this::setWorkingEnabled));
+
+        builder.widget(new AEItemGridWidget(10, 35, 3, this.internalBuffer));
+
+        builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 + 18 * 4 + 12);
+        return builder.build(this.getHolder(), entityPlayer);
+    }
+
+    @Override
+    public boolean isWorkingEnabled() {
+        return this.workingEnabled;
+    }
+
+    @Override
+    public <T> T getCapability(Capability<T> capability, EnumFacing side) {
+        if (capability == GregtechTileCapabilities.CAPABILITY_CONTROLLABLE) {
+            return GregtechTileCapabilities.CAPABILITY_CONTROLLABLE.cast(this);
+        }
+        return super.getCapability(capability, side);
+    }
+
+    @Override
+    public void writeInitialSyncData(PacketBuffer buf) {
+        super.writeInitialSyncData(buf);
+        buf.writeBoolean(workingEnabled);
+    }
+
+    @Override
+    public void receiveInitialSyncData(PacketBuffer buf) {
+        super.receiveInitialSyncData(buf);
+        this.workingEnabled = buf.readBoolean();
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound data) {
+        super.writeToNBT(data);
+        data.setBoolean(WORKING_TAG, this.workingEnabled);
+        data.setTag(ITEM_BUFFER_TAG, this.internalBuffer.serializeNBT());
+        return data;
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound data) {
+        super.readFromNBT(data);
+        if (data.hasKey(WORKING_TAG)) {
+            this.workingEnabled = data.getBoolean(WORKING_TAG);
+        }
+        if (data.hasKey(ITEM_BUFFER_TAG, 9)) {
+            this.internalBuffer.deserializeNBT((NBTTagList) data.getTag(ITEM_BUFFER_TAG));
+        }
+    }
+
+    @Override
+    public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
+        super.renderMetaTileEntity(renderState, translation, pipeline);
+        if (this.shouldRenderOverlay()) {
+            for (EnumFacing facing : this.getConnectableSides())
+                Textures.ME_OUTPUT_BUS_OVERLAY.render(renderState, translation, pipeline, facing, this.isOnline);
+        }
+    }
+
+    @Override
+    public void addInformation(ItemStack stack, @Nullable World player, @NotNull List<String> tooltip, boolean advanced) {
+        super.addInformation(stack, player, tooltip, advanced);
+        tooltip.add(I18n.format("gregtech.machine.item_bus.export.tooltip"));
+        tooltip.add(I18n.format("gregtech.machine.me.item_export.tooltip"));
+        tooltip.add(I18n.format("gregtech.machine.me.item_export.tooltip.2"));
+        tooltip.add(I18n.format("gregtech.machine.me.extra_connections.tooltip"));
+        tooltip.add(I18n.format("gregtech.universal.enabled"));
+    }
+
+    @Override
+    public MultiblockAbility<IItemHandlerModifiable> getAbility() {
+        return MultiblockAbility.EXPORT_ITEMS;
+    }
+
+    @Override
+    public void registerAbilities(List<IItemHandlerModifiable> abilityList) {
+        abilityList.add(new InaccessibleInfiniteSlot(this, this.internalBuffer, this.getController()));
+    }
+
+    @Override
+    public void addToMultiBlock(MultiblockControllerBase controllerBase) {
+        super.addToMultiBlock(controllerBase);
+        this.updateConnectableSides();
+        this.markDirty();
+        if (controllerBase instanceof MultiblockWithDisplayBase) {
+            ((MultiblockWithDisplayBase) controllerBase).enableItemInfSink();
+        }
+    }
+
+    private static class InaccessibleInfiniteSlot implements IItemHandlerModifiable {
+
+        private final IItemList<IAEItemStack> internalBuffer;
+        private final MetaTileEntity holder;
+
+        public InaccessibleInfiniteSlot(MetaTileEntity holder, IItemList<IAEItemStack> internalBuffer,
+                                        MetaTileEntity mte) {
+            this.holder = holder;
+            this.internalBuffer = internalBuffer;
+        }
+
+        @Override
+        public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+            this.internalBuffer.add(AEItemStack.fromItemStack(stack));
+            this.holder.markDirty();
+        }
+
+        @Override
+        public int getSlots() {
+            return Byte.MAX_VALUE;
+        }
+
+        @NotNull
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return ItemStack.EMPTY;
+        }
+
+        @NotNull
+        @Override
+        public ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (stack.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            if (!simulate) {
+                this.internalBuffer.add(AEItemStack.fromItemStack(stack));
+                this.holder.markDirty();
+            }
+            return ItemStack.EMPTY;
+        }
+
+        @NotNull
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return Integer.MAX_VALUE - 1;
+        }
+    }
+}

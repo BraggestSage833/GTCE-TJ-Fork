@@ -4,8 +4,12 @@ import com.google.common.collect.ImmutableList;
 import gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.recipes.recipeproperties.RecipeProperty;
 import gregtech.api.recipes.recipeproperties.RecipePropertyStorage;
+import gregtech.api.util.GTFluidUtils;
 import gregtech.api.util.GTUtility;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.NonNullList;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
@@ -46,6 +50,9 @@ public class Recipe {
     private final List<FluidStack> fluidInputs;
     private final List<FluidStack> fluidOutputs;
 
+    private final Object2ObjectMap<String, Pair<Ingredient, Counter>> itemIngredientsMerged = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<FluidStack, Counter> fluidInputsMerged = new Object2ObjectOpenHashMap<>();
+
     private final int duration;
 
     /**
@@ -76,6 +83,15 @@ public class Recipe {
         this.hidden = hidden;
         //sort input elements in descending order (i.e not consumables inputs are last)
         this.inputs.sort(Comparator.comparing(CountableIngredient::getCount).reversed());
+
+        for (CountableIngredient ingredient : this.inputs) {
+            Counter count = this.itemIngredientsMerged.computeIfAbsent(Arrays.toString(ingredient.getIngredient().getMatchingStacks()), k -> Pair.of(ingredient.getIngredient(), new Counter(0))).getValue();
+            count.increment(ingredient.getCount());
+        }
+        for (FluidStack fluid : this.fluidInputs) {
+            Counter count = this.fluidInputsMerged.computeIfAbsent(fluid, k -> new Counter(0));
+            count.increment(fluid.amount);
+        }
     }
 
     /**
@@ -222,6 +238,49 @@ public class Recipe {
                 return Pair.of(false, fluidAmountInTank);
         }
         return Pair.of(true, fluidAmountInTank);
+    }
+
+    /**
+     * New recipe matcher for recipe logic and LRU cache.
+     */
+    public boolean matchesFound(boolean consume, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+        if (!matchesFluid(fluidInputs) || !matchesItems(inputs)) {
+            return false;
+        }
+        if (!consume)
+            return true;
+        for (Object2ObjectMap.Entry<FluidStack, Counter> entry : this.fluidInputsMerged.object2ObjectEntrySet()) {
+            fluidInputs.drain(entry.getKey(), true);
+        }
+        for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : this.itemIngredientsMerged.object2ObjectEntrySet()) {
+            GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), false);
+        }
+        return true;
+    }
+
+    private boolean matchesItems(IItemHandlerModifiable inputs) {
+        for (Object2ObjectMap.Entry<String, Pair<Ingredient, Counter>> entry : this.itemIngredientsMerged.object2ObjectEntrySet()) {
+            if (entry.getValue().getValue().getValue() == 0) {
+                if (!GTUtility.checkItemHandlerForIngredient(inputs, entry.getValue().getKey()))
+                    return false;
+            } else if (GTUtility.extractFromItemHandlerByIngredient(inputs, entry.getValue().getKey(), entry.getValue().getValue().getValue(), true) != entry.getValue().getValue().getValue())
+                return false;
+        }
+        return true;
+    }
+
+    private boolean matchesFluid(IMultipleTankHandler fluidInputs) {
+        for (Object2ObjectMap.Entry<FluidStack, Counter> entry : this.fluidInputsMerged.object2ObjectEntrySet()) {
+            if (entry.getValue().getValue() == 0) {
+                if (!GTFluidUtils.findFluidFromTanks(fluidInputs, entry.getKey()))
+                    return false;
+            } else {
+                FluidStack drained = fluidInputs.drain(entry.getKey(), false);
+                if (drained == null || drained.amount != entry.getValue().getValue())
+                    return false;
+            }
+        }
+        return true;
     }
 
     ///////////////////
@@ -380,6 +439,23 @@ public class Recipe {
 
         public int getBoostPerTier() {
             return boostPerTier;
+        }
+    }
+
+    public static class Counter {
+
+        private int value;
+
+        public Counter(int initialValue) {
+            this.value = initialValue;
+        }
+
+        public void increment(int amount) {
+            this.value += amount;
+        }
+
+        public int getValue() {
+            return this.value;
         }
     }
 }

@@ -1,5 +1,12 @@
 package gregtech.api.metatileentity;
 
+import appeng.api.networking.IGridNode;
+import appeng.api.networking.security.IActionHost;
+import appeng.api.util.AECableType;
+import appeng.api.util.AEPartLocation;
+import appeng.api.util.DimensionalCoord;
+import appeng.me.helpers.AENetworkProxy;
+import appeng.me.helpers.IGridProxyable;
 import com.google.common.base.Preconditions;
 import gregtech.api.GTValues;
 import gregtech.api.GregTechAPI;
@@ -20,12 +27,17 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraftforge.fml.common.Optional;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
-
-public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIHolder {
+@Optional.InterfaceList(value = {
+        @Optional.Interface(iface = "appeng.api.networking.security.IActionHost", modid = GTValues.MODID_AE2, striprefs = true),
+        @Optional.Interface(iface = "appeng.me.helpers.IGridProxyable", modid = GTValues.MODID_AE2, striprefs = true)
+})
+public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIHolder, IActionHost, IGridProxyable {
 
     private MetaTileEntity metaTileEntity;
     private boolean needToUpdateLightning = false;
@@ -97,6 +109,9 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
             } else {
                 GTLog.logger.error("Failed to load MetaTileEntity with invalid ID " + metaTileEntityIdRaw);
             }
+            if (GTValues.isModLoaded(GTValues.MODID_AE2)) {
+                readFromNBT_AENetwork(compound);
+            }
         }
     }
 
@@ -133,6 +148,9 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
             NBTTagCompound metaTileEntityData = new NBTTagCompound();
             metaTileEntity.writeToNBT(metaTileEntityData);
             compound.setTag("MetaTileEntity", metaTileEntityData);
+        }
+        if (GTValues.isModLoaded(GTValues.MODID_AE2)) {
+            writeToNBT_AENetwork(compound);
         }
         return compound;
     }
@@ -226,6 +244,9 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
         if (metaTileEntity != null) {
             metaTileEntity.onUnload();
         }
+        if (GTValues.isModLoaded(GTValues.MODID_AE2)) {
+            onChunkUnloadAE();
+        }
     }
 
     @Override
@@ -279,5 +300,96 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
     @Override
     public boolean canRenderBreaking() {
         return false;
+    }
+
+    @Override
+    public void invalidate() {
+        super.invalidate();
+        if (GTValues.isModLoaded(GTValues.MODID_AE2)) {
+            invalidateAE();
+        }
+    }
+
+    @org.jetbrains.annotations.Nullable
+    @Override
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public IGridNode getGridNode(@NotNull AEPartLocation part) {
+        // Forbid it connects the faces it shouldn't connect.
+        if (this.getCableConnectionType(part) == AECableType.NONE) {
+            return null;
+        }
+        AENetworkProxy proxy = getProxy();
+        return proxy == null ? null : proxy.getNode();
+    }
+
+    @NotNull
+    @Override
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public AECableType getCableConnectionType(@NotNull AEPartLocation part) {
+        return metaTileEntity == null ? AECableType.NONE : metaTileEntity.getCableConnectionType(part);
+    }
+
+    @Override
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public void securityBreak() {}
+
+    @NotNull
+    @Override
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public IGridNode getActionableNode() {
+        AENetworkProxy proxy = getProxy();
+        return proxy == null ? null : proxy.getNode();
+    }
+
+    @Override
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public AENetworkProxy getProxy() {
+        return metaTileEntity == null ? null : metaTileEntity.getProxy();
+    }
+
+    @Override
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public DimensionalCoord getLocation() {
+        return new DimensionalCoord(this);
+    }
+
+    @Override
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public void gridChanged() {
+        if (metaTileEntity != null) {
+            metaTileEntity.gridChanged();
+        }
+    }
+
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public void readFromNBT_AENetwork(NBTTagCompound data) {
+        AENetworkProxy proxy = getProxy();
+        if (proxy != null) {
+            proxy.readFromNBT(data);
+        }
+    }
+
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public void writeToNBT_AENetwork(NBTTagCompound data) {
+        AENetworkProxy proxy = getProxy();
+        if (proxy != null) {
+            proxy.writeToNBT(data);
+        }
+    }
+
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    void onChunkUnloadAE() {
+        AENetworkProxy proxy = getProxy();
+        if (proxy != null) {
+            proxy.onChunkUnload();
+        }
+    }
+
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    void invalidateAE() {
+        AENetworkProxy proxy = getProxy();
+        if (proxy != null) {
+            proxy.invalidate();
+        }
     }
 }

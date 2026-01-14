@@ -13,6 +13,7 @@ import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityEn
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityFluidHatch;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityItemBus;
 import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityRotorHolder;
+import gregtech.common.metatileentities.electric.multiblockpart.appeng.*;
 import gregtech.common.metatileentities.multi.MetaTileEntityCokeOven;
 import gregtech.common.metatileentities.multi.MetaTileEntityCokeOvenHatch;
 import gregtech.common.metatileentities.multi.MetaTileEntityLargeBoiler;
@@ -152,6 +153,16 @@ public class MetaTileEntities {
     public static MetaTileEntityTank STAINLESS_STEEL_TANK;
     public static MetaTileEntityTank TITANIUM_TANK;
     public static MetaTileEntityTank TUNGSTENSTEEL_TANK;
+
+    public static MetaTileEntityMECraftingStation ME_CRAFTING_STATION;
+
+    // ME hatches and buses
+    public static MetaTileEntityMEInputHatch ME_INPUT_HATCH;
+    public static MetaTileEntityMEStockingHatch ME_STOCKING_HATCH;
+    public static MetaTileEntityMEOutputHatch ME_OUTPUT_HATCH;
+    public static MetaTileEntityMEInputBus ME_INPUT_BUS;
+    //public static MetaTileEntityMEStockingBus ME_STOCKING_BUS;
+    public static MetaTileEntityMEOutputBus ME_OUTPUT_BUS;
 
 
     //MISC MACHINES SECTION
@@ -521,9 +532,15 @@ public class MetaTileEntities {
         GregTechAPI.registerMetaTileEntity(834, Super_tank[3]);
         GregTechAPI.registerMetaTileEntity(835, Super_tank[4]);
 
+        ME_CRAFTING_STATION = GregTechAPI.registerMetaTileEntity(1099, new MetaTileEntityMECraftingStation(gregtechId("me_crafting_station")));
 
-
-
+        // ME hatches and buses
+        ME_INPUT_HATCH = GregTechAPI.registerMetaTileEntity(1100, new MetaTileEntityMEInputHatch(gregtechId("me_input_hatch")));
+        ME_STOCKING_HATCH = GregTechAPI.registerMetaTileEntity(1101, new MetaTileEntityMEStockingHatch(gregtechId("me_stocking_hatch")));
+        ME_OUTPUT_HATCH = GregTechAPI.registerMetaTileEntity(1102, new MetaTileEntityMEOutputHatch(gregtechId("me_output_hatch")));
+        ME_INPUT_BUS = GregTechAPI.registerMetaTileEntity(1103, new MetaTileEntityMEInputBus(gregtechId("me_input_bus")));
+        //ME_STOCKING_BUS = GregTechAPI.registerMetaTileEntity(1104, new MetaTileEntityMEStockingBus(gregtechId("me_stocking_bus")));
+        ME_OUTPUT_BUS = GregTechAPI.registerMetaTileEntity(1105, new MetaTileEntityMEOutputBus(gregtechId("me_output_bus")));
 
         for (int i = 1; i < 5; i++) {
             String voltageName = GTValues.VN[i].toLowerCase();

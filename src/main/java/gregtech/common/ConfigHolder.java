@@ -130,12 +130,28 @@ public class ConfigHolder {
     @Config.RequiresMcRestart
     public static boolean enableHammeringEnchant = false;
 
+    @Config.Comment({ "The interval between ME Hatch/Bus interact ME network.",
+            "It may cause lag if the interval is too small.", "Default: 2 sec" })
+    @Config.RangeInt(min = 1, max = 80)
+    public static int updateIntervals = 40;
+
+    @Config.Comment({ "The energy consumption of ME Hatch/Bus.", "Default: 1.0AE/t" })
+    @Config.RangeDouble(min = 0.0, max = 10.0)
+    public static double meHatchEnergyUsage = 1.0;
+
     @Config.Comment("What is the max amount of time machines should sleep if they fail a start a recipe in ticks. 20 ticks = 1 second")
     @Config.RangeInt(min = 0, max = 400)
     @Config.RequiresMcRestart
     public static int maxSleepTime = 0;
+
     @Config.Comment("should the controller state the cache miss/catch ratio")
     public static boolean debug_options_for_caching =false;
+
+    @Config.Name("Recipe has problems cooldown")
+    @Config.Comment("Set tick duration of cooldown timer")
+    @Config.RequiresMcRestart
+    public static int recipeCooldown = 100;
+
     public static class VanillaRecipes {
 
         @Config.Comment("Whether to nerf the paper crafting recipe. Default: true")

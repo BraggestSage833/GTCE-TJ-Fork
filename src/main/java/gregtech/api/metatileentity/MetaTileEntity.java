@@ -1,5 +1,8 @@
 package gregtech.api.metatileentity;
 
+import appeng.api.util.AECableType;
+import appeng.api.util.AEPartLocation;
+import appeng.me.helpers.AENetworkProxy;
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.render.CCRenderState;
@@ -9,6 +12,7 @@ import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Matrix4;
 import com.google.common.base.Preconditions;
+import gregtech.api.GTValues;
 import gregtech.api.GregTechAPI;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.capability.IEnergyContainer;
@@ -45,11 +49,13 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fml.common.Optional;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -1248,4 +1254,19 @@ public abstract class MetaTileEntity implements ICoverable {
     public boolean keepsInventory() {
         return false;
     }
+
+    @NotNull
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public AECableType getCableConnectionType(@NotNull AEPartLocation part) {
+        return AECableType.NONE;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public AENetworkProxy getProxy() {
+        return null;
+    }
+
+    @Optional.Method(modid = GTValues.MODID_AE2)
+    public void gridChanged() {}
 }

@@ -44,6 +44,7 @@ public abstract class Widget {
     private Position selfPosition;
     private Position position;
     private Size size;
+    private boolean isVisible;
 
     public Widget(Position selfPosition, Size size) {
         Preconditions.checkNotNull(selfPosition, "selfPosition");
@@ -89,6 +90,14 @@ public abstract class Widget {
 
     public final Size getSize() {
         return size;
+    }
+
+    public void setVisible(boolean isVisible) {
+        this.isVisible = isVisible;
+    }
+
+    public boolean isVisible() {
+        return this.isVisible;
     }
 
     public Rectangle toRectangleBox() {

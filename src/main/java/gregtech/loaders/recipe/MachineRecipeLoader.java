@@ -56,6 +56,7 @@ import java.util.List;
 import static gregtech.api.GTValues.L;
 import static gregtech.api.GTValues.M;
 import static gregtech.api.recipes.RecipeMaps.ASSEMBLER_RECIPES;
+import static gregtech.api.unification.material.MarkerMaterials.Tier.Master;
 import static gregtech.api.unification.material.Materials.*;
 import static gregtech.api.unification.ore.OrePrefix.*;
 import static gregtech.api.util.DyeUtil.getOrdictColorName;
@@ -66,6 +67,8 @@ import static gregtech.common.blocks.BlockMultiblockCasing.MultiblockCasingType.
 import static gregtech.common.blocks.MetaBlocks.METAL_CASING;
 
 import static gregtech.common.items.MetaItems.*;
+import static gregtech.common.metatileentities.MetaTileEntities.*;
+import static gregtech.common.metatileentities.MetaTileEntities.ME_OUTPUT_BUS;
 
 public class MachineRecipeLoader {
 
@@ -763,8 +766,27 @@ public class MachineRecipeLoader {
         RecipeMaps.ASSEMBLER_RECIPES.recipeBuilder().EUt(1).input(OrePrefix.stick, Materials.Wood, 1).input(OrePrefix.dust, Materials.Sulfur, 1).outputs(new ItemStack(Blocks.TORCH, 2)).duration(400).buildAndRegister();
         RecipeMaps.ASSEMBLER_RECIPES.recipeBuilder().EUt(1).input(OrePrefix.stick, Materials.Wood, 1).input(OrePrefix.dust, Materials.Phosphorus, 1).outputs(new ItemStack(Blocks.TORCH, 6)).duration(400).buildAndRegister();
 
-
-
+        if (GTValues.isModLoaded(GTValues.MODID_AE2)) {
+            for (int i = 0; i < 4; i++) {
+                ASSEMBLER_RECIPES.recipeBuilder()
+                        .inputs(i == 3 ? FLUID_IMPORT_HATCH[4].getStackForm() : i == 2 ? FLUID_EXPORT_HATCH[4].getStackForm() : i == 1 ? ITEM_IMPORT_BUS[4].getStackForm() : ITEM_EXPORT_BUS[4].getStackForm(),
+                                new ItemStack(Item.getByNameOrId(i == 3 || i == 2 ? "appliedenergistics2:fluid_interface" : "appliedenergistics2:interface"), 2),
+                                new ItemStack(Item.getByNameOrId("appliedenergistics2:material"), 4, 30), // acceleration card
+                                new ItemStack(Item.getByNameOrId("appliedenergistics2:material"), 1, 47), // singularity
+                                new ItemStack(Item.getByNameOrId("appliedenergistics2:material"), 2, i == 3 || i == 1 ? 44 : 43)) // annihilation and formation cores
+                        .outputs(i == 3 ? ME_INPUT_HATCH.getStackForm() : i == 2 ? ME_OUTPUT_HATCH.getStackForm() : i == 1 ? ME_INPUT_BUS.getStackForm() : ME_OUTPUT_BUS.getStackForm())
+                        .duration(300).EUt(1920)
+                        .buildAndRegister();
+            }
+            ASSEMBLER_RECIPES.recipeBuilder()
+                    .input(circuit, Master, 2)
+                    .inputs(ME_INPUT_HATCH.getStackForm(), SENSOR_IV.getStackForm(), EMITTER_IV.getStackForm(),
+                            new ItemStack(Item.getByNameOrId("appliedenergistics2:material"), 4, 30), // acceleration card
+                            new ItemStack(Item.getByNameOrId("appliedenergistics2:material"), 2, 44)) // annihilation cores
+                    .outputs(ME_STOCKING_HATCH.getStackForm())
+                    .duration(300).EUt(7680)
+                    .buildAndRegister();
+        }
     }
 
     private static void registerBlastFurnaceRecipes() {

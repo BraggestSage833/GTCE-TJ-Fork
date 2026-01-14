@@ -23,10 +23,9 @@ import gregtech.api.recipes.map.MapFluidIngredient;
 import gregtech.api.recipes.map.MapItemStackIngredient;
 import gregtech.api.unification.material.type.Material;
 import gregtech.api.unification.ore.OrePrefix;
-import gregtech.api.util.EnumValidationResult;
-import gregtech.api.util.GTLog;
-import gregtech.api.util.GTUtility;
-import gregtech.api.util.ValidationResult;
+import gregtech.api.util.*;
+import it.unimi.dsi.fastutil.objects.Object2ByteMap;
+import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
@@ -67,7 +66,7 @@ public class RecipeMap<R extends RecipeBuilder<R>> {
 
     private final Map<MapFluidIngredient, Collection<Recipe>> recipeFluidMap = new HashMap<>();
     private final Map<MapItemStackIngredient, Collection<Recipe>> recipeItemMap = new HashMap<>();
-    private final Map<Recipe, Byte> recipeIngredientCountMap = new HashMap<>();
+    private final Object2ByteMap<Recipe> recipeIngredientCountMap = new Object2ByteOpenHashMap<>();
     private final Collection<Recipe> recipeList = new ArrayList<>();
 
     public RecipeMap(String unlocalizedName,
@@ -197,6 +196,7 @@ public class RecipeMap<R extends RecipeBuilder<R>> {
         }
         byte uniqueIngredients = 0;
         uniqueIngredients += (byte) (uniqueFluidIngredients.size() + uniqueItemIngredients.size());
+        recipeIngredientCountMap.defaultReturnValue((byte) -127);
         recipeIngredientCountMap.put(recipe, uniqueIngredients);
     }
 
@@ -263,6 +263,28 @@ public class RecipeMap<R extends RecipeBuilder<R>> {
     @Nullable
     public Recipe findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity, boolean useOptimizedRecipeLookUp) {
         return this.findRecipe(voltage, GTUtility.itemHandlerToList(inputs), GTUtility.fluidHandlerToList(fluidInputs), outputFluidTankCapacity, MatchingMode.DEFAULT, useOptimizedRecipeLookUp);
+    }
+
+    @Nullable
+    public Recipe searchRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity, boolean useOptimizedRecipeLookUp) {
+        if (recipeList.isEmpty())
+            return null;
+        if (minFluidInputs > 0 && GTUtility.amountOfNonNullElements(GTUtility.fluidHandlerToList(fluidInputs)) < minFluidInputs) {
+            return null;
+        }
+        if (minInputs > 0 && GTUtility.amountOfNonEmptyStacks(GTUtility.itemHandlerToList(inputs)) < minInputs) {
+            return null;
+        }
+
+        if (useOptimizedRecipeLookUp) {
+            return findWithHashMap(voltage, inputs, fluidInputs);
+        }
+
+        if (maxInputs > 0) {
+            return findByInputs(voltage, inputs, fluidInputs);
+        } else {
+            return findByFluidInputs(voltage, inputs, fluidInputs);
+        }
     }
 
     /**
@@ -377,6 +399,97 @@ public class RecipeMap<R extends RecipeBuilder<R>> {
                     continue;
                 }
                 boolean isMatch = recipe.matches(false, inputs, fluidInputs, matchingMode);
+                if (isMatch) {
+                    return recipe;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private Recipe findByFluidInputs(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+        for (FluidStack fluid : GTUtility.fluidHandlerToList(fluidInputs)) {
+            if (fluid == null) continue;
+            Collection<Recipe> recipes = recipeFluidMap.get(new MapFluidIngredient(fluid));
+            if (recipes == null) continue;
+            for (Recipe tmpRecipe : recipes) {
+                if (tmpRecipe.matchesFound(false, inputs, fluidInputs)) {
+                    return voltage >= tmpRecipe.getEUt() ? tmpRecipe : null;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private Recipe findByInputs(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+        for (Recipe recipe : recipeList) {
+            if (recipe.matchesFound(false, inputs, fluidInputs)) {
+                return voltage >= recipe.getEUt() ? recipe : null;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private Recipe findWithHashMap(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+        HashSet<MapItemStackIngredient> uniqueItems = new HashSet<>();
+        HashSet<MapFluidIngredient> uniqueFluids = new HashSet<>();
+
+        for (ItemStack item : GTUtility.itemHandlerToList(inputs)) {
+            uniqueItems.add(new MapItemStackIngredient(item));
+        }
+        for (FluidStack fluid : GTUtility.fluidHandlerToList(fluidInputs)) {
+            if (fluid == null) continue;
+            uniqueFluids.add(new MapFluidIngredient(fluid));
+        }
+
+        Object2ByteMap<Recipe> recipeLeftoverIngredients = new Object2ByteOpenHashMap<>();
+        recipeLeftoverIngredients.defaultReturnValue((byte) -127);
+        for (MapItemStackIngredient item : uniqueItems) {
+            boolean hasRecipes = recipeItemMap.containsKey(item);
+            if (!hasRecipes) continue;
+            Collection<Recipe> recipes = recipeItemMap.get(item);
+            for (Recipe recipe : recipes) {
+                byte leftOverIngredients;
+                if ((leftOverIngredients = recipeLeftoverIngredients.getByte(recipe)) == -127)
+                    if ((leftOverIngredients = this.recipeIngredientCountMap.getByte(recipe)) == -127)
+                        leftOverIngredients = 0;
+                leftOverIngredients--;
+                recipeLeftoverIngredients.put(recipe, leftOverIngredients);
+                if (leftOverIngredients > 0) {
+                    continue;
+                }
+                int v = recipe.getEUt();
+                if (voltage < v) {
+                    continue;
+                }
+                boolean isMatch = recipe.matchesFound(false, inputs, fluidInputs);
+                if (isMatch) {
+                    return recipe;
+                }
+            }
+        }
+        for (MapFluidIngredient fluid : uniqueFluids) {
+            boolean hasRecipes = recipeFluidMap.containsKey(fluid);
+            if (!hasRecipes) continue;
+            Collection<Recipe> recipes = recipeFluidMap.get(fluid);
+            for (Recipe recipe : recipes) {
+                byte leftOverIngredients;
+                if ((leftOverIngredients = recipeLeftoverIngredients.getByte(recipe)) == -127)
+                    if ((leftOverIngredients = this.recipeIngredientCountMap.getByte(recipe)) == -127)
+                        leftOverIngredients = 0;
+                leftOverIngredients--;
+                recipeLeftoverIngredients.put(recipe, leftOverIngredients);
+                if (leftOverIngredients > 0) {
+                    continue;
+                }
+                int v = recipe.getEUt();
+                if (voltage < v) {
+                    continue;
+                }
+                boolean isMatch = recipe.matchesFound(false, inputs, fluidInputs);
                 if (isMatch) {
                     return recipe;
                 }

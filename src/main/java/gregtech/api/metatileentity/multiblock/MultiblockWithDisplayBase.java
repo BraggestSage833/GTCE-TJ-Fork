@@ -17,6 +17,9 @@ import java.util.List;
 
 public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase {
 
+    private boolean enableItemInfSink;
+    private boolean enableFluidInfSink;
+
     public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId) {
         super(metaTileEntityId);
     }
@@ -60,4 +63,26 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
         return createUITemplate(entityPlayer).build(getHolder(), entityPlayer);
     }
 
+    @Override
+    public void invalidateStructure() {
+        super.invalidateStructure();
+        this.enableItemInfSink = false;
+        this.enableFluidInfSink = false;
+    }
+
+    public boolean isItemInfSink() {
+        return this.enableItemInfSink;
+    }
+
+    public boolean isFluidInfSink() {
+        return this.enableFluidInfSink;
+    }
+
+    public void enableItemInfSink() {
+        this.enableItemInfSink = true;
+    }
+
+    public void enableFluidInfSink() {
+        this.enableFluidInfSink = true;
+    }
 }

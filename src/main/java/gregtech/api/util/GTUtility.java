@@ -26,6 +26,7 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.play.client.CPacketPlayerDigging;
@@ -45,11 +46,16 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.IFluidTank;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -789,5 +795,124 @@ public class GTUtility {
                 stack.shrink(shrink);
             }
         }
+    }
+
+    /**
+     * Get fluidstack from a container.
+     *
+     * @param ingredient the fluidstack or fluid container item
+     * @return the fluidstack in container
+     */
+    @Nullable
+    public static FluidStack getFluidFromContainer(Object ingredient) {
+        if (ingredient instanceof FluidStack) {
+            return (FluidStack) ingredient;
+        } else if (ingredient instanceof ItemStack) {
+            ItemStack itemStack = (ItemStack) ingredient;
+            IFluidHandlerItem fluidHandler = itemStack
+                    .getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null);
+            if (fluidHandler != null)
+                return fluidHandler.drain(Integer.MAX_VALUE, false);
+        }
+        return null;
+    }
+
+    /**
+     * Tries to extract from container inventory or item handler with ingredients
+     * @param itemHandler container inventory
+     * @param ingredient the ItemStack to extract
+     * @param amount the amount of items to extract and will be added to ItemStack count
+     * @param simulate test to see if the item can be extracted without actually extracting the item for real.
+     * @return The amount extracted
+     */
+    public static int extractFromItemHandlerByIngredient(IItemHandler itemHandler, @Nonnull Ingredient ingredient, int amount, boolean simulate) {
+        if (itemHandler == null || amount == 0)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < itemHandler.getSlots(); i++) {
+            ItemStack slotStack = itemHandler.getStackInSlot(i);
+            if (ingredient.apply(slotStack)) {
+                int extracted = itemHandler.extractItem(i, amount, simulate).getCount();
+                count += extracted;
+                amount -= extracted;
+            }
+            if (amount < 1) break;
+        }
+        return count;
+    }
+
+    /**
+     * Tries to extract from container inventory or item handler with ingredients.
+     * @param itemHandler container inventory
+     * @param ingredient the ItemStack to check
+     */
+    public static boolean checkItemHandlerForIngredient(IItemHandler itemHandler, @Nonnull Ingredient ingredient) {
+        if (itemHandler == null)
+            return false;
+        for (int i = 0; i < itemHandler.getSlots(); i++) {
+            if (ingredient.apply(itemHandler.getStackInSlot(i)))
+                return true;
+        }
+        return false;
+    }
+
+    public static IItemHandlerModifiable createItemHandlerFromList(List<ItemStack> itemStacks) {
+        ItemStackHandler handler = new ItemStackHandler(itemStacks.size()) {
+            @Override
+            public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+                if (amount == 0)
+                    return ItemStack.EMPTY;
+                validateSlotIndex(slot);
+                ItemStack existing = this.stacks.get(slot);
+                if (existing.isEmpty())
+                    return ItemStack.EMPTY;
+                if (existing.getCount() <= amount) {
+                    if (!simulate) {
+                        this.stacks.set(slot, ItemStack.EMPTY);
+                        onContentsChanged(slot);
+                    }
+                    return existing;
+                } else {
+                    if (!simulate) {
+                        this.stacks.set(slot, ItemHandlerHelper.copyStackWithSize(existing, existing.getCount() - amount));
+                        onContentsChanged(slot);
+                    }
+                    return ItemHandlerHelper.copyStackWithSize(existing, amount);
+                }
+            }
+        };
+        for (int i = 0; i < handler.getSlots(); i++) {
+            handler.setStackInSlot(i, itemStacks.get(i));
+        }
+        return handler;
+    }
+
+    /**
+     * Tries to insert into container inventory or item handler
+     * @param itemHandler container inventory
+     * @param stack the ItemStack to insert
+     * @param simulate test to see if the item can be inserted without actually inserting the item for real.
+     * @return ItemStack reminder. returns empty when ItemStack is fully inserted. returns the stack unmodified when unable to insert at all.
+     */
+    public static ItemStack insertIntoItemHandler(IItemHandler itemHandler, @Nonnull ItemStack stack, boolean simulate) {
+        if (itemHandler == null || stack.isEmpty())
+            return stack;
+
+        stack = simulate ? stack.copy() : stack;
+        for (int i = 0; i < itemHandler.getSlots() && !stack.isEmpty(); i++) {
+            ItemStack slotStack = itemHandler.getStackInSlot(i);
+            int maxStackSize = itemHandler.getSlotLimit(i);
+            if (slotStack.isEmpty()) {
+                stack = itemHandler.insertItem(i, stack, simulate);
+            } else if (slotStack.isItemEqual(stack) && ItemStack.areItemStackShareTagsEqual(slotStack, stack)) {
+                int reminder = Math.max(0, maxStackSize - slotStack.getCount());
+                int extracted = Math.min(stack.getCount(), reminder);
+                stack.shrink(extracted);
+                if (!simulate)
+                    slotStack.grow(extracted);
+            }
+        }
+        return stack;
     }
 }
