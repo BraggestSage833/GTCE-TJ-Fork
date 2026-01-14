@@ -6,6 +6,7 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.Vector3;
 import gregtech.api.capability.impl.FluidTankList;
+import gregtech.api.capability.impl.ThermalFluidHandlerItemStack;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.ModularUI.Builder;
@@ -25,6 +26,7 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
@@ -105,9 +107,16 @@ public class MetaTileEntityQuantumTank extends MetaTileEntity implements ITiered
     }
 
     @Override
+    public ICapabilityProvider initItemStackCapabilities(ItemStack itemStack) {
+        return new ThermalFluidHandlerItemStack(itemStack, maxFluidCapacity, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
+
+    @Override
     public void initFromItemStackData(NBTTagCompound itemStack) {
         super.initFromItemStackData(itemStack);
-        if (itemStack.hasKey("FluidName", Constants.NBT.TAG_COMPOUND)) {
+        if (itemStack.hasKey("Fluid", Constants.NBT.TAG_COMPOUND)) {
+            this.fluidTank.setFluid(FluidStack.loadFluidStackFromNBT(itemStack.getCompoundTag("Fluid")));
+        } else if (itemStack.hasKey("FluidName", Constants.NBT.TAG_COMPOUND)) { // for people that have old super tanks filled with fluid
             this.fluidTank.setFluid(FluidStack.loadFluidStackFromNBT(itemStack.getCompoundTag("FluidName")));
         }
         if (itemStack.getBoolean("IsVoiding")) {
@@ -122,7 +131,7 @@ public class MetaTileEntityQuantumTank extends MetaTileEntity implements ITiered
         if (fluidStack != null && fluidStack.amount > 0) {
             NBTTagCompound tagCompound = new NBTTagCompound();
             fluidStack.writeToNBT(tagCompound);
-            itemStack.setTag("FluidName", tagCompound);
+            itemStack.setTag("Fluid", tagCompound);
         }
         if (this.voiding) {
             itemStack.setBoolean("IsVoiding", true);
@@ -181,8 +190,8 @@ public class MetaTileEntityQuantumTank extends MetaTileEntity implements ITiered
         tooltip.add(I18n.format("gregtech.machine.quantum_tank.capacity", maxFluidCapacity));
         NBTTagCompound compound = stack.getTagCompound();
         if (compound != null) {
-            if (compound.hasKey("FluidName", Constants.NBT.TAG_COMPOUND)) {
-                FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(compound.getCompoundTag("FluidName"));
+            if (compound.hasKey("Fluid", Constants.NBT.TAG_COMPOUND)) {
+                FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(compound.getCompoundTag("Fluid"));
                 if (fluidStack != null) {
                     tooltip.add(I18n.format("gregtech.machine.quantum_tank.tooltip.name", fluidStack.getLocalizedName()));
                     tooltip.add(I18n.format("gregtech.machine.quantum_tank.tooltip.count", fluidStack.amount));

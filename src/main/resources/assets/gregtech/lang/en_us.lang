@@ -2323,9 +2323,9 @@ gregtech.machine.quantum_chestuv.name=Quantum Chest IV
 #Quantum tanks
 gregtech.machine.quantum_tank.tooltip=Compact place to store all your fluids.
 gregtech.machine.quantum_tank.tooltip.voiding_enabled=Excess Fluid Voiding §aEnabled
-gregtech.machine.quantum_tank.capacity=Fluid Capacity: %,d mb
+gregtech.machine.quantum_tank.capacity=Fluid Capacity: §3%,d mb
 gregtech.machine.quantum_tank.tooltip.name=Fluid Stored: §b%s
-gregtech.machine.quantum_tank.tooltip.count=Fluid Amount: §e%,d mb
+gregtech.machine.quantum_tank.tooltip.count=Fluid Amount: §3%,d mb
 
 gregtech.machine.quantum_tanklv.name=Super Tank I
 gregtech.machine.quantum_tank.mv.name=Super Tank II
@@ -2995,18 +2995,18 @@ gregtech.recipe.blast_furnace_temperature=Temperature: %,dK (%s)
 gregtech.recipe.explosive=Explosive: %s
 gregtech.recipe.eu_to_start=Energy To Start: %,dEU
 
-gregtech.fluid.click_to_fill=§7Click with a empty fluid container to fill it from tank.
-gregtech.fluid.click_to_fill.shift=§7(Shift-clicking will fill all containers in your hand)
+gregtech.fluid.click_to_fill=§7Right-Click with a fluid container to fill it from tank slot.
+gregtech.fluid.click_to_fill.shift=§7(Shift-Right-Clicking will fill all containers in your hand)
 
-gregtech.fluid.click_to_empty=§7Click with a filled fluid container to empty in into tank.
-gregtech.fluid.click_to_empty.shift=§7(Shift-clicking will empty all containers in your hand)
+gregtech.fluid.click_to_empty=§7Left-Click with a fluid container to empty in into tank slot.
+gregtech.fluid.click_to_empty.shift=§7(Shift-Left-Clicking will empty all containers in your hand)
 
 gregtech.fluid.plasma=%s Plasma
 gregtech.fluid.empty=Empty
-gregtech.fluid.amount=§7%,d/%,d
-gregtech.fluid.temperature=§7Temperature: %,dK
-gregtech.fluid.state_gas=§7State: Gaseous
-gregtech.fluid.state_liquid=§7State: Liquid
+gregtech.fluid.amount=§7Amount: §3%,d/%,dL
+gregtech.fluid.temperature=§7Temperature: §c%,dK
+gregtech.fluid.state_gas=§7State: §eGaseous
+gregtech.fluid.state_liquid=§7State: §bLiquid
 gregtech.gui.fuel_amount=Fuel Amount:
 gregtech.gui.fluid_amount=Fluid Amount:
 gregtech.gui.toggle_view.disabled=Toggle View (Fluids)
