@@ -74,7 +74,6 @@ public class GTRecipeWrapper implements IRecipeWrapper {
             recipeInputs.forEach(stack -> {
                 if (stack.amount == 0) {
                     notConsumedFluidInput.add(stack);
-                    stack.amount = 1;
                 }
             });
             ingredients.setInputs(VanillaTypes.FLUID, recipeInputs);
