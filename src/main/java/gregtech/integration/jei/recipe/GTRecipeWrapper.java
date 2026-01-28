@@ -11,6 +11,8 @@ import gregtech.integration.jei.utils.JEIHelpers;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import mezz.jei.api.ingredients.IIngredients;
@@ -20,6 +22,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,20 +35,14 @@ public class GTRecipeWrapper implements IRecipeWrapper {
     private final Set<ItemStack> notConsumedInput = new ObjectOpenCustomHashSet<>(strategy);
     private final Map<ItemStack, ChanceEntry> chanceOutput = new Object2ObjectOpenCustomHashMap<>(strategy);
     private final Int2BooleanMap ingredientConsumable = new Int2BooleanOpenHashMap();
+    private final Int2ObjectMap<int[]> chanceEntries = new Int2ObjectOpenHashMap<>();
     private final List<FluidStack> notConsumedFluidInput = new ArrayList<>();
 
-
+    private final RecipeMap<?> recipeMap;
     private final Recipe recipe;
 
-    public GTRecipeWrapper(Recipe recipe) {
-        this.recipe = recipe;
-    }
-
-    /**
-     * @deprecated use {@link #GTRecipeWrapper(Recipe recipe)} instead
-     */
-    @Deprecated
     public GTRecipeWrapper(RecipeMap<?> recipeMap, Recipe recipe) {
+        this.recipeMap = recipeMap;
         this.recipe = recipe;
     }
 
@@ -89,10 +86,12 @@ public class GTRecipeWrapper implements IRecipeWrapper {
             List<ItemStack> recipeOutputs = recipe.getOutputs()
                     .stream().map(ItemStack::copy).collect(Collectors.toList());
             List<ChanceEntry> chancedOutputs = recipe.getChancedOutputs();
-            for (ChanceEntry chancedEntry : chancedOutputs) {
+            for (int i = 0; i < chancedOutputs.size(); i++) {
+                ChanceEntry chancedEntry = chancedOutputs.get(i);
                 ItemStack chancedStack = chancedEntry.getItemStack();
                 chanceOutput.put(chancedStack, chancedEntry);
                 recipeOutputs.add(chancedStack);
+                this.chanceEntries.put(i + this.recipeMap.getMaxInputs() + this.recipe.getOutputs().size(), ArrayUtils.addAll(new int[0], chancedEntry.getChance(), chancedEntry.getBoostPerTier()));
             }
 
             recipeOutputs.sort(Comparator.comparingInt(stack -> {
@@ -156,5 +155,9 @@ public class GTRecipeWrapper implements IRecipeWrapper {
 
     public Int2BooleanMap getIngredientConsumable() {
         return this.ingredientConsumable;
+    }
+
+    public Int2ObjectMap<int[]> getChanceEntries() {
+        return this.chanceEntries;
     }
 }
