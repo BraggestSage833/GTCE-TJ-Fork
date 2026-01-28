@@ -9,6 +9,8 @@ import gregtech.api.unification.OreDictUnifier;
 import gregtech.api.util.ItemStackHashStrategy;
 import gregtech.integration.jei.utils.JEIHelpers;
 import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import mezz.jei.api.ingredients.IIngredients;
@@ -29,6 +31,7 @@ public class GTRecipeWrapper implements IRecipeWrapper {
 
     private final Set<ItemStack> notConsumedInput = new ObjectOpenCustomHashSet<>(strategy);
     private final Map<ItemStack, ChanceEntry> chanceOutput = new Object2ObjectOpenCustomHashMap<>(strategy);
+    private final Int2BooleanMap ingredientConsumable = new Int2BooleanOpenHashMap();
     private final List<FluidStack> notConsumedFluidInput = new ArrayList<>();
 
 
@@ -51,17 +54,20 @@ public class GTRecipeWrapper implements IRecipeWrapper {
         if (!recipe.getInputs().isEmpty()) {
             List<CountableIngredient> recipeInputs = recipe.getInputs();
             List<List<ItemStack>> matchingInputs = new ArrayList<>(recipeInputs.size());
-            for (CountableIngredient ingredient : recipeInputs) {
+            for (int i = 0; i < recipeInputs.size(); i++) {
+                CountableIngredient ingredient = recipeInputs.get(i);
                 List<ItemStack> ingredientValues = Arrays.stream(ingredient.getIngredient().getMatchingStacks())
                         .map(ItemStack::copy)
                         .sorted(OreDictUnifier.getItemStackComparator())
                         .collect(Collectors.toList());
-                ingredientValues.forEach(stack -> {
+                for (ItemStack stack : ingredientValues) {
                     if (ingredient.getCount() == 0) {
-                        notConsumedInput.add(stack);
+                        this.notConsumedInput.add(stack);
                         stack.setCount(1);
                     } else stack.setCount(ingredient.getCount());
-                });
+                }
+                if (ingredient.getCount() != 0)
+                    this.ingredientConsumable.put(i, true);
                 matchingInputs.add(ingredientValues);
             }
             ingredients.setInputLists(VanillaTypes.ITEM, matchingInputs);
@@ -148,4 +154,7 @@ public class GTRecipeWrapper implements IRecipeWrapper {
         return (recipe.getRecipePropertyStorage().getSize() + 3) * LINE_HEIGHT;
     }
 
+    public Int2BooleanMap getIngredientConsumable() {
+        return this.ingredientConsumable;
+    }
 }

@@ -5,7 +5,6 @@ import gregtech.api.util.TextFormattingUtil;
 import mezz.jei.api.gui.IDrawable;
 import mezz.jei.plugins.vanilla.ingredients.fluid.FluidStackRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -31,10 +30,9 @@ public class FluidStackTextRenderer extends FluidStackRenderer {
 
         GlStateManager.pushMatrix();
         GlStateManager.scale(0.5, 0.5, 1);
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
 
         String s = amount > 0 ? TextFormattingUtil.formatLongToCompactString(fluidStack.amount, 4) + "L" : "NC";
-        fontRenderer.drawStringWithShadow(s, (xPosition + 6) * 2 - fontRenderer.getStringWidth(s) + 21, (yPosition + 12) * 2, amount > 0 ? 0xFFFFFF : 0xFFEC00);
+        minecraft.fontRenderer.drawStringWithShadow(s, (xPosition + 6) * 2 - minecraft.fontRenderer.getStringWidth(s) + 21, (yPosition + 12) * 2, amount > 0 ? 0xFFFFFF : 0xFFEC00);
 
         GlStateManager.popMatrix();
 
