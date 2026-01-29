@@ -269,7 +269,7 @@ public abstract class Widget {
     }
 
     @SideOnly(Side.CLIENT)
-    protected static void drawItemStack(ItemStack itemStack, int x, int y, @Nullable String altTxt) {
+    public static void drawItemStack(ItemStack itemStack, int x, int y, @Nullable String altTxt) {
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0F, 0.0F, 32.0F);
         GlStateManager.color(1F, 1F, 1F, 1F);
