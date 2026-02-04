@@ -36,11 +36,6 @@ public class BlockWireCoil extends VariantBlock<BlockWireCoil.CoilType> {
     }
 
     @Override
-    public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
-        return state.getValue(ACTIVE) ? 15 : 0;
-    }
-
-    @Override
     protected BlockStateContainer createBlockState() {
         super.createBlockState();
         return new BlockStateContainer(this, VARIANT, ACTIVE);

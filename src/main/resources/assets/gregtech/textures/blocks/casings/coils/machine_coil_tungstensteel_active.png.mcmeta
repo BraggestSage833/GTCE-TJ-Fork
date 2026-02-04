@@ -7,7 +7,11 @@
             "gregtech:blocks/casings/coils/machine_coil_tungstensteel_active_ctm"
         ],
         "extra": {
-            "connect_inside": true
+            "connect_inside": true,
+            "light": {
+                "block": 15,
+                "sky": 15
+            }
         }
     }
 }
