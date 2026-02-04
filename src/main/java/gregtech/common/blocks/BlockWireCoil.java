@@ -53,17 +53,17 @@ public class BlockWireCoil extends VariantBlock<BlockWireCoil.CoilType> {
 
     @Override
     public IBlockState getStateFromMeta(int meta) {
-        return super.getStateFromMeta(meta % 9).withProperty(ACTIVE, meta / 9 >= 1);
+        return super.getStateFromMeta(meta % 9).withProperty(ACTIVE, meta / VALUES.length >= 1);
     }
 
     @Override
     public int getMetaFromState(IBlockState state) {
-        return Math.min(15, super.getMetaFromState(state) + (state.getValue(ACTIVE) ? 9 : 0));
+        return Math.min(15, super.getMetaFromState(state) + (state.getValue(ACTIVE) ? VALUES.length : 0));
     }
 
     @Override
     public int damageDropped(IBlockState state) {
-        return super.damageDropped(state) - (state.getValue(ACTIVE) ? 9 : 0);
+        return super.damageDropped(state) - (state.getValue(ACTIVE) ? VALUES.length : 0);
     }
 
     @Override

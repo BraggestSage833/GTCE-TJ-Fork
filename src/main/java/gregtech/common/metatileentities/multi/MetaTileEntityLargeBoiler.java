@@ -183,6 +183,7 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
 
     @Override
     public void invalidateStructure() {
+        this.setActive(false);
         super.invalidateStructure();
         this.fluidImportInventory = new FluidTankList(true);
         this.itemImportInventory = new ItemHandlerList(Collections.emptyList());
@@ -190,17 +191,13 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
         this.currentTemperature = 0; //reset temperature
         this.fuelBurnTicksLeft = 0;
         this.hasNoWater = false;
-        this.isActive = false;
         this.throttlePercentage = 100;
-        replaceFireboxAsActive(false);
     }
 
     @Override
     public void onRemoval() {
+        this.setActive(false);
         super.onRemoval();
-        if (!getWorld().isRemote && isStructureFormed()) {
-            replaceFireboxAsActive(false);
-        }
     }
 
     @Override
@@ -360,7 +357,7 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
         this.currentTemperature = data.getInteger("CurrentTemperature");
         this.fuelBurnTicksLeft = data.getInteger("FuelBurnTicksLeft");
         this.hasNoWater = data.getBoolean("HasNoWater");
-        if(data.hasKey("ThrottlePercentage")) {
+        if (data.hasKey("ThrottlePercentage")) {
             this.throttlePercentage = data.getInteger("ThrottlePercentage");
         }
         this.isActive = fuelBurnTicksLeft > 0;
@@ -368,12 +365,12 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
 
     private void setActive(boolean active) {
         this.isActive = active;
-        if (!getWorld().isRemote) {
-            if (isStructureFormed()) {
-                replaceFireboxAsActive(active);
-            }
-            writeCustomData(100, buf -> buf.writeBoolean(isActive));
-            markDirty();
+        if (!this.getWorld().isRemote) {
+            this.writeCustomData(100, buf -> {
+                buf.writeBoolean(this.isActive);
+                this.writeActiveBlockPacket(buf);
+            });
+            this.markDirty();
         }
     }
 
@@ -385,16 +382,6 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
         return MathHelper.clamp(1.0 + 0.3*Math.log(getThrottleMultiplier()), 0.4, 1.0);
     }
 
-    private void replaceFireboxAsActive(boolean isActive) {
-        this.activeStates.forEach(pos -> {
-            IBlockState state = this.getWorld().getBlockState(pos);
-            if (state.getBlock() instanceof BlockFireboxCasing) {
-                state = state.withProperty(BlockFireboxCasing.ACTIVE, isActive);
-                this.getWorld().setBlockState(pos, state);
-            }
-        });
-    }
-
     @Override
     public int getLightValueForPart(IMultiblockPart sourcePart) {
         return sourcePart == null ? 0 : (isActive ? 15 : 0);
@@ -403,13 +390,15 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
     @Override
     public void writeInitialSyncData(PacketBuffer buf) {
         super.writeInitialSyncData(buf);
-        buf.writeBoolean(isActive);
+        buf.writeBoolean(this.isActive);
+        this.writeActiveBlockPacket(buf);
     }
 
     @Override
     public void receiveInitialSyncData(PacketBuffer buf) {
         super.receiveInitialSyncData(buf);
         this.isActive = buf.readBoolean();
+        this.readActiveBlockPacket(buf, this.isActive);
     }
 
     @Override
@@ -417,6 +406,26 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
         super.receiveCustomData(dataId, buf);
         if (dataId == 100) {
             this.isActive = buf.readBoolean();
+            this.readActiveBlockPacket(buf, this.isActive);
+        }
+    }
+
+    private void writeActiveBlockPacket(PacketBuffer buffer) {
+        buffer.writeInt(this.activeStates.size());
+        for (BlockPos pos : this.activeStates) {
+            buffer.writeBlockPos(pos);
+        }
+    }
+
+    private void readActiveBlockPacket(PacketBuffer buffer, boolean isActive) {
+        int size = buffer.readInt();
+        for (int i = 0; i < size; i++) {
+            BlockPos pos = buffer.readBlockPos();
+            IBlockState state = this.getWorld().getBlockState(pos);
+            if (state.getBlock() instanceof BlockFireboxCasing) {
+                state = state.withProperty(BlockFireboxCasing.ACTIVE, isActive);
+                this.getWorld().setBlockState(pos, state, 8);
+            }
         }
     }
 
