@@ -1,53 +1,109 @@
 {
   "forge_marker": 1,
   "defaults": {
-    "model": "minecraft:cube_all",
+    "model": "gregtech:multiblock_casing",
     "textures": {
       "all": "gregtech:blocks/rendering_error"
     }
   },
   "variants": {
-    "variant": {
-      "bronze_bricks": {
+    "active=false,variant=bronze_bricks": [
+      {
         "textures": {
           "all": "gregtech:blocks/rendering_error"
         }
-      },
-      "engine_intake": {
+      }
+    ],
+    "active=true,variant=bronze_bricks": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/rendering_error"
+        }
+      }
+    ],
+    "active=false,variant=engine_intake": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/pipe/machine_casing_engine_intake"
         }
-      },
-      "extreme_engine_intake": {
+      }
+    ],
+    "active=true,variant=engine_intake": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/pipe/machine_casing_engine_intake_active"
+        }
+      }
+    ],
+    "active=false,variant=extreme_engine_intake": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/pipe/machine_casing_extreme_engine_intake"
         }
-      },
-      "grate": {
+      }
+    ],
+    "active=true,variant=extreme_engine_intake": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/pipe/machine_casing_extreme_engine_intake_active"
+        }
+      }
+    ],
+    "active=false,variant=grate": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/pipe/machine_casing_grate"
         }
-      },
-      "assembler": {
+      }
+    ],
+    "active=true,variant=grate": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/casings/pipe/machine_casing_grate"
+        }
+      }
+    ],
+    "active=false,variant=assembler": [
+      {
         "textures": {
           "all": "gregtech:blocks/casings/mechanic/machine_casing_assembler"
         }
-      },
-      "assembling_machine": {
+      }
+    ],
+    "active=true,variant=assembler": [
+      {
         "textures": {
-          "all": "gregtech:blocks/rendering_error"
+          "all": "gregtech:blocks/casings/mechanic/machine_casing_assembler"
         }
-      },
-      "fusion": {
+      }
+    ],
+    "active=false,variant=fusion": [
+      {
         "textures": {
           "all": "gregtech:blocks/multiblock/fusion/fusioni_8"
         }
-      },
-      "fusion_mk2": {
+      }
+    ],
+    "active=true,variant=fusion": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/multiblock/fusion/fusioni_8"
+        }
+      }
+    ],
+    "active=false,variant=fusion_mk2": [
+      {
         "textures": {
           "all": "gregtech:blocks/multiblock/fusion/fusionii_8"
         }
       }
-    }
+    ],
+    "active=true,variant=fusion_mk2": [
+      {
+        "textures": {
+          "all": "gregtech:blocks/multiblock/fusion/fusionii_8"
+        }
+      }
+    ]
   }
 }
