@@ -3,6 +3,7 @@ package gregtech.api;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.oredict.OreDictionary;
 
+import java.text.DecimalFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -91,5 +92,9 @@ public class GTValues {
         isModLoadedCache.put(modid, isLoaded);
         return isLoaded;
     }
+
+    public static final DecimalFormat thousandFormat = new DecimalFormat(",###");
+
+    public static final DecimalFormat thousandTwoPlaceFormat = new DecimalFormat(",##0.00");
 
 }
