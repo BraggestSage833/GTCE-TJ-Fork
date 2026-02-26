@@ -83,7 +83,7 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
 
     public MetaTileEntityMECraftingStation(ResourceLocation metaTileEntityId) {
         super(metaTileEntityId, GTValues.MV, IItemStorageChannel.class);
-
+        this.allowExtraConnections = true;
     }
 
     @Override
@@ -93,7 +93,7 @@ public class MetaTileEntityMECraftingStation extends MetaTileEntityAEHostablePar
 
     @Override
     public EnumSet<EnumFacing> getConnectableSides() {
-        return EnumSet.of(EnumFacing.DOWN, EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST);
+        return this.allowExtraConnections ? EnumSet.of(EnumFacing.DOWN, EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST) : EnumSet.of(this.getFrontFacing());
     }
 
     @Override

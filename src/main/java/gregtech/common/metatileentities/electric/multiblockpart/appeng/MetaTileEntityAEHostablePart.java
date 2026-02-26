@@ -45,7 +45,7 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
     private AENetworkProxy aeProxy;
     private int meUpdateTick;
     protected boolean isOnline;
-    private boolean allowExtraConnections;
+    protected boolean allowExtraConnections;
     protected boolean meStatusChanged = false;
     protected boolean workingEnabled = true;
 
