@@ -77,6 +77,10 @@ public class AEFluidDisplayWidget extends Widget implements IIngredientSlot {
 
     @Override
     public Object getIngredientOverMouse(int mouseX, int mouseY) {
-        return this.isMouseOverElement(mouseX, mouseY) ? this.gridWidget.getAt(this.index).getFluidStack() : null;
+        if (this.isMouseOverElement(mouseX, mouseY)) {
+            IAEFluidStack stack = this.gridWidget.getAt(this.index);
+            return stack != null ? stack.getFluidStack() : null;
+        }
+        return null;
     }
 }

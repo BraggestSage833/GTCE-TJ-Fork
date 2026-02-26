@@ -273,11 +273,11 @@ public class AEFluidConfigSlot extends AEConfigSlot<IAEFluidStack> implements II
     public Object getIngredientOverMouse(int mouseX, int mouseY) {
         if (this.isMouseOverElement(mouseX, mouseY)) {
             IConfigurableSlot<IAEFluidStack> slot = this.getParentWidget().getDisplay(this.index);
-            return slot != null ? slot.getConfig().getFluidStack() : null;
+            return slot == null ? null : slot.getConfig() == null ? null : slot.getConfig().getFluidStack();
         }
         if (this.isMouseOverElement(mouseX + DISPLAY_X_OFFSET, mouseY)) {
             IConfigurableSlot<IAEFluidStack> slot = this.getParentWidget().getDisplay(this.index);
-            return slot != null ? slot.getStock().getFluidStack() : null;
+            return slot == null ? null : slot.getStock() == null ? null : slot.getStock().getFluidStack();
         }
         return null;
     }

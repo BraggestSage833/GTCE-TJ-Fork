@@ -236,11 +236,11 @@ public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> implements IIng
     public Object getIngredientOverMouse(int mouseX, int mouseY) {
         if (this.isMouseOverElement(mouseX, mouseY)) {
             IConfigurableSlot<IAEItemStack> slot = this.getParentWidget().getDisplay(this.index);
-            return slot != null ? slot.getConfig().getDefinition() : null;
+            return slot == null ? null : slot.getConfig() == null ? null : slot.getConfig().getDefinition();
         }
         if (this.isMouseOverElement(mouseX + DISPLAY_X_OFFSET, mouseY)) {
             IConfigurableSlot<IAEItemStack> slot = this.getParentWidget().getDisplay(this.index);
-            return slot != null ? slot.getStock().getDefinition() : null;
+            return slot == null ? null : slot.getStock() == null ? null : slot.getStock().getDefinition();
         }
         return null;
     }

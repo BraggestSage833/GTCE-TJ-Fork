@@ -63,6 +63,10 @@ public class AEItemDisplayWidget extends Widget implements IIngredientSlot {
 
     @Override
     public Object getIngredientOverMouse(int mouseX, int mouseY) {
-        return this.isMouseOverElement(mouseX, mouseY) ? this.gridWidget.getAt(this.index).getDefinition() : null;
+        if (this.isMouseOverElement(mouseX, mouseY)) {
+            IAEItemStack stack = this.gridWidget.getAt(this.index);
+            return stack != null ? stack.getDefinition() : null;
+        }
+        return null;
     }
 }
