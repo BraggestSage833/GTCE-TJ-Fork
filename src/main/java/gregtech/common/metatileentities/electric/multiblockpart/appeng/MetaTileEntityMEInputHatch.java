@@ -259,13 +259,6 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
     }
 
     @Override
-    public void addToMultiBlock(MultiblockControllerBase controllerBase) {
-        super.addToMultiBlock(controllerBase);
-        this.updateConnectableSides();
-        this.markDirty();
-    }
-
-    @Override
     public boolean onRightClick(EntityPlayer playerIn, EnumHand hand, EnumFacing facing, CuboidRayTraceResult hitResult) {
         ItemStack stack = playerIn.getHeldItem(hand);
         if (stack.isItemEqual(TOOL_DATA_STICK.getStackForm())) {

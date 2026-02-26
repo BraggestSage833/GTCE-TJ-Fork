@@ -10,7 +10,6 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechDataCodes;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
@@ -191,8 +190,6 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
     @Override
     public void addToMultiBlock(MultiblockControllerBase controllerBase) {
         super.addToMultiBlock(controllerBase);
-        this.updateConnectableSides();
-        this.markDirty();
         if (controllerBase instanceof MultiblockWithDisplayBase)
             ((MultiblockWithDisplayBase) controllerBase).enableFluidInfSink();
     }
