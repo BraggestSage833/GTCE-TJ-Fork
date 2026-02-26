@@ -4,6 +4,7 @@ import appeng.api.storage.data.IAEItemStack;
 import com.google.common.collect.Lists;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.IRenderContext;
+import gregtech.api.gui.igredient.IIngredientSlot;
 import gregtech.api.util.Position;
 import gregtech.api.util.Size;
 import gregtech.api.util.TextFormattingUtil;
@@ -23,7 +24,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> {
+public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> implements IIngredientSlot {
 
     public AEItemConfigSlot(int x, int y, AEItemConfigWidget widget, int index) {
         super(new Position(x, y), new Size(18 * 6, 18), widget, index);
@@ -229,5 +230,18 @@ public class AEItemConfigSlot extends AEConfigSlot<IAEItemStack> {
                 }
             }
         });
+    }
+
+    @Override
+    public Object getIngredientOverMouse(int mouseX, int mouseY) {
+        if (this.isMouseOverElement(mouseX, mouseY)) {
+            IConfigurableSlot<IAEItemStack> slot = this.getParentWidget().getDisplay(this.index);
+            return slot != null ? slot.getConfig().getDefinition() : null;
+        }
+        if (this.isMouseOverElement(mouseX + DISPLAY_X_OFFSET, mouseY)) {
+            IConfigurableSlot<IAEItemStack> slot = this.getParentWidget().getDisplay(this.index);
+            return slot != null ? slot.getStock().getDefinition() : null;
+        }
+        return null;
     }
 }

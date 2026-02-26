@@ -4,6 +4,7 @@ import appeng.api.storage.data.IAEFluidStack;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.IRenderContext;
 import gregtech.api.gui.Widget;
+import gregtech.api.gui.igredient.IIngredientSlot;
 import gregtech.api.gui.resources.RenderUtil;
 import gregtech.api.util.FluidTooltipUtil;
 import gregtech.api.util.Position;
@@ -22,7 +23,7 @@ import java.util.List;
  * @Description Display a certain {@link IAEFluidStack} element.
  * @Date 2023/4/19-0:30
  */
-public class AEFluidDisplayWidget extends Widget {
+public class AEFluidDisplayWidget extends Widget implements IIngredientSlot {
 
     private final AEListGridWidget<IAEFluidStack> gridWidget;
     private final int index;
@@ -72,5 +73,10 @@ public class AEFluidDisplayWidget extends Widget {
                 drawHoveringText(ItemStack.EMPTY, hoverStringList, -1, mouseX, mouseY);
             }
         }
+    }
+
+    @Override
+    public Object getIngredientOverMouse(int mouseX, int mouseY) {
+        return this.isMouseOverElement(mouseX, mouseY) ? this.gridWidget.getAt(this.index).getFluidStack() : null;
     }
 }

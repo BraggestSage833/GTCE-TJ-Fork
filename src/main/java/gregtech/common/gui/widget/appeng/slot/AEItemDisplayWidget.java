@@ -4,6 +4,7 @@ import appeng.api.storage.data.IAEItemStack;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.IRenderContext;
 import gregtech.api.gui.Widget;
+import gregtech.api.gui.igredient.IIngredientSlot;
 import gregtech.api.util.Position;
 import gregtech.api.util.Size;
 import gregtech.common.gui.widget.appeng.AEListGridWidget;
@@ -16,7 +17,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * @Description Display a certain {@link IAEItemStack} element.
  * @Date 2023/4/19-21:23
  */
-public class AEItemDisplayWidget extends Widget {
+public class AEItemDisplayWidget extends Widget implements IIngredientSlot {
 
     private final AEListGridWidget<IAEItemStack> gridWidget;
     private final int index;
@@ -58,5 +59,10 @@ public class AEItemDisplayWidget extends Widget {
                 drawHoveringText(item.createItemStack(), getItemToolTip(item.createItemStack()), -1, mouseX, mouseY);
             }
         }
+    }
+
+    @Override
+    public Object getIngredientOverMouse(int mouseX, int mouseY) {
+        return this.isMouseOverElement(mouseX, mouseY) ? this.gridWidget.getAt(this.index).getDefinition() : null;
     }
 }
