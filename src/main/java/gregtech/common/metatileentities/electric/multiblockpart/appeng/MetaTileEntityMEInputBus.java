@@ -36,7 +36,6 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -47,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 
 import static gregtech.common.items.MetaItems.TOOL_DATA_STICK;
@@ -58,7 +56,7 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
     public final static String WORKING_TAG = "WorkingEnabled";
     private final static int CONFIG_SIZE = 16;
     protected ExportOnlyAEItemList aeItemHandler;
-    protected ItemStackHandler circuitInventory = new ItemStackHandler(1);
+    protected ItemStackHandler circuitInventory;
     protected ItemStackHandler extraSlotInventory;
     private ItemHandlerList actualImportItems;
 
@@ -81,8 +79,9 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
     protected void initializeInventory() {
         super.initializeInventory();
         this.aeItemHandler = getAEItemHandler();
+        this.circuitInventory = new ItemStackHandler(1);
         this.extraSlotInventory = new ItemStackHandler(1);
-        this.actualImportItems = new ItemHandlerList(Arrays.asList(this.aeItemHandler, this.extraSlotInventory));
+        this.actualImportItems = new ItemHandlerList(Arrays.asList(this.aeItemHandler, this.circuitInventory, this.extraSlotInventory));
         this.importItems = this.actualImportItems;
     }
 
@@ -91,6 +90,7 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
         return new MetaTileEntityMEInputBus(metaTileEntityId);
     }
 
+    @Override
     public IItemHandlerModifiable getImportItems() {
         return this.actualImportItems;
     }
@@ -276,7 +276,6 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
 
     @Override
     public void registerAbilities(List<IItemHandlerModifiable> abilityList) {
-        abilityList.add(this.circuitInventory);
         abilityList.add(this.actualImportItems);
     }
 
