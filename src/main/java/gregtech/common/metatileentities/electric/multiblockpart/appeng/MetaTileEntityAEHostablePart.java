@@ -45,7 +45,7 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
     private AENetworkProxy aeProxy;
     private int meUpdateTick;
     protected boolean isOnline;
-    private boolean allowExtraConnections;
+    protected boolean allowExtraConnections;
     protected boolean meStatusChanged = false;
     protected boolean workingEnabled = true;
 
@@ -230,8 +230,8 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
     }
 
     public void updateConnectableSides() {
-        if (this.aeProxy != null) {
-            this.aeProxy.setValidSides(getConnectableSides());
+        if (this.getProxy() != null) {
+            this.getProxy().setValidSides(getConnectableSides());
         }
     }
 
@@ -259,9 +259,7 @@ public abstract class MetaTileEntityAEHostablePart<T extends IAEStack<T>> extend
 
     @Override
     public void onAttached() {
-        super.onAttached();
         this.updateConnectableSides();
-        this.markDirty();
     }
 
     @Override

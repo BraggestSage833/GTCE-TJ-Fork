@@ -13,13 +13,11 @@ import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.capability.impl.FluidTankList;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.widgets.ImageWidget;
 import gregtech.api.gui.widgets.ToggleButtonWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
-import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.Textures;
 import gregtech.common.gui.widget.appeng.AEFluidConfigWidget;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.slot.ExportOnlyAEFluidList;
@@ -256,13 +254,6 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
     @Override
     public void registerAbilities(List<IFluidTank> abilityList) {
         abilityList.addAll(Arrays.asList(this.getAEFluidHandler().getInventory()));
-    }
-
-    @Override
-    public void addToMultiBlock(MultiblockControllerBase controllerBase) {
-        super.addToMultiBlock(controllerBase);
-        this.updateConnectableSides();
-        this.markDirty();
     }
 
     @Override

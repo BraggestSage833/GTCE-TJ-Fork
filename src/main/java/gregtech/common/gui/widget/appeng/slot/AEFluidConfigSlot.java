@@ -4,6 +4,7 @@ import appeng.api.storage.data.IAEFluidStack;
 import com.google.common.collect.Lists;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.IRenderContext;
+import gregtech.api.gui.igredient.IIngredientSlot;
 import gregtech.api.gui.resources.RenderUtil;
 import gregtech.api.util.FluidTooltipUtil;
 import gregtech.api.util.Position;
@@ -33,7 +34,7 @@ import java.util.List;
 import static gregtech.api.capability.GregtechDataCodes.LOAD_PHANTOM_FLUID_STACK_FROM_NBT;
 import static gregtech.api.util.GTUtility.getFluidFromContainer;
 
-public class AEFluidConfigSlot extends AEConfigSlot<IAEFluidStack> {
+public class AEFluidConfigSlot extends AEConfigSlot<IAEFluidStack> implements IIngredientSlot {
 
     public AEFluidConfigSlot(int x, int y, AEFluidConfigWidget widget, int index) {
         super(new Position(x, y), new Size(18 * 6, 18), widget, index);
@@ -266,5 +267,18 @@ public class AEFluidConfigSlot extends AEConfigSlot<IAEFluidStack> {
                 }
             }
         });
+    }
+
+    @Override
+    public Object getIngredientOverMouse(int mouseX, int mouseY) {
+        if (this.isMouseOverElement(mouseX, mouseY)) {
+            IConfigurableSlot<IAEFluidStack> slot = this.getParentWidget().getDisplay(this.index);
+            return slot == null ? null : slot.getConfig() == null ? null : slot.getConfig().getFluidStack();
+        }
+        if (this.isMouseOverElement(mouseX + DISPLAY_X_OFFSET, mouseY)) {
+            IConfigurableSlot<IAEFluidStack> slot = this.getParentWidget().getDisplay(this.index);
+            return slot == null ? null : slot.getStock() == null ? null : slot.getStock().getFluidStack();
+        }
+        return null;
     }
 }

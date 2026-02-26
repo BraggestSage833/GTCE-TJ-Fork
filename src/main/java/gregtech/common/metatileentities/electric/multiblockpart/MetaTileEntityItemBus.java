@@ -3,6 +3,7 @@ package gregtech.common.metatileentities.electric.multiblockpart;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
+import gregtech.api.capability.impl.ItemHandlerList;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.ModularUI.Builder;
@@ -24,18 +25,21 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.List;
 
 public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implements IMultiblockAbilityPart<IItemHandlerModifiable> {
 
     private static final int[] INVENTORY_SIZES = {1, 4, 9, 16, 25, 36, 49};
     private final ItemStackHandler ghostCircuitInventory = new ItemStackHandler(1);
+    private final IItemHandlerModifiable combinedInventory;
     private final boolean isExportHatch;
 
     public MetaTileEntityItemBus(ResourceLocation metaTileEntityId, int tier, boolean isExportHatch) {
         super(metaTileEntityId, tier);
         this.isExportHatch = isExportHatch;
         initializeInventory();
+        this.combinedInventory = new ItemHandlerList(Arrays.asList(this.ghostCircuitInventory, this.importItems));
     }
 
     @Override
@@ -88,9 +92,7 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
 
     @Override
     public void registerAbilities(List<IItemHandlerModifiable> abilityList) {
-        if (!this.isExportHatch)
-            abilityList.add(this.ghostCircuitInventory);
-        abilityList.add(isExportHatch ? this.exportItems : this.importItems);
+        abilityList.add(isExportHatch ? this.exportItems : this.combinedInventory);
     }
 
     @Override
