@@ -223,7 +223,20 @@ public class BlockMachine extends BlockCustomParticle implements ITileEntityProv
             if (stack.hasTagCompound()) {
                 metaTileEntity.initFromItemStackData(stack.getTagCompound());
             }
+            BlockPos playerPos = placer.getPosition();
+            int offsetX = Math.abs(pos.getX() - playerPos.getX());
+            int offsetZ = Math.abs(pos.getZ() - playerPos.getZ());
             EnumFacing placeFacing = placer.getHorizontalFacing().getOpposite();
+            if (offsetX < 3 && offsetZ < 3 && playerPos.getY() > pos.getY() + (offsetX + offsetZ) / 2) {
+                placeFacing = EnumFacing.UP;
+            } else if (offsetX < 3 && offsetZ < 3 && playerPos.getY() + 1 < pos.getY() - (offsetX + offsetZ) / 2) {
+                placeFacing = EnumFacing.DOWN;
+            }
+            if (metaTileEntity.isValidFrontFacing(placeFacing)) {
+                metaTileEntity.setFrontFacing(placeFacing);
+                return;
+            }
+            placeFacing = placer.getHorizontalFacing().getOpposite();
             if (metaTileEntity.isValidFrontFacing(placeFacing)) {
                 metaTileEntity.setFrontFacing(placeFacing);
             }
