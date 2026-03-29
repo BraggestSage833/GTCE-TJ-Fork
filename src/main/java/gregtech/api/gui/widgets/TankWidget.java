@@ -7,6 +7,7 @@ import gregtech.api.gui.igredient.IIngredientSlot;
 import gregtech.api.gui.resources.RenderUtil;
 import gregtech.api.gui.resources.TextureArea;
 import gregtech.api.util.*;
+import gregtech.common.ConfigHolder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -210,15 +211,18 @@ public class TankWidget extends Widget implements IIngredientSlot {
             this.lastFluidInTank = FluidStack.loadFluidStackFromNBT(fluidStackTag);
         } else if (id == 3 && lastFluidInTank != null) {
             this.lastFluidInTank.amount = buffer.readVarInt();
-        }
-
-        if (id == 4) {
+        } else if (id == 4) {
             try {
                 ItemStack stack = buffer.readItemStack();
                 this.gui.entityPlayer.inventory.setItemStack(stack);
             } catch (IOException e) {
                 GTLog.logger.info(e.getMessage());
             }
+        } else if (id == 5) {
+            ItemStack currentStack = gui.entityPlayer.inventory.getItemStack();
+            int newStackSize = buffer.readVarInt();
+            currentStack.setCount(newStackSize);
+            gui.entityPlayer.inventory.setItemStack(currentStack);
         }
     }
 
@@ -228,9 +232,16 @@ public class TankWidget extends Widget implements IIngredientSlot {
         if (id == 1) {
             boolean isShiftKeyDown = buffer.readBoolean();
             int button = buffer.readInt();
-            ItemStack clickStack = this.tryClickContainer(isShiftKeyDown, button);
-            if (!clickStack.isEmpty()) {
-                this.writeUpdateInfo(4, buf -> buf.writeItemStack(clickStack));
+            if (buffer.readBoolean()) {
+                ItemStack clickStack = this.tryClickContainer(isShiftKeyDown, button);
+                if (!clickStack.isEmpty()) {
+                    this.writeUpdateInfo(4, buf -> buf.writeItemStack(clickStack));
+                }
+            } else {
+                int clickResult = tryClickContainer(isShiftKeyDown);
+                if (clickResult >= 0) {
+                    this.writeUpdateInfo(5, buf -> buf.writeVarInt(clickResult));
+                }
             }
         }
     }
@@ -296,6 +307,62 @@ public class TankWidget extends Widget implements IIngredientSlot {
         return ItemStack.EMPTY;
     }
 
+    private int tryClickContainer(boolean isShiftKeyDown) {
+        EntityPlayer player = gui.entityPlayer;
+        ItemStack currentStack = player.inventory.getItemStack();
+        if (!currentStack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null))
+            return -1;
+        int maxAttempts = isShiftKeyDown ? currentStack.getCount() : 1;
+
+        if (allowClickFilling && fluidTank.getFluidAmount() > 0) {
+            boolean performedFill = false;
+            FluidStack initialFluid = fluidTank.getFluid();
+            for (int i = 0; i < maxAttempts; i++) {
+                FluidActionResult result = FluidUtil.tryFillContainer(currentStack,
+                        (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, false);
+                if (!result.isSuccess()) break;
+                ItemStack remainingStack = result.getResult();
+                if (!remainingStack.isEmpty() && !GTUtility.insertInPlayerInventory(player.inventory, remainingStack, true, false, false).isEmpty())
+                    break; //do not continue if we can't add resulting container into inventory
+                FluidUtil.tryFillContainer(currentStack, (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, true);
+                currentStack.shrink(1);
+                performedFill = true;
+            }
+            if (performedFill) {
+                SoundEvent soundevent = initialFluid.getFluid().getFillSound(initialFluid);
+                player.world.playSound(null, player.posX, player.posY + 0.5, player.posZ,
+                        soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                gui.entityPlayer.inventory.setItemStack(currentStack);
+                return currentStack.getCount();
+            }
+        }
+
+        if (allowClickEmptying) {
+            boolean performedEmptying = false;
+            for (int i = 0; i < maxAttempts; i++) {
+                FluidActionResult result = FluidUtil.tryEmptyContainer(currentStack,
+                        (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, false);
+                if (!result.isSuccess()) break;
+                ItemStack remainingStack = result.getResult();
+                if (!remainingStack.isEmpty() && !player.inventory.addItemStackToInventory(remainingStack))
+                    break; //do not continue if we can't add resulting container into inventory
+                FluidUtil.tryEmptyContainer(currentStack, (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, true);
+                currentStack.shrink(1);
+                performedEmptying = true;
+            }
+            FluidStack filledFluid = fluidTank.getFluid();
+            if (performedEmptying) {
+                SoundEvent soundevent = filledFluid.getFluid().getEmptySound(filledFluid);
+                player.world.playSound(null, player.posX, player.posY + 0.5, player.posZ,
+                        soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                gui.entityPlayer.inventory.setItemStack(currentStack);
+                return currentStack.getCount();
+            }
+        }
+
+        return -1;
+    }
+
     @Override
     @SideOnly(Side.CLIENT)
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
@@ -306,6 +373,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
                 this.writeClientAction(1, buffer -> {
                     buffer.writeBoolean(isShiftKeyDown);
                     buffer.writeInt(button);
+                    buffer.writeBoolean(ConfigHolder.newTankFilling);
                 });
                 this.playButtonClickSound();
                 return true;

@@ -152,6 +152,10 @@ public class ConfigHolder {
     @Config.RequiresMcRestart
     public static int recipeCooldown = 100;
 
+    @Config.Name("New fluid slot interaction behavior")
+    @Config.Comment("Set to enable new behavior to fill or empty buckets, drums, and super tanks from/to fluid slots.")
+    public static boolean newTankFilling = true;
+
     public static class VanillaRecipes {
 
         @Config.Comment("Whether to nerf the paper crafting recipe. Default: true")
