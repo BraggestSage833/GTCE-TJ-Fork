@@ -158,13 +158,13 @@ public class TankWidget extends Widget implements IIngredientSlot {
             }
             if (allowClickFilling) {
                 tooltips.add(""); //add empty line to separate things
-                tooltips.add(I18n.format("gregtech.fluid.click_to_fill"));
-                tooltips.add(I18n.format("gregtech.fluid.click_to_fill.shift"));
+                tooltips.add(I18n.format(ConfigHolder.newTankFilling ? "gregtech.fluid.click_to_fill.new" : "gregtech.fluid.click_to_fill"));
+                tooltips.add(I18n.format(ConfigHolder.newTankFilling ? "gregtech.fluid.click_to_fill.shift.new" : "gregtech.fluid.click_to_fill.shift"));
             }
             if (allowClickEmptying) {
                 tooltips.add(""); //add empty line to separate things
-                tooltips.add(I18n.format("gregtech.fluid.click_to_empty"));
-                tooltips.add(I18n.format("gregtech.fluid.click_to_empty.shift"));
+                tooltips.add(I18n.format(ConfigHolder.newTankFilling ? "gregtech.fluid.click_to_empty.new" : "gregtech.fluid.click_to_empty"));
+                tooltips.add(I18n.format(ConfigHolder.newTankFilling ? "gregtech.fluid.click_to_empty.shift.new" : "gregtech.fluid.click_to_empty.shift"));
             }
             drawHoveringText(ItemStack.EMPTY, tooltips, 300, mouseX, mouseY);
             GlStateManager.color(1.0f, 1.0f, 1.0f);
