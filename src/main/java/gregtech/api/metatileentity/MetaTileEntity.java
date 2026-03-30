@@ -729,8 +729,9 @@ public abstract class MetaTileEntity implements ICoverable {
         int amountOfTraits = buf.readShort();
         for (int i = 0; i < amountOfTraits; i++) {
             int traitNetworkId = buf.readVarInt();
-            MTETrait trait = mteTraits.stream().filter(otherTrait -> otherTrait.getNetworkID() == traitNetworkId).findAny().get();
-            trait.receiveInitialData(buf);
+            mteTraits.stream()
+                    .filter(otherTrait -> otherTrait.getNetworkID() == traitNetworkId).findAny()
+                    .ifPresent(trait -> trait.receiveInitialData(buf));
         }
         for (EnumFacing coverSide : EnumFacing.VALUES) {
             int coverId = buf.readVarInt();
