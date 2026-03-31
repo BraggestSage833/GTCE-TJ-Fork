@@ -11,6 +11,7 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
 import gregtech.api.capability.GregtechTileCapabilities;
+import gregtech.api.capability.impl.ItemHandlerList;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.ToggleButtonWidget;
@@ -37,6 +38,7 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEItemStack> implements IMultiblockAbilityPart<IItemHandlerModifiable> {
@@ -44,6 +46,7 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
     public final static String ITEM_BUFFER_TAG = "ItemBuffer";
     public final static String WORKING_TAG = "WorkingEnabled";
     private SerializableItemList internalBuffer;
+    private IItemHandlerModifiable infiniteOutput;
 
     public MetaTileEntityMEOutputBus(ResourceLocation metaTileEntityId) {
         super(metaTileEntityId, GTValues.EV, IItemStorageChannel.class);
@@ -52,12 +55,18 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
     @Override
     protected void initializeInventory() {
         this.internalBuffer = new SerializableItemList();
+        this.infiniteOutput = new InaccessibleInfiniteSlot(this, this.internalBuffer);
         super.initializeInventory();
     }
 
     @Override
     public MetaTileEntity createMetaTileEntity(MetaTileEntityHolder holder) {
         return new MetaTileEntityMEOutputBus(metaTileEntityId);
+    }
+
+    @Override
+    protected IItemHandlerModifiable createExportItemHandler() {
+        return new ItemHandlerList(Collections.singletonList(this.infiniteOutput));
     }
 
     @Override
@@ -181,7 +190,7 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
 
     @Override
     public void registerAbilities(List<IItemHandlerModifiable> abilityList) {
-        abilityList.add(new InaccessibleInfiniteSlot(this, this.internalBuffer, this.getController()));
+        abilityList.add(this.infiniteOutput);
     }
 
     @Override
@@ -197,8 +206,7 @@ public class MetaTileEntityMEOutputBus extends MetaTileEntityAEHostablePart<IAEI
         private final IItemList<IAEItemStack> internalBuffer;
         private final MetaTileEntity holder;
 
-        public InaccessibleInfiniteSlot(MetaTileEntity holder, IItemList<IAEItemStack> internalBuffer,
-                                        MetaTileEntity mte) {
+        public InaccessibleInfiniteSlot(MetaTileEntity holder, IItemList<IAEItemStack> internalBuffer) {
             this.holder = holder;
             this.internalBuffer = internalBuffer;
         }

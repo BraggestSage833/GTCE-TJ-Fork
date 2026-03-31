@@ -11,6 +11,7 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
 import gregtech.api.capability.GregtechTileCapabilities;
+import gregtech.api.capability.impl.FluidTankList;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.ToggleButtonWidget;
@@ -46,6 +47,7 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
     public final static String FLUID_BUFFER_TAG = "FluidBuffer";
     public final static String WORKING_TAG = "WorkingEnabled";
     private SerializableFluidList internalBuffer;
+    private IFluidTank infiniteTank;
 
     public MetaTileEntityMEOutputHatch(ResourceLocation metaTileEntityId) {
         super(metaTileEntityId, GTValues.EV, IFluidStorageChannel.class);
@@ -54,12 +56,18 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
     @Override
     protected void initializeInventory() {
         this.internalBuffer = new SerializableFluidList();
+        this.infiniteTank = new InaccessibleInfiniteTank(this, this.internalBuffer);
         super.initializeInventory();
     }
 
     @Override
     public MetaTileEntity createMetaTileEntity(MetaTileEntityHolder holder) {
         return new MetaTileEntityMEOutputHatch(metaTileEntityId);
+    }
+
+    @Override
+    protected FluidTankList createExportFluidHandler() {
+        return new FluidTankList(true, this.infiniteTank);
     }
 
     @Override
@@ -184,7 +192,7 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
 
     @Override
     public void registerAbilities(List<IFluidTank> abilityList) {
-        abilityList.add(new InaccessibleInfiniteTank(this, this.internalBuffer));
+        abilityList.add(this.infiniteTank);
     }
 
     @Override
