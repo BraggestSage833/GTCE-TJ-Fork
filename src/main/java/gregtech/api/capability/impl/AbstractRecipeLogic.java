@@ -309,7 +309,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         }
         boolean negativeEU = EUt < 0;
         int tier = getOverclockingTier(voltage);
-        if (GTValues.VOC[tier] <= EUt || tier == 0)
+        if (V[tier] <= EUt || tier == 0)
             return new long[]{EUt, duration};
         if (negativeEU)
             EUt = -EUt;
@@ -332,11 +332,11 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected long getVoltageByTier(final int tier) {
-        return GTValues.VOC[tier];
+        return V[tier];
     }
 
     public String[] getAvailableOverclockingTiers() {
-        final int maxTier = GTUtility.getOCTierByVoltage(getMaxVoltage());
+        final int maxTier = getOverclockingTier(getMaxVoltage());
         final String[] result = new String[maxTier + 2];
         result[0] = "gregtech.gui.overclock.off";
         for (int i = 0; i < maxTier + 1; ++i) {
