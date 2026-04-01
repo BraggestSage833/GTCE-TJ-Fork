@@ -4,6 +4,7 @@ import appeng.api.implementations.items.IAEWrench;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import crazypants.enderio.api.tool.ITool;
 import forestry.api.arboriculture.IToolGrafter;
 import gregtech.api.GTValues;
 import gregtech.api.capability.GregtechCapabilities;
@@ -40,6 +41,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EntityDamageSource;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
@@ -52,6 +54,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.oredict.OreDictionary;
 import org.apache.commons.lang3.Validate;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -72,9 +75,10 @@ import java.util.stream.Collectors;
  */
 @Optional.InterfaceList(value = {
         @Interface(modid = GTValues.MODID_AE2, iface = "appeng.api.implemenations.items.IAEWrench"),
-        @Interface(modid = GTValues.MODID_FR, iface = "forestry.api.arboriculture.IToolGrafter")
+        @Interface(modid = GTValues.MODID_FR, iface = "forestry.api.arboriculture.IToolGrafter"),
+        @Interface(modid = "enderio", iface = "crazypants.enderio.api.tool.ITool")
 })
-public class ToolMetaItem<T extends ToolMetaItem<?>.MetaToolValueItem> extends MetaItem<T> implements IToolItem, IAOEItem, IAEWrench, IToolGrafter {
+public class ToolMetaItem<T extends ToolMetaItem<?>.MetaToolValueItem> extends MetaItem<T> implements IToolItem, IAOEItem, IAEWrench, IToolGrafter, ITool {
 
     public ToolMetaItem() {
         super((short) 0);
@@ -577,17 +581,6 @@ public class ToolMetaItem<T extends ToolMetaItem<?>.MetaToolValueItem> extends M
         return statsTag.getInteger("Dmg");
     }
 
-    @Override
-    public boolean canWrench(ItemStack itemStack, EntityPlayer entityPlayer, BlockPos blockPos) {
-        Item item = itemStack.getItem();
-        if (item instanceof ToolMetaItem<?>) {
-            ((ToolMetaItem<?>) item).damageItem(itemStack, 1, false);
-            IToolStats toolStats = ((ToolMetaItem<?>) item).getItem(itemStack).getToolStats();
-            return toolStats instanceof ToolWrench;
-        }
-        return false;
-    }
-
     private boolean setInternalDamage(ItemStack itemStack, int damage) {
         NBTTagCompound statsTag = getOrCreateToolStatsTag(itemStack);
         statsTag.setInteger("Dmg", damage);
@@ -621,6 +614,36 @@ public class ToolMetaItem<T extends ToolMetaItem<?>.MetaToolValueItem> extends M
             return (SolidMaterial) material;
         }
         return Materials.Aluminium;
+    }
+
+    @Override
+    public boolean canWrench(ItemStack itemStack, EntityPlayer entityPlayer, BlockPos blockPos) {
+        Item item = itemStack.getItem();
+        if (item instanceof ToolMetaItem<?>) {
+            ((ToolMetaItem<?>) item).damageItem(itemStack, 1, false);
+            IToolStats toolStats = ((ToolMetaItem<?>) item).getItem(itemStack).getToolStats();
+            return toolStats instanceof ToolWrench;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canUse(@NotNull EnumHand enumHand, @NotNull EntityPlayer entityPlayer, @NotNull BlockPos blockPos) {
+        ItemStack stack = entityPlayer.getHeldItem(enumHand);
+        Item item = stack.getItem();
+        if (item instanceof ToolMetaItem<?>) {
+            IToolStats toolStats = ((ToolMetaItem<?>) item).getItem(stack).getToolStats();
+            return toolStats instanceof ToolWrench;
+        }
+        return false;
+    }
+
+    @Override
+    public void used(@NotNull EnumHand enumHand, @NotNull EntityPlayer entityPlayer, @NotNull BlockPos blockPos) {}
+
+    @Override
+    public boolean shouldHideFacades(@NotNull ItemStack itemStack, @NotNull EntityPlayer entityPlayer) {
+        return false;
     }
 
     public class MetaToolValueItem extends MetaValueItem {
