@@ -1,5 +1,6 @@
 package gregtech.api.items.toolitem;
 
+import appeng.api.implementations.items.IAEWrench;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -21,6 +22,7 @@ import gregtech.api.unification.material.type.SolidMaterial;
 import gregtech.api.util.GTLog;
 import gregtech.api.util.GTUtility;
 import gregtech.common.ConfigHolder;
+import gregtech.common.tools.ToolWrench;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
@@ -34,6 +36,7 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Enchantments;
 import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EntityDamageSource;
@@ -43,6 +46,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.fml.common.Optional;
 import net.minecraftforge.fml.common.Optional.Interface;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -66,8 +70,11 @@ import java.util.stream.Collectors;
  * @see IToolStats
  * @see MetaItem
  */
-@Interface(modid = GTValues.MODID_FR, iface = "forestry.api.arboriculture.IToolGrafter")
-public class ToolMetaItem<T extends ToolMetaItem<?>.MetaToolValueItem> extends MetaItem<T> implements IToolItem, IAOEItem, IToolGrafter {
+@Optional.InterfaceList(value = {
+        @Interface(modid = GTValues.MODID_AE2, iface = "appeng.api.implemenations.items.IAEWrench"),
+        @Interface(modid = GTValues.MODID_FR, iface = "forestry.api.arboriculture.IToolGrafter")
+})
+public class ToolMetaItem<T extends ToolMetaItem<?>.MetaToolValueItem> extends MetaItem<T> implements IToolItem, IAOEItem, IAEWrench, IToolGrafter {
 
     public ToolMetaItem() {
         super((short) 0);
@@ -568,6 +575,17 @@ public class ToolMetaItem<T extends ToolMetaItem<?>.MetaToolValueItem> extends M
             return isElectricItem ? oldToolDamage : oldToolDamage / 10;
         }
         return statsTag.getInteger("Dmg");
+    }
+
+    @Override
+    public boolean canWrench(ItemStack itemStack, EntityPlayer entityPlayer, BlockPos blockPos) {
+        Item item = itemStack.getItem();
+        if (item instanceof ToolMetaItem<?>) {
+            ((ToolMetaItem<?>) item).damageItem(itemStack, 1, false);
+            IToolStats toolStats = ((ToolMetaItem<?>) item).getItem(itemStack).getToolStats();
+            return toolStats instanceof ToolWrench;
+        }
+        return false;
     }
 
     private boolean setInternalDamage(ItemStack itemStack, int damage) {
