@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import crazypants.enderio.api.tool.ITool;
+import crazypants.enderio.base.EnderIO;
 import forestry.api.arboriculture.IToolGrafter;
 import gregtech.api.GTValues;
 import gregtech.api.capability.GregtechCapabilities;
@@ -76,7 +77,7 @@ import java.util.stream.Collectors;
 @Optional.InterfaceList(value = {
         @Interface(modid = GTValues.MODID_AE2, iface = "appeng.api.implemenations.items.IAEWrench"),
         @Interface(modid = GTValues.MODID_FR, iface = "forestry.api.arboriculture.IToolGrafter"),
-        @Interface(modid = "enderio", iface = "crazypants.enderio.api.tool.ITool")
+        @Interface(modid = EnderIO.MODID, iface = "crazypants.enderio.api.tool.ITool")
 })
 public class ToolMetaItem<T extends ToolMetaItem<?>.MetaToolValueItem> extends MetaItem<T> implements IToolItem, IAOEItem, IAEWrench, IToolGrafter, ITool {
 
