@@ -42,6 +42,7 @@ dependencies {
     api("com.cleanroommc:modularui:2.4.1") { transitive = false }
     api("com.cleanroommc:groovyscript:0.7.3") { transitive = false }
     api("CraftTweaker2:CraftTweaker2-MC1120-Main:1.12-4.1.20.684")
+    api("curse.maven:ender-io-64578:4674244")
     api rfg.deobf("curse.maven:ae2-extended-life-570458:4402048") // AE2UEL 0.55.6
     api rfg.deobf("curse.maven:ctm-267602:2915363") // CTM 1.0.2.31
     compileOnly rfg.deobf("curse.maven:forestry-59751:2684780") // Forestry 5.8.2.387
