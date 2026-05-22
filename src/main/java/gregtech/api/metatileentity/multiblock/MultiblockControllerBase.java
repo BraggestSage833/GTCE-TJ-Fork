@@ -201,11 +201,22 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
             }
             Map<MultiblockAbility<Object>, List<Object>> abilities = new HashMap<>();
             for (IMultiblockPart multiblockPart : parts) {
+
+                if (multiblockPart instanceof IDualAbilityProvider dual) {
+                    for (MultiblockAbility<?> ability : dual.getAbilities()) {
+                        MultiblockAbility<Object> key = cast(ability);
+                        List<Object> list = abilities.computeIfAbsent(key, k -> new ArrayList<>());
+                        dual.registerAbilityFor(ability, list);
+                    }
+                    continue;
+                }
+
                 if (multiblockPart instanceof IMultiblockAbilityPart) {
                     IMultiblockAbilityPart<Object> abilityPart = (IMultiblockAbilityPart<Object>) multiblockPart;
-                    List<Object> abilityInstancesList = abilities.computeIfAbsent(abilityPart.getAbility(), k -> new ArrayList<>());
-                    abilityPart.registerAbilities(abilityInstancesList);
+                    List<Object> list = abilities.computeIfAbsent(abilityPart.getAbility(), k -> new ArrayList<>());
+                    abilityPart.registerAbilities(list);
                 }
+
             }
             if (checkStructureComponents(parts, abilities)) {
                 parts.forEach(part -> part.addToMultiBlock(this));
@@ -287,6 +298,9 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     public boolean isStructureFormed() {
         return structureFormed;
     }
-
+    @SuppressWarnings("unchecked")
+    private static <T> MultiblockAbility<Object> cast(MultiblockAbility<T> ability) {
+        return (MultiblockAbility<Object>) (Object) ability;
+    }
 
 }
