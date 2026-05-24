@@ -17,26 +17,20 @@ import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
 import gregtech.common.ConfigHolder;
 import gregtech.common.items.MetaItems;
-import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityRotorHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import net.minecraftforge.common.capabilities.Capability;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import stanhebben.zenscript.dump.IDumpConvertable;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -153,6 +147,9 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     public IPatternCenterPredicate selfPredicate() {
         return BlockWorldState.wrap(tilePredicate((state, tile) -> tile.metaTileEntityId.equals(metaTileEntityId)));
     }
+    public static Predicate<BlockWorldState> multiiPartPredicate() {
+        return tilePredicate((state, tile) -> tile instanceof IMultiAbilityProvider );
+    }
 
     public Predicate<BlockWorldState> countMatch(String key, Predicate<BlockWorldState> original) {
         return blockWorldState -> {
@@ -201,11 +198,22 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
             }
             Map<MultiblockAbility<Object>, List<Object>> abilities = new HashMap<>();
             for (IMultiblockPart multiblockPart : parts) {
+
+                if (multiblockPart instanceof IMultiAbilityProvider dual) {
+                    for (MultiblockAbility<?> ability : dual.getAbilities()) {
+                        MultiblockAbility<Object> key = cast(ability);
+                        List<Object> list = abilities.computeIfAbsent(key, k -> new ArrayList<>());
+                        dual.registerAbilityFor(ability, list);
+                    }
+                    continue;
+                }
+
                 if (multiblockPart instanceof IMultiblockAbilityPart) {
                     IMultiblockAbilityPart<Object> abilityPart = (IMultiblockAbilityPart<Object>) multiblockPart;
-                    List<Object> abilityInstancesList = abilities.computeIfAbsent(abilityPart.getAbility(), k -> new ArrayList<>());
-                    abilityPart.registerAbilities(abilityInstancesList);
+                    List<Object> list = abilities.computeIfAbsent(abilityPart.getAbility(), k -> new ArrayList<>());
+                    abilityPart.registerAbilities(list);
                 }
+
             }
             if (checkStructureComponents(parts, abilities)) {
                 parts.forEach(part -> part.addToMultiBlock(this));
@@ -287,6 +295,9 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     public boolean isStructureFormed() {
         return structureFormed;
     }
-
+    @SuppressWarnings("unchecked")
+    private static <T> MultiblockAbility<Object> cast(MultiblockAbility<T> ability) {
+        return (MultiblockAbility<Object>) (Object) ability;
+    }
 
 }

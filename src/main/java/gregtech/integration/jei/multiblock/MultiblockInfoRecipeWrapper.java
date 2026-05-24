@@ -49,12 +49,12 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderCallback {
-    private static final int MAX_PARTS = 20;
-    private static final int PARTS_HEIGHT = 36;
+    private static final int MAX_PARTS = 30;
+    private static final int PARTS_HEIGHT = 29;
     private final int SLOT_SIZE = 18;
     private final int SLOTS_PER_ROW = 10;
     private final int ICON_SIZE = 20;
-    private final int RIGHT_PADDING = 5;
+    private final int RIGHT_PADDING = 6;
 
     private static class MBPattern {
         final WorldSceneRenderer sceneRenderer;
@@ -246,6 +246,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private void updateParts() {
         IGuiItemStackGroup itemStackGroup = recipeLayout.getItemStacks();
         List<ItemStack> parts = this.patterns[currentRendererPage].parts;
+
         int limit = Math.min(parts.size(), MAX_PARTS);
         for (int i = 0; i < limit; ++i)
             itemStackGroup.set(i, parts.get(i));
