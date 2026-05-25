@@ -28,7 +28,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import stanhebben.zenscript.dump.IDumpConvertable;
 
 import javax.annotation.Nonnull;
 import java.util.*;
