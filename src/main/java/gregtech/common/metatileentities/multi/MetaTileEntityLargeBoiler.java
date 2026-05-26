@@ -37,6 +37,7 @@ import gregtech.common.blocks.BlockFireboxCasing;
 import gregtech.common.blocks.BlockFireboxCasing.FireboxCasingType;
 import gregtech.common.blocks.BlockMetalCasing.MetalCasingType;
 import gregtech.common.blocks.MetaBlocks;
+import gregtech.common.sound.GTSoundEvents;
 import gregtech.common.tools.DamageValues;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
@@ -47,6 +48,7 @@ import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
@@ -55,6 +57,8 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nonnull;
@@ -339,6 +343,18 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase impleme
             }
         }
         return 0;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public SoundEvent getSound() {
+        return GTSoundEvents.BOILER;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public boolean shouldPlaySound() {
+        return isValid() && isActive && isStructureFormed();
     }
 
     @Override

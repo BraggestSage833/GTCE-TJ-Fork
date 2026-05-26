@@ -4,6 +4,7 @@ import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.capability.IControllable;
 import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import gregtech.api.util.GTUtility;
+import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -11,6 +12,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -41,6 +43,7 @@ public class SoftHammerBehaviour implements IItemBehaviour {
                     controllable.setWorkingEnabled(true);
                 }
                 GTUtility.doDamageItem(stack, cost, false);
+                world.playSound(null, pos, GTSoundEvents.SOFT_MALLET, SoundCategory.PLAYERS, 1F, 1F);
                 return EnumActionResult.SUCCESS;
             }
         }

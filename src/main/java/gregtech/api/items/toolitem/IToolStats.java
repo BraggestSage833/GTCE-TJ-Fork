@@ -8,6 +8,7 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
@@ -19,6 +20,12 @@ import java.util.List;
  * The Stats for GT Tools. Not including any Material Modifiers.
  */
 public interface IToolStats {
+
+
+
+    default SoundEvent getBlockBreakSound(ItemStack itemStack) {
+        return null;
+    }
 
     /**
      * Called when aPlayer crafts this Tool

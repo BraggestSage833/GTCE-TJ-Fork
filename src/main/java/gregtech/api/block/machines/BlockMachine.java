@@ -317,6 +317,13 @@ public class BlockMachine extends BlockCustomParticle implements ITileEntityProv
             return true;
         }
 
+        if (playerIn.getHeldItemMainhand().isItemEqual(MetaItems.HARD_HAMMER.getStackForm())){
+            if (!worldIn.isRemote) {
+                metaTileEntity.onHardHammerClick(playerIn,hand,facing,rayTraceResult);
+            }
+            return true;
+        }
+
         return metaTileEntity.onCoverRightClick(playerIn, hand, rayTraceResult);
     }
 

@@ -18,12 +18,14 @@ import gregtech.api.render.OrientedOverlayRenderer;
 import gregtech.api.render.SimpleSidedCubeRenderer;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
+import gregtech.common.sound.MachineSoundManager;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fml.relauncher.Side;
@@ -53,6 +55,27 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
         BRONZE_BACKGROUND_TEXTURE = getFullGuiTexture("%s_gui");
         BRONZE_SLOT_BACKGROUND_TEXTURE = getFullGuiTexture("slot_%s");
     }
+
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public SoundEvent getSound() {
+        return workableHandler.recipeMap.getSound();
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public boolean shouldPlaySound() {
+        return isValid() && workableHandler.isActive();
+    }
+
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void updateSound() {
+        MachineSoundManager.update(this);
+    }
+
 
     @SideOnly(Side.CLIENT)
     protected SimpleSidedCubeRenderer getBaseRenderer() {

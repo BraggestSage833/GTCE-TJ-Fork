@@ -4,6 +4,8 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
+import gregtech.api.GregTechAPI;
+import gregtech.api.capability.IControllable;
 import gregtech.api.capability.impl.EnergyContainerHandler;
 import gregtech.api.capability.impl.FilteredFluidHandler;
 import gregtech.api.capability.impl.FluidTankList;
@@ -20,6 +22,7 @@ import gregtech.api.render.OrientedOverlayRenderer;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
 import gregtech.api.util.PipelineUtil;
+import gregtech.common.sound.MachineSoundManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -27,8 +30,11 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
@@ -40,6 +46,7 @@ public class SimpleGeneratorMetaTileEntity extends TieredMetaTileEntity {
     private  ItemStackHandler containerInventory;
     private  OrientedOverlayRenderer overlayRenderer;
     private  FuelRecipeMap recipeMap;
+
 
     public SimpleGeneratorMetaTileEntity(ResourceLocation metaTileEntityId, FuelRecipeMap recipeMap, OrientedOverlayRenderer renderer, int tier) {
         super(metaTileEntityId, tier);
@@ -87,6 +94,20 @@ public class SimpleGeneratorMetaTileEntity extends TieredMetaTileEntity {
         Textures.ENERGY_OUT.renderSided(getFrontFacing(), renderState, translation, PipelineUtil.color(pipeline, GTValues.VC[getTier()]));
     }
 
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public SoundEvent getSound() {
+        System.out.println(recipeMap.getSound().getSoundName());
+        return recipeMap.getSound();
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public boolean shouldPlaySound() {
+        return isValid() && workableHandler.isActive();
+    }
+
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound data) {
         super.writeToNBT(data);
@@ -113,6 +134,12 @@ public class SimpleGeneratorMetaTileEntity extends TieredMetaTileEntity {
             fillContainerFromInternalTank(containerInventory, containerInventory, 0, 1);
             fillInternalTankFromFluidContainer(containerInventory, containerInventory, 0, 1);
         }
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void updateSound() {
+        MachineSoundManager.update(this);
     }
 
     @Override

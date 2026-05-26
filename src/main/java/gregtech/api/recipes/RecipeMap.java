@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.Optional.Method;
@@ -63,6 +64,9 @@ public class RecipeMap<R extends RecipeBuilder<R>> {
     protected TextureArea progressBarTexture;
     protected MoveType moveType;
     public final boolean isHidden;
+
+    @Nullable
+    protected SoundEvent sound;
 
     private final Map<MapFluidIngredient, Collection<Recipe>> recipeFluidMap = new HashMap<>();
     private final Map<MapItemStackIngredient, Collection<Recipe>> recipeItemMap = new HashMap<>();
@@ -148,6 +152,17 @@ public class RecipeMap<R extends RecipeBuilder<R>> {
         this.slotOverlays.put((byte) ((isOutput ? 2 : 0) + (isFluid ? 1 : 0) + (isLast ? 4 : 0)), slotOverlay);
         return this;
     }
+
+    public RecipeMap<R> setSound(SoundEvent sound) {
+        this.sound = sound;
+        return this;
+    }
+
+    @Nullable
+    public SoundEvent getSound() {
+        return sound;
+    }
+
 
     /**
      * This is alternative case when machine can input given fluid

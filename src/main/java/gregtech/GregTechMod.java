@@ -3,6 +3,7 @@ package gregtech;
 import codechicken.lib.CodeChickenLib;
 import crafttweaker.CraftTweakerAPI;
 import gregtech.api.GTValues;
+import gregtech.api.GregTechAPI;
 import gregtech.api.capability.SimpleCapabilityManager;
 import gregtech.api.cover.CoverBehaviorUIFactory;
 import gregtech.api.items.gui.PlayerInventoryUIFactory;
@@ -10,6 +11,8 @@ import gregtech.api.metatileentity.MetaTileEntityUIFactory;
 import gregtech.api.model.ResourcePackHook;
 import gregtech.api.net.NetworkHandler;
 import gregtech.api.recipes.RecipeMap;
+import gregtech.common.sound.GTSoundEvents;
+import gregtech.common.sound.GTSoundSystem;
 import gregtech.api.unification.OreDictUnifier;
 import gregtech.api.unification.material.Materials;
 import gregtech.api.unification.material.type.Material;
@@ -44,6 +47,7 @@ import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+
 
 @Mod(modid = GTValues.MODID,
         name = "GregTech",
@@ -87,6 +91,9 @@ public class GregTechMod {
         SimpleCapabilityManager.init();
         OreDictUnifier.init();
         NBTUtil.registerSerializers();
+
+        GregTechAPI.soundSystem = GTSoundSystem.getInstance();
+        GTSoundEvents.register();
 
         //first, register primary materials and run material handlers
         Materials.register();

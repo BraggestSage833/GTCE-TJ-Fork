@@ -15,8 +15,11 @@ import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.multiblock.PatternMatchContext;
 import gregtech.api.recipes.machines.FuelRecipeMap;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.List;
 import java.util.Map;
@@ -54,6 +57,20 @@ public abstract class FueledMultiblockController extends MultiblockWithDisplayBa
             }
         }
     }
+
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public SoundEvent getSound() {
+        return workableHandler.recipeMap.getSound();
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public boolean shouldPlaySound() {
+        return isValid() && workableHandler.isActive() && isStructureFormed();
+    }
+
 
     @Override
     protected void formStructure(PatternMatchContext context) {

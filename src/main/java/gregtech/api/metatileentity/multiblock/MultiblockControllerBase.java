@@ -17,6 +17,7 @@ import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
 import gregtech.common.ConfigHolder;
 import gregtech.common.items.MetaItems;
+import gregtech.common.sound.MachineSoundManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -26,6 +27,8 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -179,6 +182,12 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     public boolean canShare() {
         return true;
 
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void updateSound() {
+        MachineSoundManager.update(this);
     }
 
     protected void checkStructurePattern() {

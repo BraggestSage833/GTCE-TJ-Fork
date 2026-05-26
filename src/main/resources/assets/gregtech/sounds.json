@@ -1,2 +1,170 @@
 {
+  "arc": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:arc", "stream": false }
+    ]
+  },
+  "assembler": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:assembler", "stream": false }
+    ]
+  },
+  "bath": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:bath", "stream": false }
+    ]
+  },
+  "boiler": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:boiler", "stream": false }
+    ]
+  },
+  "centrifuge": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:centrifuge", "stream": false }
+    ]
+  },
+  "chemical": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:chemical", "stream": false }
+    ]
+  },
+  "combustion": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:combustion", "stream": false }
+    ]
+  },
+  "compressor": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:compressor", "stream": false }
+    ]
+  },
+  "electrolyzer": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:electrolyzer", "stream": false }
+    ]
+  },
+  "forge_hammer": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:forge_hammer", "stream": false }
+    ]
+  },
+  "furnace": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:furnace", "stream": false }
+    ]
+  },
+  "macerator": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:macerator", "stream": false }
+    ]
+  },
+  "miner": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:miner", "stream": false }
+    ]
+  },
+  "mixer": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:mixer", "stream": false }
+    ]
+  },
+  "portable_scanner": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:portable_scanner", "stream": false }
+    ]
+  },
+  "replicator": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:replicator", "stream": false }
+    ]
+  },
+  "wrench": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:wrench", "stream": false }
+    ]
+  },
+  "screwdriver": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:screwdriver", "stream": false }
+    ]
+  },
+   "soft_mallet": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:soft_mallet", "stream": false }
+    ]
+  },
+  "crowbar": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:crowbar", "stream": false }
+    ]
+  },
+  "turbine": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:turbine", "stream": false }
+    ]
+  },
+  "cooling": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:cooling", "stream": false }
+    ]
+  },
+  "fire": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:fire", "stream": false }
+    ]
+  },
+  "motor": {
+    "category": "block",
+    "sounds": [
+      { "name": "gregtech:motor", "stream": false }
+    ]
+  },
+  "cut": {
+    "category": "block",
+    "sounds": [
+      {"name": "gregtech:cut", "stream": false}
+    ]
+  },
+  "spray_can": {
+    "category": "block",
+    "sounds": [
+      {"name": "gregtech:spray_can", "stream": false}
+    ]
+  },
+  "drill": {
+    "category": "block",
+    "sounds": [
+      {"name": "gregtech:drill", "stream": false}
+    ]
+  },
+  "computation": {
+    "category": "block",
+    "sounds": [
+      {"name": "gregtech:computation", "stream": false}
+    ]
+  }
 }
