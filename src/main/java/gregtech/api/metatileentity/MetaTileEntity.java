@@ -416,12 +416,14 @@ public abstract class MetaTileEntity implements ICoverable {
      * @return true if something happened, so wrench will get damaged and animation will be played
      */
     public boolean onWrenchClick(EntityPlayer playerIn, EnumHand hand, EnumFacing wrenchSide, CuboidRayTraceResult hitResult) {
-        getWorld().playSound(null, getPos(), GTSoundEvents.WRENCH, SoundCategory.PLAYERS, 1F, 1F);
 
         if (playerIn.isSneaking()) {
             if (wrenchSide == getFrontFacing() || !isValidFrontFacing(wrenchSide) || !hasFrontFacing()) {
                 return false;
             }
+
+            getWorld().playSound(null, getPos(), GTSoundEvents.WRENCH, SoundCategory.PLAYERS, 1F, 1F);
+
             if (wrenchSide != null && !getWorld().isRemote) {
                 setFrontFacing(wrenchSide);
             }

@@ -98,7 +98,6 @@ public class SimpleGeneratorMetaTileEntity extends TieredMetaTileEntity {
     @Override
     @SideOnly(Side.CLIENT)
     public SoundEvent getSound() {
-        System.out.println(recipeMap.getSound().getSoundName());
         return recipeMap.getSound();
     }
 
