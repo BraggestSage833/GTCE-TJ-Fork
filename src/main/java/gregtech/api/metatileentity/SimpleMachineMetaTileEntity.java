@@ -129,21 +129,6 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
         }
     }
 
-
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public boolean shouldPlaySound() {
-        return isValid() && workable.isActive();
-    }
-
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public SoundEvent getSound() {
-        return workable.recipeMap.getSound();
-    }
-
     @Override
     public void update() {
         super.update();

@@ -193,6 +193,9 @@ public class ConfigHolder {
         @Config.Comment("Whether machines produce sound while operating. Default: true")
         public boolean machineSounds = true;
 
+        @Config.Comment("Allow machines with combustion sounds to produce audio")
+        public boolean allowCombustionSounds = true;
+
         @Config.Comment({
                 "Overrides the MC total playable sounds limit.",
                 "If sounds are causing large amounts of lag, try lowering this.",

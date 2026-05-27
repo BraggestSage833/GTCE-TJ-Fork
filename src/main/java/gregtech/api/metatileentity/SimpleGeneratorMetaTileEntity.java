@@ -22,6 +22,8 @@ import gregtech.api.render.OrientedOverlayRenderer;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
 import gregtech.api.util.PipelineUtil;
+import gregtech.common.ConfigHolder;
+import gregtech.common.sound.GTSoundEvents;
 import gregtech.common.sound.MachineSoundManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
@@ -104,7 +106,12 @@ public class SimpleGeneratorMetaTileEntity extends TieredMetaTileEntity {
     @Override
     @SideOnly(Side.CLIENT)
     public boolean shouldPlaySound() {
-        return isValid() && workableHandler.isActive();
+        return isValid() && workableHandler.isActive() && isCombustionSoundAllowed();
+    }
+
+    @SideOnly(Side.CLIENT)
+    private boolean isCombustionSoundAllowed() {
+        return getSound() == GTSoundEvents.COMBUSTION && ConfigHolder.soundConfiguration.allowCombustionSounds;
     }
 
     @Override

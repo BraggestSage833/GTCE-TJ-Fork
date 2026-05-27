@@ -14,6 +14,8 @@ import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.multiblock.PatternMatchContext;
 import gregtech.api.recipes.machines.FuelRecipeMap;
+import gregtech.common.ConfigHolder;
+import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.ITextComponent;
@@ -68,7 +70,12 @@ public abstract class FueledMultiblockController extends MultiblockWithDisplayBa
     @Override
     @SideOnly(Side.CLIENT)
     public boolean shouldPlaySound() {
-        return isValid() && workableHandler.isActive() && isStructureFormed();
+        return isValid() && workableHandler.isActive() && isStructureFormed() && isCombustionSoundAllowed();
+    }
+
+    @SideOnly(Side.CLIENT)
+    private boolean isCombustionSoundAllowed() {
+        return getSound() == GTSoundEvents.COMBUSTION && ConfigHolder.soundConfiguration.allowCombustionSounds;
     }
 
 
