@@ -338,12 +338,22 @@ public class PartsRecipeHandler {
 
     public static void processStick(OrePrefix stickPrefix, DustMaterial material) {
         if (material instanceof GemMaterial || material instanceof IngotMaterial) {
-            RecipeMaps.LATHE_RECIPES.recipeBuilder()
-                    .input(material instanceof GemMaterial ? OrePrefix.gem : OrePrefix.ingot, material)
-                    .outputs(OreDictUnifier.get(OrePrefix.stick, material, 2))
-                    .duration((int) Math.max(material.getAverageMass() * 2, 1))
-                    .EUt(16)
-                    .buildAndRegister();
+            if (material instanceof IngotMaterial) {
+                RecipeMaps.LATHE_RECIPES.recipeBuilder()
+                        .input(OrePrefix.ingot, material)
+                        .outputs(OreDictUnifier.get(OrePrefix.stick, material, 2))
+                        .duration((int) Math.max(material.getAverageMass() * 2, 1))
+                        .EUt(getTieredVoltageMultiplier(material))
+                        .buildAndRegister();
+            }
+            else {
+                RecipeMaps.LATHE_RECIPES.recipeBuilder()
+                        .input(OrePrefix.gem, material)
+                        .outputs(OreDictUnifier.get(OrePrefix.stick, material, 2))
+                        .duration((int) Math.max(material.getAverageMass() * 2, 1))
+                        .EUt(16)
+                        .buildAndRegister();
+            }
         }
 
         if (material.hasFlag(GENERATE_BOLT_SCREW)) {
