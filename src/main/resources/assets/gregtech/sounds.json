@@ -166,5 +166,11 @@
     "sounds": [
       {"name": "gregtech:computation", "stream": false}
     ]
+  },
+  "pump": {
+    "category": "block",
+    "sounds": [
+      {"name": "gregtech:pump", "stream": false}
+    ]
   }
 }

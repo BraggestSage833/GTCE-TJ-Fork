@@ -33,6 +33,7 @@ public class GTSoundEvents {
     public static SoundEvent MINER;
     public static SoundEvent DRILL;
     public static SoundEvent COMPUTATION;
+    public static SoundEvent PUMP;
 
 
     public static void register() {
@@ -64,6 +65,6 @@ public class GTSoundEvents {
         MINER = soundSystem.registerSound("miner");
         DRILL = soundSystem.registerSound("drill");
         COMPUTATION = soundSystem.registerSound("computation");
-
+        PUMP = soundSystem.registerSound("pump");
     }
 }
