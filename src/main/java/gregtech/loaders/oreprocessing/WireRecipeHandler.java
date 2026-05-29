@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static gregtech.api.GTValues.M;
+import static gregtech.api.util.GTUtility.getTieredVoltageMultiplier;
 
 public class WireRecipeHandler {
 
@@ -50,33 +51,33 @@ public class WireRecipeHandler {
     }
 
     private static final OrePrefix[] WIRE_DOUBLING_ORDER = new OrePrefix[]{
-        OrePrefix.wireGtSingle, OrePrefix.wireGtDouble, OrePrefix.wireGtQuadruple, OrePrefix.wireGtOctal, OrePrefix.wireGtHex
+            OrePrefix.wireGtSingle, OrePrefix.wireGtDouble, OrePrefix.wireGtQuadruple, OrePrefix.wireGtOctal, OrePrefix.wireGtHex
     };
 
     private static final OrePrefix[] CABLE_DOUBLING_ORDER = new OrePrefix[]{
-        OrePrefix.cableGtSingle, OrePrefix.cableGtDouble, OrePrefix.cableGtQuadruple, OrePrefix.cableGtOctal, OrePrefix.cableGtHex
+            OrePrefix.cableGtSingle, OrePrefix.cableGtDouble, OrePrefix.cableGtQuadruple, OrePrefix.cableGtOctal, OrePrefix.cableGtHex
     };
 
     public static void processWireSingle(OrePrefix wirePrefix, IngotMaterial material) {
         RecipeMaps.EXTRUDER_RECIPES.recipeBuilder()
-            .input(OrePrefix.ingot, material)
-            .notConsumable(MetaItems.SHAPE_EXTRUDER_WIRE)
-            .outputs(OreDictUnifier.get(OrePrefix.wireGtSingle, material, 2))
-            .duration((int) material.getAverageMass() * 2)
-            .EUt(6 * getVoltageMultiplier(material))
-            .buildAndRegister();
+                .input(OrePrefix.ingot, material)
+                .notConsumable(MetaItems.SHAPE_EXTRUDER_WIRE)
+                .outputs(OreDictUnifier.get(OrePrefix.wireGtSingle, material, 2))
+                .duration((int) material.getAverageMass() * 2)
+                .EUt(getTieredVoltageMultiplier(material))
+                .buildAndRegister();
 
         RecipeMaps.WIREMILL_RECIPES.recipeBuilder()
-            .input(OrePrefix.ingot, material)
-            .outputs(OreDictUnifier.get(OrePrefix.wireGtSingle, material, 2))
-            .duration((int) material.getAverageMass())
-            .EUt(getVoltageMultiplier(material))
-            .buildAndRegister();
+                .input(OrePrefix.ingot, material)
+                .outputs(OreDictUnifier.get(OrePrefix.wireGtSingle, material, 2))
+                .duration((int) material.getAverageMass())
+                .EUt(getTieredVoltageMultiplier(material))
+                .buildAndRegister();
 
         if (!material.hasFlag(MatFlags.NO_WORKING)) {
             ModHandler.addShapedRecipe(String.format("%s_wire_single", material),
-                OreDictUnifier.get(OrePrefix.wireGtSingle, material), "Xx",
-                'X', new UnificationEntry(OrePrefix.plate, material));
+                    OreDictUnifier.get(OrePrefix.wireGtSingle, material), "Xx",
+                    'X', new UnificationEntry(OrePrefix.plate, material));
         }
     }
 
@@ -92,41 +93,44 @@ public class WireRecipeHandler {
                 ingredients[0] = new UnificationEntry(wirePrefix, material);
                 ingredients[ingredients.length - 1] = OreDictNames.string;
                 for (int i = 1; i < ingredients.length - 1; i++) {
-                    ingredients[i] = (OreDictUnifier.get(OrePrefix.plate, Materials.Rubber, 1) );
+                    ingredients[i] = (OreDictUnifier.get(OrePrefix.plate, Materials.Rubber, 1));
                 }
                 ModHandler.addShapelessRecipe(String.format("%s_cable_%d", material, cableAmount), cableStack, ingredients);
             }
         }
 
         if (isPaperInsulatedCable(material)) {
-            ItemStack carpetStack = (OreDictUnifier.get(OrePrefix.plate, Materials.Rubber, 1) );
+            ItemStack carpetStack = (OreDictUnifier.get(OrePrefix.plate, Materials.Rubber, 1));
             RecipeMaps.PACKER_RECIPES.recipeBuilder()
-                .input(wirePrefix, material)
-                .inputs(carpetStack)
-                .outputs(cableStack)
-                .duration(100).EUt(8)
-                .buildAndRegister();
+                    .input(wirePrefix, material)
+                    .inputs(carpetStack)
+                    .outputs(cableStack)
+                    .duration(100)
+                    .EUt(getTieredVoltageMultiplier(material))
+                    .buildAndRegister();
         }
 
-        for(FluidMaterial insulationMaterial : INSULATION_MATERIALS.keySet()) {
+        for (FluidMaterial insulationMaterial : INSULATION_MATERIALS.keySet()) {
             int cableTier = GTUtility.getTierByVoltage(material.cableProperties.voltage);
             int materialAmount = getMaterialAmount(cableTier, INSULATION_MATERIALS.get(insulationMaterial));
             if (materialAmount == -1) continue;
 
             if (wirePrefix != OrePrefix.wireGtSingle) {
                 RecipeMaps.ASSEMBLER_RECIPES.recipeBuilder()
-                    .input(OrePrefix.wireGtSingle, material, cableAmount).circuitMeta(24 + ArrayUtils.indexOf(WIRE_DOUBLING_ORDER, wirePrefix))
-                    .fluidInputs(insulationMaterial.getFluid(materialAmount * cableAmount))
-                    .outputs(cableStack)
-                    .duration(150).EUt(8)
-                    .buildAndRegister();
+                        .input(OrePrefix.wireGtSingle, material, cableAmount).circuitMeta(24 + ArrayUtils.indexOf(WIRE_DOUBLING_ORDER, wirePrefix))
+                        .fluidInputs(insulationMaterial.getFluid(materialAmount * cableAmount))
+                        .outputs(cableStack)
+                        .duration(150)
+                        .EUt(getTieredVoltageMultiplier(material))
+                        .buildAndRegister();
             }
             RecipeMaps.ASSEMBLER_RECIPES.recipeBuilder()
-                .input(wirePrefix, material).circuitMeta(24)
-                .fluidInputs(insulationMaterial.getFluid(materialAmount * cableAmount))
-                .outputs(cableStack)
-                .duration(150).EUt(8)
-                .buildAndRegister();
+                    .input(wirePrefix, material).circuitMeta(24)
+                    .fluidInputs(insulationMaterial.getFluid(materialAmount * cableAmount))
+                    .outputs(cableStack)
+                    .duration(150)
+                    .EUt(getTieredVoltageMultiplier(material))
+                    .buildAndRegister();
         }
     }
 
@@ -136,24 +140,24 @@ public class WireRecipeHandler {
 
         if (wireIndex < WIRE_DOUBLING_ORDER.length - 1) {
             ModHandler.addShapelessRecipe(String.format("%s_wire_%s_doubling", material, wirePrefix),
-                OreDictUnifier.get(WIRE_DOUBLING_ORDER[wireIndex + 1], material),
-                new UnificationEntry(wirePrefix, material),
-                new UnificationEntry(wirePrefix, material));
+                    OreDictUnifier.get(WIRE_DOUBLING_ORDER[wireIndex + 1], material),
+                    new UnificationEntry(wirePrefix, material),
+                    new UnificationEntry(wirePrefix, material));
         }
 
         if (wireIndex > 0) {
             ModHandler.addShapelessRecipe(String.format("%s_wire_%s_splitting", material, wirePrefix),
-                OreDictUnifier.get(WIRE_DOUBLING_ORDER[wireIndex - 1], material, 2),
-                new UnificationEntry(wirePrefix, material));
+                    OreDictUnifier.get(WIRE_DOUBLING_ORDER[wireIndex - 1], material, 2),
+                    new UnificationEntry(wirePrefix, material));
         }
 
         if (wireIndex < 3) {
             ModHandler.addShapelessRecipe(String.format("%s_wire_%s_quadrupling", material, wirePrefix),
-                OreDictUnifier.get(WIRE_DOUBLING_ORDER[wireIndex + 2], material),
-                new UnificationEntry(wirePrefix, material),
-                new UnificationEntry(wirePrefix, material),
-                new UnificationEntry(wirePrefix, material),
-                new UnificationEntry(wirePrefix, material));
+                    OreDictUnifier.get(WIRE_DOUBLING_ORDER[wireIndex + 2], material),
+                    new UnificationEntry(wirePrefix, material),
+                    new UnificationEntry(wirePrefix, material),
+                    new UnificationEntry(wirePrefix, material),
+                    new UnificationEntry(wirePrefix, material));
         }
     }
 
@@ -162,24 +166,24 @@ public class WireRecipeHandler {
 
         if (cableIndex < CABLE_DOUBLING_ORDER.length - 1) {
             ModHandler.addShapelessRecipe(String.format("%s_cable_%s_doubling", material, cablePrefix),
-                OreDictUnifier.get(CABLE_DOUBLING_ORDER[cableIndex + 1], material),
-                new UnificationEntry(cablePrefix, material),
-                new UnificationEntry(cablePrefix, material));
+                    OreDictUnifier.get(CABLE_DOUBLING_ORDER[cableIndex + 1], material),
+                    new UnificationEntry(cablePrefix, material),
+                    new UnificationEntry(cablePrefix, material));
         }
 
         if (cableIndex > 0) {
             ModHandler.addShapelessRecipe(String.format("%s_cable_%s_splitting", material, cablePrefix),
-                OreDictUnifier.get(CABLE_DOUBLING_ORDER[cableIndex - 1], material, 2),
-                new UnificationEntry(cablePrefix, material));
+                    OreDictUnifier.get(CABLE_DOUBLING_ORDER[cableIndex - 1], material, 2),
+                    new UnificationEntry(cablePrefix, material));
         }
 
         if (cableIndex < 3) {
             ModHandler.addShapelessRecipe(String.format("%s_cable_%s_quadrupling", material, cablePrefix),
-                OreDictUnifier.get(CABLE_DOUBLING_ORDER[cableIndex + 2], material),
-                new UnificationEntry(cablePrefix, material),
-                new UnificationEntry(cablePrefix, material),
-                new UnificationEntry(cablePrefix, material),
-                new UnificationEntry(cablePrefix, material));
+                    OreDictUnifier.get(CABLE_DOUBLING_ORDER[cableIndex + 2], material),
+                    new UnificationEntry(cablePrefix, material),
+                    new UnificationEntry(cablePrefix, material),
+                    new UnificationEntry(cablePrefix, material),
+                    new UnificationEntry(cablePrefix, material));
         }
     }
 
@@ -197,7 +201,7 @@ public class WireRecipeHandler {
 
     private static int getVoltageMultiplier(Material material) {
         return material instanceof IngotMaterial && ((IngotMaterial) material)
-            .blastFurnaceTemperature >= 2800 ? 32 : 8;
+                .blastFurnaceTemperature >= 2800 ? 32 : 8;
     }
 
 }
