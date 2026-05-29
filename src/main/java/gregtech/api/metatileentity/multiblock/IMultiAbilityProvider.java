@@ -2,7 +2,7 @@ package gregtech.api.metatileentity.multiblock;
 
 import java.util.List;
 
-public interface IMultiAbilityProvider {
+    public interface IMultiAbilityProvider {
     /**
      * Returns all abilities this part provides.
      */
