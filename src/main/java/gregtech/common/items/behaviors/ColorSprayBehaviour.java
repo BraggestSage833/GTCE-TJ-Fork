@@ -9,11 +9,14 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import gregtech.api.metatileentity.multiblock.IChanneled;
+
 
 import java.util.List;
 
@@ -44,8 +47,26 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
     private boolean tryPaintBlock(World world, BlockPos pos, EnumFacing side) {
         IBlockState blockState = world.getBlockState(pos);
         Block block = blockState.getBlock();
-        return block.recolorBlock(world, pos, side, this.color) || tryPaintSpecialBlock(world, pos, block);
+        if (block.recolorBlock(world, pos, side, this.color)) {
+            return true;
+        }
+
+        if (tryPaintSpecialBlock(world, pos, block)) {
+            return true;
+        }
+
+        //new for marking TE a given channel
+        TileEntity te = world.getTileEntity(pos);
+        if (te instanceof IChanneled channeled) {
+            channeled.setChannel(this.color);
+            te.markDirty();
+            world.notifyBlockUpdate(pos, blockState, blockState, 3);
+            return true;
+        }
+
+        return false;
     }
+
 
     private boolean tryPaintSpecialBlock(World world, BlockPos pos, Block block) {
         if (block == Blocks.GLASS) {

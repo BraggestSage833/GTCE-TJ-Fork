@@ -10,30 +10,36 @@ import gregtech.api.gui.ModularUI.Builder;
 import gregtech.api.gui.widgets.SlotWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.api.metatileentity.multiblock.IChanneled;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
+import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
+import gregtech.api.render.ICubeRenderer;
 import gregtech.api.render.SimpleOverlayRenderer;
 import gregtech.api.render.Textures;
 import gregtech.common.gui.widget.GhostCircuitWidget;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.ItemStackHandler;;
+
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implements IMultiblockAbilityPart<IItemHandlerModifiable> {
+public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implements IMultiblockAbilityPart<IItemHandlerModifiable>, IChanneled {
 
     private static final int[] INVENTORY_SIZES = {1, 4, 9, 16, 25, 36, 49};
     private final ItemStackHandler ghostCircuitInventory = new ItemStackHandler(1);
     private final IItemHandlerModifiable combinedInventory;
     private final boolean isExportHatch;
+    private ICubeRenderer hatchTexture = null;
 
     public MetaTileEntityItemBus(ResourceLocation metaTileEntityId, int tier, boolean isExportHatch) {
         super(metaTileEntityId, tier);
@@ -139,5 +145,29 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
         super.readFromNBT(data);
         if (data.hasKey("GhostCircuit"))
             this.ghostCircuitInventory.deserializeNBT(data.getCompoundTag("GhostCircuit"));
+    }
+
+    @Override
+    public ICubeRenderer getBaseTexture() {
+        MultiblockControllerBase controller = getController();
+        if (controller != null) {
+            this.hatchTexture = controller.getBaseTexture(this);
+        }
+        if (controller == null && this.hatchTexture != null) {
+            return this.hatchTexture;
+        }
+        super.getBaseTexture();
+        this.setPaintingColor(0xFFFFFF);
+        return controller.getBaseTexture(this);
+    }
+
+    @Override
+    public EnumDyeColor getChannel() {
+        return EnumDyeColor.byMetadata(getPaintingColor());
+    }
+
+    @Override
+    public void setChannel(EnumDyeColor color) {
+        setPaintingColor(color.getColorValue());
     }
 }
