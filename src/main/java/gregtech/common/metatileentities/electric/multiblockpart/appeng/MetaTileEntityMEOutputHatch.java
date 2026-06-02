@@ -104,7 +104,7 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
     @Override
     protected ModularUI createUI(EntityPlayer entityPlayer) {
         ModularUI.Builder builder = ModularUI
-                .builder(GuiTextures.BACKGROUND, 176, 18 + 18 * 4 + 94)
+                .builder(GuiTextures.BORDERED_BACKGROUND, 176, 38 + 18 * 4 + 94)
                 .label(10, 5, getMetaFullName());
         // ME Network status
         builder.dynamicLabel(10, 15, () -> this.isOnline ?
@@ -115,9 +115,9 @@ public class MetaTileEntityMEOutputHatch extends MetaTileEntityAEHostablePart<IA
 
         builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_GT_LOGO, this::isWorkingEnabled, this::setWorkingEnabled));
 
-        builder.widget(new AEFluidGridWidget(10, 35, 3, this.internalBuffer));
+        builder.widget(new AEFluidGridWidget(10, 35, 4, this.internalBuffer));
 
-        builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 + 18 * 4 + 12);
+        builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 38 + 18 * 4 + 12);
         return builder.build(this.getHolder(), entityPlayer);
     }
 

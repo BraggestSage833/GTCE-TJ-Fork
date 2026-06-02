@@ -8,6 +8,8 @@ import codechicken.lib.raytracer.CuboidRayTraceResult;
 import gregtech.api.GTValues;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
+import gregtech.api.gui.widgets.ClickButtonWidget;
+import gregtech.api.gui.widgets.TextFieldWidget;
 import gregtech.api.gui.widgets.ToggleButtonWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -32,29 +34,30 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import static gregtech.api.capability.GregtechDataCodes.UPDATE_AUTO_PULL;
 
 public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
 
-    private static final int CONFIG_SIZE = 16;
     private boolean autoPull;
     private Predicate<FluidStack> autoPullTest;
 
-    public MetaTileEntityMEStockingHatch(ResourceLocation metaTileEntityId) {
-        super(metaTileEntityId, GTValues.IV);
+    public MetaTileEntityMEStockingHatch(ResourceLocation metaTileEntityId, int configSlots) {
+        super(metaTileEntityId, configSlots >= 64 ? GTValues.LuV : GTValues.IV, configSlots);
         this.autoPullTest = $ -> false;
+        this.tickRate = 100;
     }
 
     @Override
     public MetaTileEntity createMetaTileEntity(MetaTileEntityHolder holder) {
-        return new MetaTileEntityMEStockingHatch(metaTileEntityId);
+        return new MetaTileEntityMEStockingHatch(this.metaTileEntityId, this.configSlots);
     }
 
     @Override
     protected ExportOnlyAEStockingFluidList getAEFluidHandler() {
         if (this.aeFluidHandler == null) {
-            this.aeFluidHandler = new ExportOnlyAEStockingFluidList(this, CONFIG_SIZE, getController());
+            this.aeFluidHandler = new ExportOnlyAEStockingFluidList(this, this.configSlots, getController());
         }
         return (ExportOnlyAEStockingFluidList) this.aeFluidHandler;
     }
@@ -62,19 +65,19 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
     @Override
     public void update() {
         super.update();
-        if (!getWorld().isRemote) {
-            if (isWorkingEnabled() && autoPull && getOffsetTimer() % 100 == 0) {
-                refreshList();
-                syncME();
+        if (!this.getWorld().isRemote) {
+            if (this.isWorkingEnabled() && this.autoPull && this.getOffsetTimer() % this.tickRate == 0) {
+                this.refreshList();
+                this.syncME();
             }
 
             // Immediately clear cached fluids if the status changed, to prevent running recipes while offline
             if (this.meStatusChanged && !this.isOnline) {
-                if (autoPull) {
+                if (this.autoPull) {
                     this.getAEFluidHandler().clearConfig();
                 } else {
-                    for (int i = 0; i < CONFIG_SIZE; i++) {
-                        getAEFluidHandler().getInventory()[i].setStack(null);
+                    for (int i = 0; i < this.configSlots; i++) {
+                        this.getAEFluidHandler().getInventory()[i].setStack(null);
                     }
                 }
             }
@@ -184,7 +187,7 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
 
         int index = 0;
         for (IAEFluidStack stack : storageList) {
-            if (index >= CONFIG_SIZE) break;
+            if (index >= this.configSlots) break;
             if (stack.getStackSize() == 0) continue;
             stack = monitor.extractItems(stack, Actionable.SIMULATE, getActionSource());
             if (stack == null || stack.getStackSize() == 0) continue;
@@ -204,7 +207,7 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
     }
 
     private void clearInventory(int startIndex) {
-        for (int i = startIndex; i < CONFIG_SIZE; i++) {
+        for (int i = startIndex; i < this.configSlots; i++) {
             var slot = this.getAEFluidHandler().getInventory()[i];
             slot.setConfig(null);
             slot.setStack(null);
@@ -222,8 +225,12 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
     @Override
     protected ModularUI.Builder createUITemplate(EntityPlayer player) {
         ModularUI.Builder builder = super.createUITemplate(player);
-        builder.widget(new ToggleButtonWidget(7 + 18 * 4 + 1, 26, 16, 16, GuiTextures.BUTTON_AUTO_PULL, () -> autoPull, this::setAutoPull)
-                .setTooltipText("gregtech.gui.me_bus.auto_pull_button"));
+        builder.widget(new ToggleButtonWidget(7 + 18 * 4 + 1, 46, 16, 16, GuiTextures.BUTTON_AUTO_PULL, () -> autoPull, this::setAutoPull)
+                        .setTooltipText("gregtech.gui.me_bus.auto_pull_button"))
+                .widget(new TextFieldWidget(26, 25, 124, 18, true, () -> String.valueOf(this.tickRate), this::setTickRate)
+                        .setValidator(str -> Pattern.compile("\\*?[0-9_]*\\*?").matcher(str).matches()))
+                .widget(new ClickButtonWidget(7, 25, 18, 18, "/2", data -> this.setTickRate(String.valueOf((long) this.tickRate / 2))))
+                .widget(new ClickButtonWidget(151, 25, 18, 18, "*2", data -> this.setTickRate(String.valueOf((long) this.tickRate * 2))));
         return builder;
     }
 
@@ -246,7 +253,7 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound data) {
         super.writeToNBT(data);
-        data.setBoolean("AutoPull", autoPull);
+        data.setBoolean("AutoPull", this.autoPull);
         return data;
     }
 
@@ -259,7 +266,7 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
     @Override
     public void writeInitialSyncData(PacketBuffer buf) {
         super.writeInitialSyncData(buf);
-        buf.writeBoolean(autoPull);
+        buf.writeBoolean(this.autoPull);
     }
 
     @Override
@@ -273,9 +280,9 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
                                boolean advanced) {
         tooltip.add(I18n.format("gregtech.machine.fluid_hatch.import.tooltip"));
         tooltip.add(I18n.format("gregtech.machine.me.stocking_fluid.tooltip"));
-        tooltip.add(I18n.format("gregtech.machine.me_import_fluid_hatch.configs.tooltip"));
+        tooltip.add(I18n.format("gregtech.machine.me_import_fluid_hatch.configs.tooltip", this.configSlots));
         tooltip.add(I18n.format("gregtech.machine.me.copy_paste.tooltip"));
-        tooltip.add(I18n.format("gregtech.machine.me.stocking_fluid.tooltip.2"));
+        tooltip.add(I18n.format("gregtech.machine.me.stocking_fluid.tooltip.2", this.configSlots));
         tooltip.add(I18n.format("gregtech.machine.me.extra_connections.tooltip"));
         tooltip.add(I18n.format("gregtech.universal.enabled"));
     }
@@ -303,6 +310,11 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
         // set auto pull first to avoid issues with clearing the config after reading from the data stick
         this.setAutoPull(false);
         super.readConfigFromTag(tag);
+    }
+
+    private void setTickRate(String tickRate) {
+        this.tickRate = (int) Math.max(1, Math.min(Integer.MAX_VALUE, Long.parseLong(tickRate)));
+        this.markDirty();
     }
 
     private static class ExportOnlyAEStockingFluidSlot extends ExportOnlyAEFluidSlot {

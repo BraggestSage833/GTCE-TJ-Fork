@@ -1,6 +1,7 @@
 package gregtech.common.gui.widget.appeng;
 
 import appeng.api.storage.data.IAEItemStack;
+import gregtech.common.gui.widget.SlotScrollableWidgetGroup;
 import gregtech.common.gui.widget.appeng.slot.AEItemConfigSlot;
 import gregtech.common.gui.widget.appeng.slot.ExportOnlyAEItemList;
 import gregtech.common.gui.widget.appeng.slot.ExportOnlyAEItemSlot;
@@ -21,17 +22,16 @@ public class AEItemConfigWidget extends AEConfigWidget<IAEItemStack> {
     @Override
     @SuppressWarnings("unchecked")
     void init() {
-        final int size = (int) Math.sqrt(this.config.length);
         this.displayList = new IConfigurableSlot[this.config.length];
         this.cached = new IConfigurableSlot[this.config.length];
-        for (int h = 0; h < size; h++) {
-            for (int w = 0; w < size; w++) {
-                final int index = h * size + w;
-                this.displayList[index] = new ExportOnlyAEItemSlot();
-                this.cached[index] = new ExportOnlyAEItemSlot();
-                this.addWidget(new AEItemConfigSlot(w * 18, h * 18, this, index));
-            }
+        final SlotScrollableWidgetGroup scrollableWidgetGroup = new SlotScrollableWidgetGroup(0, 0, 166, 72, 4)
+                .setScrollWidth(4);
+        for (int i = 0; i < this.config.length; i++) {
+            this.displayList[i] = new ExportOnlyAEItemSlot();
+            this.cached[i] = new ExportOnlyAEItemSlot();
+            scrollableWidgetGroup.addWidget(new AEItemConfigSlot(18 * (i % 4), 18 * (i / 4), this, i));
         }
+        this.addWidget(scrollableWidgetGroup);
     }
 
     public boolean hasStackInConfig(ItemStack stack) {
