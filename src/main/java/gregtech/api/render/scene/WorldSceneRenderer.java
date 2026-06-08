@@ -32,6 +32,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,14 +51,18 @@ public class WorldSceneRenderer {
     private SceneRenderCallback renderCallback;
     private Predicate<BlockPos> renderFilter;
     private BlockPos lastHitBlock;
+    private final Map<BlockPos, BlockInfo> blockInfoMap = new HashMap<>();
+
 
     public WorldSceneRenderer(Map<BlockPos, BlockInfo> renderedBlocks) {
         for (Entry<BlockPos, BlockInfo> renderEntry : renderedBlocks.entrySet()) {
             BlockPos pos = renderEntry.getKey();
             BlockInfo blockInfo = renderEntry.getValue();
-            if (blockInfo.getBlockState().getBlock() == Blocks.AIR)
+            IBlockState state = blockInfo.getBlockState();
+            if (state == null || state.getBlock() == Blocks.AIR) // THIS GIVES AN ERROR SINCE getBlock returns NULL
                 continue; //do not render air blocks
             this.renderedBlocks.add(pos);
+            this.blockInfoMap.put(pos, blockInfo);
             blockInfo.apply(world, pos);
         }
     }
@@ -72,6 +77,14 @@ public class WorldSceneRenderer {
 
     public Vector3f getSize() {
         return world.getSize();
+    }
+
+    public List<BlockPos> getRenderedBlocks() {
+        return renderedBlocks;
+    }
+
+    public Map<BlockPos, BlockInfo> getBlockInfoMap() {
+        return blockInfoMap;
     }
 
     public BlockPos getLastHitBlock() {

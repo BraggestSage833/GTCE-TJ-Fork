@@ -4,6 +4,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.util.BlockInfo;
 import gregtech.common.blocks.MetaBlocks;
+import gregtech.integration.jei.multiblock.channel.PlaceholderType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -22,6 +23,7 @@ public class MultiblockShapeInfo {
     }
 
     public BlockInfo[][][] getBlocks() {
+        System.out.println("AMOGUS BLOCK COUNT" + blocks.length);
         return blocks;
     }
 
@@ -44,16 +46,34 @@ public class MultiblockShapeInfo {
             return this;
         }
 
+        public Builder where(char symbol, PlaceholderType type) {
+            this.symbolMap.put(symbol, BlockInfo.placeholder(type));
+            return this;
+        }
+
         public Builder where(char symbol, IBlockState blockState) {
             return where(symbol, new BlockInfo(blockState));
         }
+
+        public Builder where(char symbol, PlaceholderType type, IBlockState blockState) {
+            return where(symbol, new BlockInfo(blockState, type));
+        }
+
 
         public Builder where(char symbol, MetaTileEntity tileEntity, EnumFacing frontSide) {
             MetaTileEntityHolder holder = new MetaTileEntityHolder();
             holder.setMetaTileEntity(tileEntity);
             holder.getMetaTileEntity().setFrontFacing(frontSide);
-            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder));
+            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder,null)); // TODO: Tää tarvii olla muuta kuin null
         }
+
+        public Builder where(char symbol, PlaceholderType type, MetaTileEntity tileEntity, EnumFacing frontSide) {
+            MetaTileEntityHolder holder = new MetaTileEntityHolder();
+            holder.setMetaTileEntity(tileEntity);
+            holder.getMetaTileEntity().setFrontFacing(frontSide);
+            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder,type)); // TODO: Tää tarvii olla muuta kuin null
+        }
+
 
         private BlockInfo[][][] bakeArray() {
             BlockInfo[][][] blockInfos = new BlockInfo[shape.size()][][];
@@ -72,7 +92,7 @@ public class MultiblockShapeInfo {
                             holder = new MetaTileEntityHolder();
                             holder.setMetaTileEntity(mte);
                             holder.getMetaTileEntity().setFrontFacing(mte.getFrontFacing());
-                            columnData[k] = new BlockInfo(columnData[k].getBlockState(), holder);
+                            columnData[k] = new BlockInfo(columnData[k].getBlockState(), holder, columnData[k].getPlaceHolderType()); // TODO: SAMOIN TÄÄ
                         }
                     }
                     aisleData[j] = columnData;

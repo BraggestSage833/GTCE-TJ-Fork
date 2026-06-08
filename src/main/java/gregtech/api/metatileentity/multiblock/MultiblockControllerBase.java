@@ -74,6 +74,11 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
      */
     protected abstract void updateFormedValid();
 
+
+
+
+
+
     /**
      * @return structure pattern of this multiblock
      */
@@ -189,6 +194,12 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     public void updateSound() {
         MachineSoundManager.update(this);
     }
+
+
+    public void checkStructurePatternJEI() {
+        checkStructurePattern();
+    }
+
 
     protected void checkStructurePattern() {
         EnumFacing facing = getFrontFacing().getOpposite();

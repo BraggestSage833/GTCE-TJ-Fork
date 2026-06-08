@@ -21,8 +21,8 @@ public class CokeOvenInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public List<MultiblockShapeInfo> getMatchingShapes() {
-        MultiblockShapeInfo shapeInfo = MultiblockShapeInfo.builder()
+    public MultiblockShapeInfo getMatchingShapes() {
+        return MultiblockShapeInfo.builder()
             .aisle("XXX", "XXX", "XXX")
             .aisle("XXX", "C#X", "XXX")
             .aisle("XXX", "XSX", "XXX")
@@ -31,7 +31,6 @@ public class CokeOvenInfo extends MultiblockInfoPage {
             .where('S', MetaTileEntities.COKE_OVEN_HATCH, EnumFacing.SOUTH)
             .where('#', Blocks.AIR.getDefaultState())
             .build();
-        return Lists.newArrayList(shapeInfo);
     }
 
     @Override

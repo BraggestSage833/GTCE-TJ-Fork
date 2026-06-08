@@ -27,7 +27,7 @@ public abstract class MultiblockInfoPage {
 
     public abstract MultiblockControllerBase getController();
 
-    public abstract List<MultiblockShapeInfo> getMatchingShapes();
+    public abstract MultiblockShapeInfo getMatchingShapes();
 
     public abstract String[] getDescription();
 

@@ -10,6 +10,7 @@ import gregtech.common.blocks.MetaBlocks;
 import gregtech.common.metatileentities.MetaTileEntities;
 import gregtech.integration.jei.multiblock.MultiblockInfoPage;
 import gregtech.integration.jei.multiblock.MultiblockShapeInfo;
+import gregtech.integration.jei.multiblock.channel.PlaceholderType;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
@@ -24,21 +25,20 @@ public class DieselEngineInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public List<MultiblockShapeInfo> getMatchingShapes() {
-        MultiblockShapeInfo shapeInfo = MultiblockShapeInfo.builder()
-            .aisle("AAA", "ACA", "AAA")
-            .aisle("HHH", "HGH", "HHH")
-            .aisle("HHH", "FGH", "HHH")
-            .aisle("HHH", "HEH", "HHH")
-            .where('H', MetaBlocks.METAL_CASING.getState(MetalCasingType.TITANIUM_STABLE))
-            .where('G', MetaBlocks.TURBINE_CASING.getState(BlockTurbineCasing.TurbineCasingType.TITANIUM_GEARBOX))
-            .where('A', MetaBlocks.MUTLIBLOCK_CASING.getState(BlockMultiblockCasing.MultiblockCasingType.ENGINE_INTAKE_CASING))
-            .where('C', MetaTileEntities.DIESEL_ENGINE, EnumFacing.NORTH)
-            .where('F', MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.EV], EnumFacing.WEST)
-            .where('E', MetaTileEntities.ENERGY_OUTPUT_HATCH[GTValues.EV], EnumFacing.SOUTH)
-            .where('#', Blocks.AIR.getDefaultState())
-            .build();
-        return Lists.newArrayList(shapeInfo);
+    public MultiblockShapeInfo getMatchingShapes() {
+        return MultiblockShapeInfo.builder()
+                .aisle("AAA", "ACA", "AAA")
+                .aisle("HHH", "HGH", "HHH")
+                .aisle("HHH", "FGH", "HHH")
+                .aisle("HHH", "HEH", "HHH")
+                .where('H', MetaBlocks.METAL_CASING.getState(MetalCasingType.TITANIUM_STABLE))
+                .where('G', MetaBlocks.TURBINE_CASING.getState(BlockTurbineCasing.TurbineCasingType.TITANIUM_GEARBOX))
+                .where('A', MetaBlocks.MUTLIBLOCK_CASING.getState(BlockMultiblockCasing.MultiblockCasingType.ENGINE_INTAKE_CASING))
+                .where('C', MetaTileEntities.DIESEL_ENGINE, EnumFacing.NORTH)
+                .where('F', PlaceholderType.INPUT_HATCH, MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.EV], EnumFacing.WEST)
+                .where('E', PlaceholderType.ENERGY_OUTPUT_HATCH, MetaTileEntities.ENERGY_OUTPUT_HATCH[GTValues.EV], EnumFacing.SOUTH)
+                .where('#', Blocks.AIR.getDefaultState())
+                .build();
     }
 
     @Override

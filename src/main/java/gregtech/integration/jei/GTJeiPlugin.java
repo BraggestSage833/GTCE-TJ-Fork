@@ -66,6 +66,7 @@ public class GTJeiPlugin implements IModPlugin {
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registry) {
+
         registry.addRecipeCategories(new IntCircuitCategory(registry.getJeiHelpers().getGuiHelper()));
         registry.addRecipeCategories(new MultiblockInfoCategory(registry.getJeiHelpers()));
         for (RecipeMap<?> recipeMap : RecipeMap.getRecipeMaps()) {

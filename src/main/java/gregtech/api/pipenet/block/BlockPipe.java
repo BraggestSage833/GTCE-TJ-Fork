@@ -19,6 +19,8 @@ import gregtech.api.pipenet.WorldPipeNet;
 import gregtech.api.pipenet.tile.AttachmentType;
 import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.api.pipenet.tile.TileEntityPipeBase;
+import gregtech.common.pipelike.cable.WireProperties;
+import gregtech.common.sound.GTSoundEvents;
 import gregtech.common.tools.DamageValues;
 import gregtech.api.render.IBlockAppearance;
 import gregtech.integration.ctm.IFacadeWrapper;
@@ -215,6 +217,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             if (wrenchItem != null) {
                 if (wrenchItem.damageItem(DamageValues.DAMAGE_FOR_WRENCH, true)) {
                     if (!entityPlayer.world.isRemote) {
+                        entityPlayer.playSound(GTSoundEvents.WRENCH,1F,1F);
                         boolean isBlocked = pipeTile.isConnectionBlocked(AttachmentType.PIPE, coverSide);
                         pipeTile.setConnectionBlocked(AttachmentType.PIPE, coverSide, !isBlocked);
                         wrenchItem.damageItem(DamageValues.DAMAGE_FOR_WRENCH, false);
@@ -224,7 +227,23 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
                 return false;
             }
         }
-
+        /*
+        else if (!(hit.cuboid6.data instanceof WireProperties)) {
+            IWrenchItem wrenchItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_WRENCH, null);
+            if (wrenchItem != null) {
+                if (wrenchItem.damageItem(DamageValues.DAMAGE_FOR_WRENCH, true)) {
+                    if (!entityPlayer.world.isRemote) {
+                        entityPlayer.playSound(GTSoundEvents.WIRE_CUTTER,1F,1F);
+                        boolean isBlocked = pipeTile.isConnectionBlocked(AttachmentType.PIPE, coverSide);
+                        pipeTile.setConnectionBlocked(AttachmentType.PIPE, coverSide, !isBlocked);
+                        wrenchItem.damageItem(DamageValues.DAMAGE_FOR_WRENCH, false);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }
+        */
         CoverBehavior coverBehavior = pipeTile.getCoverableImplementation().getCoverAtSide(coverSide);
         if (coverBehavior == null)
             return false;

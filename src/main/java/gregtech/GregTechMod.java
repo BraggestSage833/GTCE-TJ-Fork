@@ -115,6 +115,10 @@ public class GregTechMod {
         MetaTileEntities.init();
         MetaEntities.init();
 
+
+        //StructureChannelRegistry.register();
+
+
         proxy.onPreLoad();
     }
 
