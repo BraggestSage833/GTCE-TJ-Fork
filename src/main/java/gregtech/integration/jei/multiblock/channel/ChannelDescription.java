@@ -8,14 +8,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public class ChannelDescription {
 
     private static final Map<String, ChannelDescription> REGISTRY = new HashMap<>();
     private static final Map<ItemStackKey, Map<String, Integer>> ITEM_TO_CHANNELS = new HashMap<>();
 
     private final String channelName;
-    private final Map<String, String> descriptions = new HashMap<>();
     private final Map<ItemStackKey, Integer> items = new HashMap<>();
 
     public static ChannelDescription get(String name) {
@@ -32,14 +30,9 @@ public class ChannelDescription {
         return map == null ? Collections.emptyList() : map.entrySet();
     }
 
-    public static void registerChannelDescription(String channel, String modid, String description) {
-        get(channel).descriptions.put(modid, description);
-    }
-
     public static void registerChannelItem(String channel, int value, ItemStack stack) {
         ChannelDescription desc = get(channel);
         ItemStackKey key = new ItemStackKey(stack);
-
         desc.items.put(key, value);
         ITEM_TO_CHANNELS.computeIfAbsent(key, k -> new HashMap<>()).put(channel, value);
     }
@@ -50,10 +43,6 @@ public class ChannelDescription {
 
     public String getName() {
         return channelName;
-    }
-
-    public Map<String, String> getDescriptions() {
-        return Collections.unmodifiableMap(descriptions);
     }
 
     public Map<ItemStackKey, Integer> getItems() {

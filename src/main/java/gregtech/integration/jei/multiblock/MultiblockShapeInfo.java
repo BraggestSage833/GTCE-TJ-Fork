@@ -17,14 +17,19 @@ import java.util.Map;
 public class MultiblockShapeInfo {
 
     private final BlockInfo[][][] blocks; //[z][y][x]
+    private final boolean isTiered;
 
-    public MultiblockShapeInfo(BlockInfo[][][] blocks) {
+    public MultiblockShapeInfo(BlockInfo[][][] blocks, boolean isTiered) {
         this.blocks = blocks;
+        this.isTiered = isTiered;
     }
 
     public BlockInfo[][][] getBlocks() {
-        System.out.println("AMOGUS BLOCK COUNT" + blocks.length);
         return blocks;
+    }
+
+    public boolean isTiered() {
+        return isTiered;
     }
 
     public static Builder builder() {
@@ -35,6 +40,7 @@ public class MultiblockShapeInfo {
 
         private List<String[]> shape = new ArrayList<>();
         private Map<Character, BlockInfo> symbolMap = new HashMap<>();
+        boolean isTiered = false;
 
         public Builder aisle(String... data) {
             this.shape.add(data);
@@ -48,6 +54,7 @@ public class MultiblockShapeInfo {
 
         public Builder where(char symbol, PlaceholderType type) {
             this.symbolMap.put(symbol, BlockInfo.placeholder(type));
+            this.isTiered = true;
             return this;
         }
 
@@ -59,7 +66,6 @@ public class MultiblockShapeInfo {
             return where(symbol, new BlockInfo(blockState, type));
         }
 
-
         public Builder where(char symbol, MetaTileEntity tileEntity, EnumFacing frontSide) {
             MetaTileEntityHolder holder = new MetaTileEntityHolder();
             holder.setMetaTileEntity(tileEntity);
@@ -68,6 +74,7 @@ public class MultiblockShapeInfo {
         }
 
         public Builder where(char symbol, PlaceholderType type, MetaTileEntity tileEntity, EnumFacing frontSide) {
+            this.isTiered = true;
             MetaTileEntityHolder holder = new MetaTileEntityHolder();
             holder.setMetaTileEntity(tileEntity);
             holder.getMetaTileEntity().setFrontFacing(frontSide);
@@ -103,7 +110,7 @@ public class MultiblockShapeInfo {
         }
 
         public MultiblockShapeInfo build() {
-            return new MultiblockShapeInfo(bakeArray());
+            return new MultiblockShapeInfo(bakeArray(),this.isTiered);
         }
 
     }

@@ -29,7 +29,7 @@ public class PyrolyzeOvenInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
                 .aisle("XXX", "ISF", "XXX")
                 .aisle("CCC", "C#C", "CCC")

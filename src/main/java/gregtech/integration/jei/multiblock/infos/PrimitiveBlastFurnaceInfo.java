@@ -21,7 +21,7 @@ public class PrimitiveBlastFurnaceInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
             .aisle("XXX", "XXX", "XXX", "XXX")
             .aisle("XXX", "C#X", "X#X", "X#X")

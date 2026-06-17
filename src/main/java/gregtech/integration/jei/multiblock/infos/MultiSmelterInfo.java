@@ -28,7 +28,7 @@ public class MultiSmelterInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
                 .aisle("IXX", "CCC", "XXX")
                 .aisle("SXE", "C#C", "XXX")

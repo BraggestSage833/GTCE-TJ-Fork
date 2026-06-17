@@ -25,7 +25,7 @@ public class DieselEngineInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
                 .aisle("AAA", "ACA", "AAA")
                 .aisle("HHH", "HGH", "HHH")
@@ -35,8 +35,8 @@ public class DieselEngineInfo extends MultiblockInfoPage {
                 .where('G', MetaBlocks.TURBINE_CASING.getState(BlockTurbineCasing.TurbineCasingType.TITANIUM_GEARBOX))
                 .where('A', MetaBlocks.MUTLIBLOCK_CASING.getState(BlockMultiblockCasing.MultiblockCasingType.ENGINE_INTAKE_CASING))
                 .where('C', MetaTileEntities.DIESEL_ENGINE, EnumFacing.NORTH)
-                .where('F', PlaceholderType.INPUT_HATCH, MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.EV], EnumFacing.WEST)
-                .where('E', PlaceholderType.ENERGY_OUTPUT_HATCH, MetaTileEntities.ENERGY_OUTPUT_HATCH[GTValues.EV], EnumFacing.SOUTH)
+                .where('F', MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.EV], EnumFacing.WEST)
+                .where('E', MetaTileEntities.ENERGY_OUTPUT_HATCH[GTValues.EV], EnumFacing.SOUTH)
                 .where('#', Blocks.AIR.getDefaultState())
                 .build();
     }

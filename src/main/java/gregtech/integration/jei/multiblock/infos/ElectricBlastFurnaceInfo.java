@@ -29,7 +29,7 @@ public class ElectricBlastFurnaceInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
             .aisle("IFX", "CCC", "CCC", "XXX")
             .aisle("SXE", "C#C", "C#C", "XXX")

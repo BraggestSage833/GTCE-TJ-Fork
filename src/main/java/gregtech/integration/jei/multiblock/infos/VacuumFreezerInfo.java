@@ -27,7 +27,7 @@ public class VacuumFreezerInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
                 .aisle("XXX", "BXH", "XXX")
                 .aisle("XXX", "C#E", "XXX")

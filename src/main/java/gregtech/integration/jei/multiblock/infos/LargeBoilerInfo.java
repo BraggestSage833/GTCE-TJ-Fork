@@ -27,7 +27,7 @@ public class LargeBoilerInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
                 .aisle("FXX", "CCC", "CCC", "CCC")
                 .aisle("XXX", "SPC", "CPC", "CCC")

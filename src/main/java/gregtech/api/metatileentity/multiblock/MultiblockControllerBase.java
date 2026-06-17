@@ -18,6 +18,7 @@ import gregtech.api.util.GTUtility;
 import gregtech.common.ConfigHolder;
 import gregtech.common.items.MetaItems;
 import gregtech.common.sound.MachineSoundManager;
+import gregtech.integration.jei.multiblock.MultiblockShapeInfo;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -45,8 +46,19 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     private final List<IMultiblockPart> multiblockParts = new ArrayList<>();
     private boolean structureFormed;
 
+    protected final int minExtent;
+    protected final int maxExtent;
+    protected final int minTier; // min tier for machines that might have min voltage tier or tiered block
+
     public MultiblockControllerBase(ResourceLocation metaTileEntityId) {
+        this(metaTileEntityId, 1, 1, 0);
+    }
+
+    public MultiblockControllerBase(ResourceLocation metaTileEntityId, int minExtent, int maxExtent, int minTier) {
         super(metaTileEntityId);
+        this.minExtent = minExtent;
+        this.maxExtent = maxExtent;
+        this.minTier = minTier;
         reinitializeStructurePattern();
         this.setPaintingColor(0xFFFFFF);
     }
@@ -73,10 +85,6 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
      * Called when the multiblock is formed and validation predicate is matched
      */
     protected abstract void updateFormedValid();
-
-
-
-
 
 
     /**
@@ -108,6 +116,19 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
         return true;
     }
 
+    public int getMinExtent() {
+        return minExtent;
+    }
+
+    public int getMaxExtent() {
+        return maxExtent;
+    }
+
+    public int getMinTier() {
+        return minTier;
+    }
+
+
     @Override
     public final int getActualLightValue() {
         return getLightValueForPart(null);
@@ -129,6 +150,8 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
             return false;
         };
     }
+
+
 
     public static Predicate<BlockWorldState> abilityPartPredicate(MultiblockAbility<?>... allowedAbilities) {
         return tilePredicate((state, tile) -> tile instanceof IMultiblockAbilityPart<?> &&

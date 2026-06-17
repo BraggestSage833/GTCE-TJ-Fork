@@ -36,7 +36,7 @@ public class LargeTurbineInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         MetaTileEntityHolder holder = new MetaTileEntityHolder();
         holder.setMetaTileEntity(MetaTileEntities.ROTOR_HOLDER[2]);
         holder.getMetaTileEntity().setFrontFacing(EnumFacing.WEST);

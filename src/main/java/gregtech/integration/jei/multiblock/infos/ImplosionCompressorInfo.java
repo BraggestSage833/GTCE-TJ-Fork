@@ -27,7 +27,7 @@ public class ImplosionCompressorInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
                 .aisle("XXX", "XBX", "XXX")
                 .aisle("XXX", "C#E", "XXX")

@@ -27,7 +27,7 @@ public class DistillationTowerInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public MultiblockShapeInfo getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         return MultiblockShapeInfo.builder()
                 .aisle("EXX", "XXX", "XXX", "XXX", "XXX", "XXX")
                 .aisle("SFX", "X#X", "X#X", "X#X", "X#X", "XXX")

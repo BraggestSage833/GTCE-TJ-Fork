@@ -4,16 +4,29 @@ public enum PlaceholderType {
     COIL,
     CASING,
     GLASS,
+    CELL,
     PIPE,
-    HEIGHT,
-    LENGTH,
+    EXTENT,
+
+    NUCLEAR_CASING,
+
+    MOTOR,
+    CONVEYOR,
+    EMITTER,
+    FIELD_GEN,
+    PISTON,
+    PUMP,
+    ROBOT_ARM,
+    SENSOR,
 
     OUTPUT_BUS,
     INPUT_BUS,
 
+    MUFFLER,
+    FRAMEWORK,
+
     ENERGY_INPUT_HATCH,
     ENERGY_OUTPUT_HATCH,
     OUTPUT_HATCH,
-    INPUT_HATCH;
-
+    INPUT_HATCH,
 };
