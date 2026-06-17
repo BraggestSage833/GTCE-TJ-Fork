@@ -79,10 +79,6 @@ public class WorldSceneRenderer {
         return world.getSize();
     }
 
-    public List<BlockPos> getRenderedBlocks() {
-        return renderedBlocks;
-    }
-
     public Map<BlockPos, BlockInfo> getBlockInfoMap() {
         return blockInfoMap;
     }
