@@ -59,7 +59,7 @@ public class WorldSceneRenderer {
             BlockPos pos = renderEntry.getKey();
             BlockInfo blockInfo = renderEntry.getValue();
             IBlockState state = blockInfo.getBlockState();
-            if (state == null || state.getBlock() == Blocks.AIR) // THIS GIVES AN ERROR SINCE getBlock returns NULL
+            if (state == null || state.getBlock() == Blocks.AIR)
                 continue; //do not render air blocks
             this.renderedBlocks.add(pos);
             this.blockInfoMap.put(pos, blockInfo);

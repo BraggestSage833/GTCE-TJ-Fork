@@ -106,7 +106,6 @@ public class MetaTileEntityElectricBlastFurnace extends RecipeMapMultiblockContr
             .build();
     }
 
-
     private EnumFacing getFacingForPos(int x, int y, int z, int maxX, int maxY, int maxZ) {
         if (x == 0) return EnumFacing.WEST;
         if (x == maxX) return EnumFacing.EAST;
@@ -116,35 +115,6 @@ public class MetaTileEntityElectricBlastFurnace extends RecipeMapMultiblockContr
         if (y == maxY) return EnumFacing.UP;
         return EnumFacing.NORTH; // fallback
     }
-
-
-
-    /*
-    @Override
-    protected  BlockPattern createStructurePattern() {
-        Pair<BlockPattern, MultiblockShapeInfo> guh = UnifiedMultiBlockBuilder.start()
-                .aisle("IFX", "CCC", "CCC", "XXX")
-                .aisle("SXE", "C#C", "C#C", "XXX")
-                .aisle("ODX", "CCC", "CCC", "XXX")
-                .where('X', statePredicate(getCasingState()).or(abilityPartPredicate(ALLOWED_ABILITIES)), getCasingState())
-                .where('C', heatingCoilPredicate(), MetaBlocks.WIRE_COIL.getState(CoilType.CUPRONICKEL)) // default for JEI
-                .where('S', selfPredicate(), MetaTileEntities.ELECTRIC_BLAST_FURNACE, null, EnumFacing.WEST)
-                .where('E', abilityPartPredicate(EXPORT_ITEMS), MetaTileEntities.ENERGY_INPUT_HATCH[GTValues.MV], PlaceholderType.ENERGY_INPUT_HATCH, EnumFacing.EAST)
-                .where('I', abilityPartPredicate(IMPORT_ITEMS), MetaTileEntities.ITEM_IMPORT_BUS[GTValues.LV],PlaceholderType.INPUT_BUS, EnumFacing.WEST)
-                .where('O', abilityPartPredicate(EXPORT_ITEMS), MetaTileEntities.ITEM_EXPORT_BUS[GTValues.LV], PlaceholderType.OUTPUT_BUS ,EnumFacing.WEST)
-                .where('F', abilityPartPredicate(IMPORT_FLUIDS), MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.LV], PlaceholderType.INPUT_HATCH, EnumFacing.NORTH)
-                .where('D', abilityPartPredicate(IMPORT_FLUIDS), MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.LV],PlaceholderType.INPUT_HATCH , EnumFacing.SOUTH)
-                .where('#', isAirPredicate(), Blocks.AIR.getDefaultState())
-                .setAmountAtLeast('L', 10)
-                .buildWithRenderInfo();
-
-        this.multiblockShapeInfo = guh.getRight();
-
-        return guh.getLeft();
-    }
-    */
-
-
 
     protected IBlockState getCasingState() {
         return MetaBlocks.METAL_CASING.getState(MetalCasingType.INVAR_HEATPROOF);
