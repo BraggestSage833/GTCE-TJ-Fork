@@ -3,9 +3,7 @@ package gregtech.integration.jei.multiblock.channel;
 public enum PlaceholderType {
     COIL,
     CASING,
-    GLASS,
     CELL,
-    PIPE,
     EXTENT,
 
     NUCLEAR_CASING,
