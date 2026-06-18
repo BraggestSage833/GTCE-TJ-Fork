@@ -23,7 +23,6 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +49,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
 
     protected int progressTime;
     protected int maxProgressTime;
-    protected int recipeEUt;
+    protected long recipeEUt;
     protected List<FluidStack> fluidOutputs;
     protected NonNullList<ItemStack> itemOutputs;
     protected final Random random = new Random();
@@ -78,7 +77,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         this.previousRecipe = new RecipeLRUCache(this.recipeCacheSize);
         this.recipeMap = recipeMap;
         if (ConfigHolder.gregicalityOverclocking) {
-            V = GTValues.V2;
+            V = GTValues.VOC;
             VN = GTValues.VN2;
         } else {
             V = GTValues.V;
@@ -90,7 +89,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
 
     protected abstract long getEnergyCapacity();
 
-    protected abstract boolean drawEnergy(int recipeEUt);
+    protected abstract boolean drawEnergy(long recipeEUt);
 
     protected abstract long getMaxVoltage();
 
@@ -290,8 +289,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected boolean setupAndConsumeRecipeInputs(Recipe recipe) {
-        int[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
-        long totalEUt = (long) resultOverclock[0] * resultOverclock[1];
+        long[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
+        long totalEUt = resultOverclock[0] * resultOverclock[1];
         IItemHandlerModifiable importInventory = getInputInventory();
         IMultipleTankHandler importFluids = getInputTank();
         return (totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
@@ -299,45 +298,45 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
                 recipe.matchesFound(true, importInventory, importFluids);
     }
 
-    protected int[] calculateOverclock(int EUt, int duration) {
+    protected long[] calculateOverclock(long EUt, int duration) {
         return calculateOverclock(EUt, this.overclockPolicy.getAsLong(), duration);
     }
 
-    protected int[] calculateOverclock(int EUt, long voltage, int duration) {
+    protected long[] calculateOverclock(long EUt, long voltage, int duration) {
 
         if (!allowOverclocking) {
-            return new int[]{EUt, duration};
+            return new long[]{EUt, duration};
         }
         boolean negativeEU = EUt < 0;
         int tier = getOverclockingTier(voltage);
-        if (V[tier] <= EUt || tier == 0)
-            return new int[]{EUt, duration};
+        if (GTValues.VOC[tier] <= EUt || tier == 0)
+            return new long[]{EUt, duration};
         if (negativeEU)
             EUt = -EUt;
-        int resultEUt = EUt;
+        long resultEUt = EUt;
         double resultDuration = duration;
         //do not overclock further if duration is already too small
         while (resultDuration >= 1 && resultEUt <= V[tier - 1]) {
             resultEUt *= 4;
             resultDuration /= 2.8;
         }
-        return new int[]{negativeEU ? -resultEUt : resultEUt, (int) Math.ceil(resultDuration)};
+        return new long[]{negativeEU ? -resultEUt : resultEUt, (int) Math.ceil(resultDuration)};
     }
 
     protected int getOverclockingTier(long voltage) {
         if (ConfigHolder.gregicalityOverclocking) {
-            return GTUtility.getGATierByVoltage(voltage);
+            return GTUtility.getOCTierByVoltage(voltage);
         } else {
             return GTUtility.getTierByVoltage(voltage);
         }
     }
 
     protected long getVoltageByTier(final int tier) {
-        return V[tier];
+        return GTValues.VOC[tier];
     }
 
     public String[] getAvailableOverclockingTiers() {
-        final int maxTier = getOverclockingTier(getMaxVoltage());
+        final int maxTier = GTUtility.getOCTierByVoltage(getMaxVoltage());
         final String[] result = new String[maxTier + 2];
         result[0] = "gregtech.gui.overclock.off";
         for (int i = 0; i < maxTier + 1; ++i) {
@@ -347,9 +346,9 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected void setupRecipe(Recipe recipe) {
-        int[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
+        long[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
         this.progressTime = 1;
-        setMaxProgress(resultOverclock[1]);
+        setMaxProgress((int) resultOverclock[1]);
         this.recipeEUt = resultOverclock[0];
         this.fluidOutputs = GTUtility.copyFluidList(recipe.getFluidOutputs());
         int tier = getMachineTierForRecipe(recipe);
@@ -424,7 +423,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         return maxProgressTime;
     }
 
-    public int getRecipeEUt() {
+    public long getRecipeEUt() {
         return recipeEUt;
     }
 
@@ -540,7 +539,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         if (progressTime > 0) {
             compound.setInteger("Progress", progressTime);
             compound.setInteger("MaxProgress", maxProgressTime);
-            compound.setInteger("RecipeEUt", this.recipeEUt);
+            compound.setLong("RecipeEUt", this.recipeEUt);
             NBTTagList itemOutputsList = new NBTTagList();
             for (ItemStack itemOutput : itemOutputs) {
                 itemOutputsList.appendTag(itemOutput.writeToNBT(new NBTTagCompound()));
@@ -572,9 +571,16 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         }
         this.isActive = false;
         if (progressTime > 0) {
+
+            if(compound.getInteger("RecipeEUt") != 0){
+                this.recipeEUt = compound.getInteger("RecipeEUt");
+            }
+            else{
+                this.recipeEUt =  compound.getInteger("RecipeEUt");
+            }
             this.isActive = true;
             this.maxProgressTime = compound.getInteger("MaxProgress");
-            this.recipeEUt = compound.getInteger("RecipeEUt");
+
             NBTTagList itemOutputsList = compound.getTagList("ItemOutputs", Constants.NBT.TAG_COMPOUND);
             this.itemOutputs = NonNullList.create();
             for (int i = 0; i < itemOutputsList.tagCount(); i++) {

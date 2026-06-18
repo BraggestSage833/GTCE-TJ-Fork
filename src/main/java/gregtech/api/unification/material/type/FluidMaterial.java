@@ -37,6 +37,11 @@ public class FluidMaterial extends Material {
         public static final long GENERATE_PLASMA = GTUtility.createFlag(9);
 
         /**
+         * Add to allow for custom fluid textures
+         */
+        public static final long CUSTOM_FLUID_TEXTURE = GTUtility.createFlag(54);
+
+        /**
          * Marks material state as gas
          * Examples: Air, Argon, Refinery Gas, Oxygen, Hydrogen
          */

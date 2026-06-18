@@ -6,6 +6,7 @@ import net.minecraftforge.oredict.OreDictionary;
 import java.text.DecimalFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import static net.minecraft.util.text.TextFormatting.*;
 
 /**
  * Made for static imports, this Class is just a Helper.
@@ -42,7 +43,11 @@ public class GTValues {
      */
     public static final long[] V = new long[]{8, 32, 128, 512, 2048, 8192, 32768, 131072, 524288, Integer.MAX_VALUE};
     public static final long[] V2 = new long[]{8, 32, 128, 512, 2048, 8192, 32768, 131072, 524288, 2097152, 8388608, 33554432, 134217728, 536870912, Integer.MAX_VALUE};
-
+    public static final long[] VOC = { 8, 32, 128, 512, 2048, 8192, 32768, 131072, 524288, 2097152, 8388608, 33554432,
+            134217728, 536870912, Integer.MAX_VALUE, 8589934592L, 34359738368L, 137438953472L, 549755813888L,
+            2199023255552L,
+            8796093022208L, 35184372088832L, 140737488355328L, 562949953421312L, 2251799813685248L, 9007199254740992L,
+            36028797018963968L, 144115188075855872L, 576460752303423488L, 2305843009213693952L, Long.MAX_VALUE };
 
     public static final int ULV = 0;
     public static final int LV = 1;
@@ -54,14 +59,23 @@ public class GTValues {
     public static final int ZPM = 7;
     public static final int UV = 8;
     public static final int MAX = 9;
+    public static final int MAX_TRUE = 30;
+
+    public static final String MAX_PLUS = RED.toString() + BOLD + "M" + YELLOW + BOLD + "A" + GREEN + BOLD + "X" +
+            AQUA + BOLD + "+" + LIGHT_PURPLE + BOLD;
 
 
     public static final String[] VN = new String[] {"ULV", "LV", "MV", "HV", "EV", "IV", "LuV", "ZPM", "UV", "MAX"};
-    public static final String[] VN2 = new String[] {"ULV", "LV", "MV", "HV", "EV", "IV", "LuV", "ZPM", "UV", "UHV", "UEV", "UIV", "UMV", "UXV", "MAX"};
+    public static final String[] VN2 = new String[] {"ULV", "LV", "MV", "HV", "EV", "IV", "LuV", "ZPM", "UV", "UHV", "UEV", "UIV", "UMV", "UXV", "MAX","MAX+",
+            MAX_PLUS + "1", MAX_PLUS + "2", MAX_PLUS + "3", MAX_PLUS + "4",
+            MAX_PLUS + "5", MAX_PLUS + "6", MAX_PLUS + "7", MAX_PLUS + "8",
+            MAX_PLUS + "9", MAX_PLUS + "10", MAX_PLUS + "11", MAX_PLUS + "12",
+            MAX_PLUS + "13", MAX_PLUS + "14", MAX_PLUS + "15", MAX_PLUS + "16", };
     /**
      * Color values for the voltages
      */
     public static final int[] VC = new int[] {0xDCDCDC, 0xDCDCDC, 0xFF6400, 0xFFFF1E, 0x808080, 0xF0F0F5, 0xF0F0F5, 0xF0F0F5, 0xF0F0F5, 0xF0F0F5};
+
 
     /**
      * The long names for the voltages

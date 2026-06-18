@@ -13,4 +13,6 @@ GTCE is **neither created nor maintained by GregoriusT** but was created with hi
 * It is a reminder that the ideas and design are primarily driven by the community
 * It is a reminder that the implementation and work are solely provided by the community.
 
-Coil Textures are from the [GregTech: New Horizons Modpack.](https://www.curseforge.com/minecraft/modpacks/gt-new-horizons)
+Coil Textures, infinity, and eternity iconset/fluid textures are from the [GregTech: New Horizons Modpack.](https://www.curseforge.com/minecraft/modpacks/gt-new-horizons)
+
+Awaken, draconium, matrix,kayon, exo kayon, chronosteel, non causal. Transendium, supercritial,photavine, kyarmalyte, hara(steel), and sines iconsets are from [Technological Transcendence](https://www.curseforge.com/minecraft/modpacks/technological-transcendence)

@@ -3,6 +3,7 @@ package gregtech.api.util;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
+import gregtech.api.GTValues;
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.IElectricItem;
 import gregtech.api.capability.IMultipleTankHandler;
@@ -73,8 +74,7 @@ import java.util.stream.Collector;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static gregtech.api.GTValues.V;
-import static gregtech.api.GTValues.V2;
+import static gregtech.api.GTValues.*;
 
 public class GTUtility {
 
@@ -90,21 +90,21 @@ public class GTUtility {
     }
 
     public static final String[] TIER_COLOR = new String[] {
-            TextFormatting.RED.toString(), // ULV, 0
-            TextFormatting.GRAY.toString(), // LV, 1
-            TextFormatting.GOLD.toString(), // MV, 2
-            TextFormatting.YELLOW.toString(), // HV, 3
-            TextFormatting.DARK_GRAY.toString(), // EV, 4
-            TextFormatting.GREEN.toString(), // IV, 5
-            TextFormatting.LIGHT_PURPLE.toString(), // LuV, 6
-            TextFormatting.AQUA.toString(), // ZPM, 7
-            TextFormatting.DARK_GREEN.toString(), // UV, 8
-            TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
-            TextFormatting.DARK_PURPLE.toString(), // UEV, 10
-            TextFormatting.DARK_BLUE.toString() + TextFormatting.BOLD, // UIV, 11
-            TextFormatting.RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UMV, 12
-            TextFormatting.DARK_RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UXV, 13
-            TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
+    TextFormatting.RED.toString(), // ULV, 0
+    TextFormatting.GRAY.toString(), // LV, 1
+    TextFormatting.GOLD.toString(), // MV, 2
+    TextFormatting.YELLOW.toString(), // HV, 3
+    TextFormatting.DARK_GRAY.toString(), // EV, 4
+    TextFormatting.GREEN.toString(), // IV, 5
+    TextFormatting.LIGHT_PURPLE.toString(), // LuV, 6
+    TextFormatting.AQUA.toString(), // ZPM, 7
+    TextFormatting.DARK_GREEN.toString(), // UV, 8
+    TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
+    TextFormatting.DARK_PURPLE.toString(), // UEV, 10
+    TextFormatting.DARK_BLUE.toString() + TextFormatting.BOLD, // UIV, 11
+    TextFormatting.RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UMV, 12
+    TextFormatting.DARK_RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UXV, 13
+    TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE,// MAX, 14,
     };
 
     public static Stream<Object> flatten(Object[] array) {
@@ -918,6 +918,67 @@ public class GTUtility {
         return stack;
     }
 
+    /**
+     * @param array Array sorted with natural order
+     * @param value Value to search for
+     * @return Index of the nearest value lesser or equal than {@code value},
+     *         or {@code -1} if there's no entry matching the condition
+     */
+    public static int nearestLesserOrEqual(@NotNull long[] array, long value) {
+        int low = 0, high = array.length - 1;
+        while (true) {
+            int median = (low + high) / 2;
+            if (array[median] <= value) {
+                if (low == high) return low;
+                low = median + 1;
+            } else {
+                if (low == high) return low - 1;
+                high = median - 1;
+            }
+        }
+    }
+
+    /**
+     * @param array Array sorted with natural order
+     * @param value Value to search for
+     * @return Index of the nearest value lesser than {@code value},
+     *         or {@code -1} if there's no entry matching the condition
+     */
+    public static int nearestLesser(@NotNull long[] array, long value) {
+        int low = 0, high = array.length - 1;
+        while (true) {
+            int median = (low + high) / 2;
+            if (array[median] < value) {
+                if (low == high) return low;
+                low = median + 1;
+            } else {
+                if (low == high) return low - 1;
+                high = median - 1;
+            }
+        }
+    }
+
+    public static byte getOCTierByVoltage(long voltage) {
+        long eut = 8;
+        for (byte i = 0; eut > 0; i++) {
+            if ((eut *= 4) > voltage)
+                return i;
+        }
+        return 0;
+    }
+
+
+
+    /**
+     * Ex: This method turns both 1024 and 512 into HV.
+     *
+     * @return the highest voltage tier with value below or equal to {@code voltage}, or
+     *         {@code ULV} if there's no tier below
+     */
+    public static byte getFloorTierByVoltage(long voltage) {
+        return (byte) Math.max(GTValues.ULV, nearestLesserOrEqual(VOC, voltage));
+    }
+    
     //for tiered metal
     public static int getTieredVoltageMultiplier(Material material) {
         int eut = 16;

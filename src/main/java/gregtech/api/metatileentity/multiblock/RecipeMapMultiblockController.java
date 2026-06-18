@@ -127,7 +127,7 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
             if (energyContainer != null && energyContainer.getEnergyCapacity() > 0) {
                 long maxVoltage = energyContainer.getInputVoltage();
                 if (ConfigHolder.gregicalityOverclocking) {
-                    voltageName = GTValues.VN2[GTUtility.getGATierByVoltage(maxVoltage)];
+                    voltageName = GTValues.VN2[GTUtility.getOCTierByVoltage(maxVoltage)];
                 } else {
                     voltageName = GTValues.VN[GTUtility.getTierByVoltage(maxVoltage)];
                 }

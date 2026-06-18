@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import static gregtech.api.unification.material.type.FluidMaterial.MatFlags.CUSTOM_FLUID_TEXTURE;
+
 public class MetaFluids {
 
     private static final Set<ResourceLocation> fluidSprites = new HashSet<>();
@@ -186,6 +188,11 @@ public class MetaFluids {
             fluid.setTemperature(temperature);
             if (textureLocation == AUTO_GENERATED_FLUID_TEXTURE) {
                 fluid.setColor(GTUtility.convertRGBtoOpaqueRGBA_MC(material.materialRGB));
+            }
+            if(material.hasFlag(CUSTOM_FLUID_TEXTURE)){
+                textureLocation = new ResourceLocation(GTValues.MODID, "blocks/fluids/fluid." + materialName);
+                fluid = new MaterialFluid(fluidName,material,fluidState,textureLocation);
+                setMaterialFluidTexture(material, fluidType, textureLocation);
             }
             setStateProperties(fluid, fluidState);
             FluidRegistry.registerFluid(fluid);

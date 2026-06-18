@@ -34,7 +34,27 @@ public enum MaterialIconSet {
     GEM_HORIZONTAL,
     GEM_VERTICAL,
     PAPER,
-    NETHERSTAR;
+    NETHERSTAR,
+    AWAKENED,
+    DRACONIUM,
+    MATRIX,
+    INFINITY,
+    ETERNITY,
+    KAYON,
+    EXO_KAYON,
+    REALITY,
+    SUPERCRITICAL_CHRONOSTEEL,
+    NON_CAUSAL,
+    TRANSCENDIUM,
+    SUPERCRITICAL,
+    PHOTAVINE,
+    KYARMALYTE,
+    SOULARIUM,
+    HARA,
+    HARASTEEL,
+    SINSES,
+    COSMIC_NEUTRONIUM;
+
 
     @ZenGetter("name")
     public String getName() {

@@ -1,0 +1,8 @@
+{
+    "parent": "item/generated",
+    "textures": {
+		"layer0": "gregtech:items/void",
+        "layer1": "gregtech:items/material_sets/exo_kayon/ring",
+		"layer2": "gregtech:items/material_sets/exo_kayon/overlay_ring"
+    }
+}
