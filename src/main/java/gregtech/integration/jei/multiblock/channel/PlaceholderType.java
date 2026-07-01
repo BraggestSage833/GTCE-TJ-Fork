@@ -5,6 +5,7 @@ public enum PlaceholderType {
     CASING,
     CELL,
     EXTENT,
+    GLASS,
 
     NUCLEAR_CASING,
 
@@ -27,4 +28,5 @@ public enum PlaceholderType {
     ENERGY_OUTPUT_HATCH,
     OUTPUT_HATCH,
     INPUT_HATCH,
+    CRAFTER_HATCH
 };
