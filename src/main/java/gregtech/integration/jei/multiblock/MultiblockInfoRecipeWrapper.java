@@ -219,6 +219,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         }
         this.layerXIndex = max(-1, newLayer);
         this.nextLayerXButton.displayString = "X:" + (layerXIndex == -1 ? "A" : Integer.toString(layerXIndex + 1));
+        renderer.markGeometryDirty();
     }
 
     private void setNextLayerY(int newLayer) {
@@ -232,6 +233,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         }
         this.layerYIndex = max(-1, newLayer);
         this.nextLayerYButton.displayString = "Y:" + (layerYIndex == -1 ? "A" : Integer.toString(layerYIndex + 1));
+        renderer.markGeometryDirty();
     }
 
     private void setNextLayerZ(int newLayer) {
@@ -245,6 +247,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         }
         this.layerZIndex = max(-1, newLayer);
         this.nextLayerZButton.displayString = "Z:" + (layerZIndex == -1 ? "A" : Integer.toString(layerZIndex + 1));
+        renderer.markGeometryDirty();
     }
 
     private void rebuildScene() {

@@ -52,6 +52,9 @@ public class WorldSceneRenderer {
     private Predicate<BlockPos> renderFilter;
     private BlockPos lastHitBlock;
     private final Map<BlockPos, BlockInfo> blockInfoMap = new HashMap<>();
+    private int sceneDisplayList = -1;
+    private boolean geometryDirty = true;
+
 
 
     public WorldSceneRenderer(Map<BlockPos, BlockInfo> renderedBlocks) {
@@ -73,6 +76,7 @@ public class WorldSceneRenderer {
 
     public void setRenderFilter(Predicate<BlockPos> filter) {
         this.renderFilter = filter;
+        markGeometryDirty();
     }
 
     public Vector3f getSize() {
@@ -87,6 +91,11 @@ public class WorldSceneRenderer {
         return lastHitBlock;
     }
 
+    public void markGeometryDirty() {
+        this.geometryDirty = true;
+    }
+
+
     /**
      * Renders scene on given coordinates with given width and height, and RGB background color
      * Note that this will ignore any transformations applied currently to projection/view matrix,
@@ -100,24 +109,13 @@ public class WorldSceneRenderer {
         }
         Minecraft minecraft = Minecraft.getMinecraft();
         minecraft.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        BlockRendererDispatcher dispatcher = minecraft.getBlockRendererDispatcher();
-        BlockRenderLayer oldRenderLayer = MinecraftForgeClient.getRenderLayer();
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
 
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-        for (BlockPos pos : renderedBlocks) {
-            if (renderFilter != null && !renderFilter.test(pos))
-                continue; //do not render if position is skipped
-            IBlockState blockState = world.getBlockState(pos);
-            for(BlockRenderLayer renderLayer : BlockRenderLayer.values()) {
-                if (!blockState.getBlock().canRenderInLayer(blockState, renderLayer)) continue;
-                ForgeHooksClient.setRenderLayer(renderLayer);
-                dispatcher.renderBlock(blockState, pos, world, bufferBuilder);
-            }
+
+        if (geometryDirty || sceneDisplayList == -1) {
+            rebuildDisplayList(minecraft);
+            geometryDirty = false;
         }
-        tessellator.draw();
-        ForgeHooksClient.setRenderLayer(oldRenderLayer);
+        GL11.glCallList(sceneDisplayList);
 
         if (mousePosition != null) {
             this.lastHitBlock = handleMouseHit(mousePosition);
@@ -128,7 +126,7 @@ public class WorldSceneRenderer {
         if (lastHitBlock != null) {
             GlStateManager.disableTexture2D();
             CCRenderState renderState = CCRenderState.instance();
-            renderState.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR, tessellator.getBuffer());
+            renderState.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR, Tessellator.getInstance().getBuffer());
             ColourMultiplier multiplier = new ColourMultiplier(0);
             renderState.setPipeline(new Translation(lastHitBlock), multiplier);
             BlockFace blockFace = new BlockFace();
@@ -147,10 +145,36 @@ public class WorldSceneRenderer {
         resetCamera();
     }
 
+    private void rebuildDisplayList(Minecraft minecraft) {
+        if (sceneDisplayList == -1) {
+            sceneDisplayList = GLAllocation.generateDisplayLists(1);
+        }
+        BlockRendererDispatcher dispatcher = minecraft.getBlockRendererDispatcher();
+        BlockRenderLayer oldRenderLayer = MinecraftForgeClient.getRenderLayer();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+
+        GL11.glNewList(sceneDisplayList, GL11.GL_COMPILE);
+        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+        for (BlockPos pos : renderedBlocks) {
+            if (renderFilter != null && !renderFilter.test(pos))
+                continue;
+            IBlockState blockState = world.getBlockState(pos);
+            for (BlockRenderLayer renderLayer : BlockRenderLayer.values()) {
+                if (!blockState.getBlock().canRenderInLayer(blockState, renderLayer)) continue;
+                ForgeHooksClient.setRenderLayer(renderLayer);
+                dispatcher.renderBlock(blockState, pos, world, bufferBuilder);
+            }
+        }
+        tessellator.draw();
+        ForgeHooksClient.setRenderLayer(oldRenderLayer);
+        GL11.glEndList();
+    }
+
     private BlockPos handleMouseHit(Vec2f mousePosition) {
         //read depth of pixel under mouse
         GL11.glReadPixels((int) mousePosition.x, (int) mousePosition.y, 1, 1,
-            GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, PIXEL_DEPTH_BUFFER);
+                GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, PIXEL_DEPTH_BUFFER);
 
         //rewind buffer after write by glReadPixels
         PIXEL_DEPTH_BUFFER.rewind();
@@ -173,7 +197,7 @@ public class WorldSceneRenderer {
 
         //call gluUnProject with retrieved parameters
         GLU.gluUnProject(mousePosition.x, mousePosition.y, pixelDepth,
-            MODELVIEW_MATRIX_BUFFER, PROJECTION_MATRIX_BUFFER, VIEWPORT_BUFFER, OBJECT_POS_BUFFER);
+                MODELVIEW_MATRIX_BUFFER, PROJECTION_MATRIX_BUFFER, VIEWPORT_BUFFER, OBJECT_POS_BUFFER);
 
         //rewind buffers after read by gluUnProject
         VIEWPORT_BUFFER.rewind();
@@ -308,6 +332,8 @@ public class WorldSceneRenderer {
             maxPos.setX(Math.max(maxPos.getX(), pos.getX()));
             maxPos.setY(Math.max(maxPos.getY(), pos.getY()));
             maxPos.setZ(Math.max(maxPos.getZ(), pos.getZ()));
+
+            WorldSceneRenderer.this.markGeometryDirty();
             return super.setBlockState(pos, newState, flags);
         }
 
