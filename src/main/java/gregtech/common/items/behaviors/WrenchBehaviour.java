@@ -3,6 +3,7 @@ package gregtech.common.items.behaviors;
 import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.util.GTUtility;
+import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -10,6 +11,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -32,6 +34,7 @@ public class WrenchBehaviour implements IItemBehaviour {
                 //machines handle wrench click manually
                 return EnumActionResult.PASS;
             if (world.getBlockState(pos).getBlock().rotateBlock(world, pos, side)) {
+                world.playSound(null, pos, GTSoundEvents.WRENCH, SoundCategory.PLAYERS, 1.f,1.f);
                 GTUtility.doDamageItem(stack, this.cost, false);
                 return EnumActionResult.SUCCESS;
             }

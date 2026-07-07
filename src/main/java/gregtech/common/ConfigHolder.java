@@ -87,6 +87,10 @@ public class ConfigHolder {
     @Config.Comment("Category that contains configs for machines with specific behavior")
     public static MachineSpecificConfiguration machineSpecific = new MachineSpecificConfiguration();
 
+    @Config.Comment("Category that contains configs for sounds")
+    public static SoundConfiguration soundConfiguration = new SoundConfiguration();
+
+
     @Config.Comment("Category that contains configs for the NanoSaber")
     public static NanoSaberConfiguration nanoSaberConfiguration = new NanoSaberConfiguration();
 
@@ -183,6 +187,22 @@ public class ConfigHolder {
     public static class MachineSpecificConfiguration {
         @Config.Comment("Array of blacklisted dimension IDs in which Air Collector does not work.")
         public int[] airCollectorDimensionBlacklist = new int[]{};
+    }
+
+    public static class SoundConfiguration {
+        @Config.Comment("Whether machines produce sound while operating. Default: true")
+        public boolean machineSounds = true;
+
+        @Config.Comment("Allow machines with combustion sounds to produce audio")
+        public boolean allowCombustionSounds = true;
+
+        @Config.Comment({
+                "Overrides the MC total playable sounds limit.",
+                "If sounds are causing large amounts of lag, try lowering this.",
+                "If sounds are cutting out or not playing, try increasing the value.", "Default: 255" })
+        @Config.RangeInt(min = 255, max = 2048)
+        @Config.RequiresMcRestart
+        public int maxNumberOfSounds = 255;
     }
 
     public static class NanoSaberConfiguration {

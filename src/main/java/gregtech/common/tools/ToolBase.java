@@ -5,8 +5,19 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.init.Enchantments;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.entity.EntityLivingBase;
 
 public abstract class ToolBase implements IToolStats {
+
+
+    @Override
+    public void onBlockDestroyed(ItemStack stack, World world, IBlockState state, BlockPos pos, EntityLivingBase entity) {
+        world.playSound(null,pos,getBlockBreakSound(stack),SoundCategory.BLOCKS,1F, 1F);
+    }
+
 
     @Override
     public boolean canMineBlock(IBlockState block, ItemStack stack) {

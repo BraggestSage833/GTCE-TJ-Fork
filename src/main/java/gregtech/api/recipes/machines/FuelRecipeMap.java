@@ -7,6 +7,7 @@ import gregtech.api.GTValues;
 import gregtech.api.recipes.FluidKey;
 import gregtech.api.recipes.recipes.FuelRecipe;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.Optional.Method;
 import net.minecraftforge.fml.relauncher.Side;
@@ -15,6 +16,7 @@ import stanhebben.zenscript.annotations.ZenClass;
 import stanhebben.zenscript.annotations.ZenGetter;
 import stanhebben.zenscript.annotations.ZenMethod;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 @ZenClass("mods.gregtech.recipe.FuelRecipeMap")
@@ -25,6 +27,9 @@ public class FuelRecipeMap {
 
     public final String unlocalizedName;
 
+    @Nullable
+    protected SoundEvent sound;
+
     private final Map<FluidKey, FuelRecipe> recipeFluidMap = new HashMap<>();
     private final List<FuelRecipe> recipeList = new ArrayList<>();
 
@@ -32,6 +37,8 @@ public class FuelRecipeMap {
         this.unlocalizedName = unlocalizedName;
         RECIPE_MAPS.add(this);
     }
+
+
 
     @ZenGetter("recipeMaps")
     public static List<FuelRecipeMap> getRecipeMaps() {
@@ -55,6 +62,19 @@ public class FuelRecipeMap {
         recipeFluidMap.put(fluidKey, fuelRecipe);
         recipeList.add(fuelRecipe);
     }
+
+
+    public FuelRecipeMap setSound(SoundEvent sound) {
+        this.sound = sound;
+        return this;
+    }
+
+
+    @Nullable
+    public SoundEvent getSound() {
+        return sound;
+    }
+
 
     @ZenMethod
     public boolean removeRecipe(FuelRecipe recipe) {

@@ -21,14 +21,12 @@ import gregtech.api.recipes.RecipeMap;
 import gregtech.api.render.OrientedOverlayRenderer;
 import gregtech.api.render.Textures;
 import gregtech.common.gui.widget.GhostCircuitWidget;
+import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
@@ -37,12 +35,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity implements IActiveOutputSide {
 
@@ -57,6 +50,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
 
     protected IItemHandler outputItemInventory;
     protected IFluidHandler outputFluidInventory;
+
 
     public SimpleMachineMetaTileEntity(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, OrientedOverlayRenderer renderer, int tier) {
         this(metaTileEntityId, recipeMap, renderer, tier, true);
@@ -100,6 +94,9 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
             if (!getWorld().isRemote) {
                 setOutputFacing(facing);
             }
+
+            getWorld().playSound(null, getPos(), GTSoundEvents.WRENCH, SoundCategory.PLAYERS, 1F, 1F);
+
             return true;
         }
         return super.onWrenchClick(playerIn, hand, facing, hitResult);
@@ -163,6 +160,9 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
                     playerIn.sendMessage(new TextComponentTranslation("gregtech.machine.basic.input_from_output_side.allow"));
                 }
             }
+
+            getWorld().playSound(null, getPos(), GTSoundEvents.SCREWDRIVER, SoundCategory.PLAYERS, 1F, 1F);
+
             return true;
         }
         return super.onScrewdriverClick(playerIn, hand, facing, hitResult);
@@ -312,7 +312,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
         super.clearMachineInventory(itemBuffer);
         clearInventory(itemBuffer, chargerInventory);
     }
-
+    
     @Override
     protected RecipeLogicEnergy createWorkable(RecipeMap<?> recipeMap) {
         return createWorkable(recipeMap, 16);

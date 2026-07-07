@@ -1891,6 +1891,10 @@ tile.concrete.dark_bricks.cracked.name=Cracked Dark Concrete Bricks
 tile.concrete.dark_bricks.mossy.name=Mossy Dark Concrete Bricks
 tile.concrete.dark_bricks.chiseled.name=Chiseled Dark Concrete Bricks
 
+# Muffeling
+gregtech.machine.muffle.on=Sound Muffling: Enabled
+gregtech.machine.muffle.off=Sound Muffling: Disabled
+
 # Steam machines
 gregtech.machine.steam_boiler.tooltip_produces=Produces %,dmb of steam in %,d ticks
 

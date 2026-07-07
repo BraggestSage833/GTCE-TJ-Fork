@@ -2,14 +2,22 @@ package gregtech.common.tools;
 
 import gregtech.api.items.metaitem.MetaItem.MetaValueItem;
 import gregtech.common.items.behaviors.WrenchBehaviour;
+import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.SoundEvent;
 
 public class ToolWrench extends ToolBase {
+
+
+    @Override
+    public SoundEvent getBlockBreakSound(ItemStack stack) {
+        return GTSoundEvents.WRENCH;
+    }
 
     @Override
     public float getNormalDamageBonus(EntityLivingBase entity, ItemStack stack, EntityLivingBase attacker) {

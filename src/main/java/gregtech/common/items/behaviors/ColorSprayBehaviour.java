@@ -1,5 +1,6 @@
 package gregtech.common.items.behaviors;
 
+import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStainedGlass;
 import net.minecraft.block.BlockStainedGlassPane;
@@ -12,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -37,6 +39,8 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         if (!tryPaintBlock(world, pos, side)) {
             return EnumActionResult.PASS;
         }
+
+        world.playSound(player, pos, GTSoundEvents.SPRAY_CAN, SoundCategory.PLAYERS,1F,1F);
         useItemDurability(player, hand, stack, empty.copy());
         return EnumActionResult.SUCCESS;
     }
