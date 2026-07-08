@@ -70,7 +70,7 @@ public class MultiblockShapeInfo {
             MetaTileEntityHolder holder = new MetaTileEntityHolder();
             holder.setMetaTileEntity(tileEntity);
             holder.getMetaTileEntity().setFrontFacing(frontSide);
-            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder,null)); // TODO: Tää tarvii olla muuta kuin null
+            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder,null));
         }
 
         public Builder where(char symbol, PlaceholderType type, MetaTileEntity tileEntity, EnumFacing frontSide) {
@@ -78,7 +78,7 @@ public class MultiblockShapeInfo {
             MetaTileEntityHolder holder = new MetaTileEntityHolder();
             holder.setMetaTileEntity(tileEntity);
             holder.getMetaTileEntity().setFrontFacing(frontSide);
-            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder,type)); // TODO: Tää tarvii olla muuta kuin null
+            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder,type));
         }
 
 
@@ -99,7 +99,7 @@ public class MultiblockShapeInfo {
                             holder = new MetaTileEntityHolder();
                             holder.setMetaTileEntity(mte);
                             holder.getMetaTileEntity().setFrontFacing(mte.getFrontFacing());
-                            columnData[k] = new BlockInfo(columnData[k].getBlockState(), holder, columnData[k].getPlaceHolderType()); // TODO: SAMOIN TÄÄ
+                            columnData[k] = new BlockInfo(columnData[k].getBlockState(), holder, columnData[k].getPlaceHolderType());
                         }
                     }
                     aisleData[j] = columnData;

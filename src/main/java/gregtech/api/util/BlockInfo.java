@@ -65,7 +65,7 @@ public class BlockInfo {
 
     public void apply(World world, BlockPos pos) {
         if (blockState == null) {
-            return; // placeholder block. We don't apply anything here.
+            return;
         }
         world.setBlockState(pos, blockState);
         if (tileEntity != null) {

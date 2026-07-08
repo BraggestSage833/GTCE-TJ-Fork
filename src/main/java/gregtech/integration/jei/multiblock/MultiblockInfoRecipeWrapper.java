@@ -102,6 +102,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private float zoom;
     private boolean isCameraFree;
     private final boolean hasVoltagePages;
+    private final boolean canExtend;
 
     private GuiButton buttonPreviousPattern;
     private GuiButton buttonNextPattern;
@@ -121,11 +122,6 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         HashSet<ItemStackKey> drops = new HashSet<>();
         drops.add(new ItemStackKey(controllerStack));
         currentExtent = infoPage.getController().getMinExtent();
-        MultiblockShapeInfo shapeInfo = infoPage.getMatchingShapes(currentExtent);
-
-        MBPattern pattern = initializePattern(shapeInfo, drops);
-        this.renderer = pattern.sceneRenderer;
-        this.baseParts = pattern.parts;
 
         this.channels = new ArrayList<>();
         for (StructureChannels ch : StructureChannels.values()) {
@@ -134,6 +130,12 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
             }
         }
 
+        MultiblockShapeInfo shapeInfo = infoPage.getMatchingShapes(currentExtent);
+        currentChannelIndex = infoPage.getController().getMinTier();
+        MBPattern pattern = initializePattern(shapeInfo, drops);
+        this.renderer = pattern.sceneRenderer;
+        this.baseParts = pattern.parts;
+        this.canExtend = infoPage.getController().getMaxExtent() > 1;
         this.hasVoltagePages = shapeInfo.isTiered();
 
         drops.forEach(it -> allItemStackInputs.add(it.getItemStack()));
@@ -150,7 +152,12 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     }
 
     public void setRecipeLayout(RecipeLayout layout, IGuiHelper guiHelper) {
-        currentChannelIndex = 0;
+        currentChannelIndex = infoPage.getController().getMinTier();
+
+        for (StructureChannels ch : StructureChannels.values()) {
+            channelState.set(ch, currentChannelIndex);
+        }
+
         currentExtent = infoPage.getController().getMinExtent();
         this.recipeLayout = layout;
 
@@ -167,17 +174,19 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.buttonNextPattern = new GuiButton(0, border.getWidth() - (ICON_SIZE + RIGHT_PADDING), 90, ICON_SIZE, ICON_SIZE, ">");
         this.cameraModeButton = new GuiButton(0, border.getWidth() - ((2 * ICON_SIZE) + RIGHT_PADDING + 1), 70, ICON_SIZE, ICON_SIZE, this.isCameraFree ? "↺" : "↔");
 
+        this.buttonPreviousPattern.visible = this.hasVoltagePages || this.canExtend;
+        this.buttonPreviousPattern.enabled = false;
+
+        this.buttonNextPattern.visible = this.hasVoltagePages || this.canExtend;
+        this.buttonNextPattern.enabled = true;
+
+
         this.buttons.put(nextLayerXButton, () -> setNextLayerX(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(nextLayerYButton, () -> setNextLayerY(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(nextLayerZButton, () -> setNextLayerZ(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(buttonPreviousPattern, () -> switchChannel(-1));
         this.buttons.put(buttonNextPattern, () -> switchChannel(1));
         this.buttons.put(cameraModeButton, this::setCameraFree);
-
-        this.buttonPreviousPattern.visible = this.hasVoltagePages;
-        this.buttonNextPattern.visible = this.hasVoltagePages;
-        this.buttonPreviousPattern.enabled = this.hasVoltagePages;
-        this.buttonNextPattern.enabled = this.hasVoltagePages;
 
         this.panX = 0.0f;
         this.panY = 0.0f;
@@ -268,12 +277,15 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     }
 
     private void switchChannel(int amount) {
+        int minIndex = infoPage.getController().getMinTier();
         int maxIndex = 14;
-        int newIndex = max(0, Math.min(currentChannelIndex + amount, maxIndex));
+        int newIndex = max(minIndex, Math.min(currentChannelIndex + amount, maxIndex));
 
-        if (currentChannelIndex == newIndex) return;
+        if (currentChannelIndex == newIndex) {
+            return;
+        }
 
-        this.buttonPreviousPattern.enabled = newIndex > 0;
+        this.buttonPreviousPattern.enabled = newIndex > minIndex;
         this.buttonNextPattern.enabled = newIndex < maxIndex;
 
         currentChannelIndex = newIndex;
@@ -586,8 +598,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                         facing = ((MetaTileEntityHolder) originalTe).getMetaTileEntity().getFrontFacing();
                     }
 
-                    PlaceholderBlockRegistry.PlaceholderContext context = new PlaceholderBlockRegistry.PlaceholderContext(
-                            voltageTier, coilTier, facing, blockPos, infoPage.getController().getMinTier());
+                    PlaceholderBlockRegistry.PlaceholderContext context = new PlaceholderBlockRegistry.PlaceholderContext(voltageTier, coilTier, facing, blockPos);
 
                     BlockInfo resolved = PlaceholderBlockRegistry.resolve(blockInfo.getPlaceHolderType(), context);
                     if (resolved == null) continue;

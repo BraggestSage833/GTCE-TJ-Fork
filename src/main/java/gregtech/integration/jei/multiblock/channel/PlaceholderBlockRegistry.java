@@ -32,20 +32,13 @@ public class PlaceholderBlockRegistry {
 
 
     public static void init() {
-        PlaceholderBlockRegistry.register(PlaceholderType.COIL, (context) ->
-                new BlockInfo(MetaBlocks.WIRE_COIL.getState(BlockWireCoil.CoilType.values()[context.coilTier])));
-
-
-
+        PlaceholderBlockRegistry.register(PlaceholderType.COIL, (context) -> new BlockInfo(MetaBlocks.WIRE_COIL.getState(BlockWireCoil.CoilType.values()[context.coilTier])));
         PlaceholderBlockRegistry.register(PlaceholderType.INPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.FLUID_IMPORT_HATCH[IOMTEClamper(context.voltageTier)], context.facing));
         PlaceholderBlockRegistry.register(PlaceholderType.OUTPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.FLUID_EXPORT_HATCH[IOMTEClamper(context.voltageTier)], context.facing));
         PlaceholderBlockRegistry.register(PlaceholderType.INPUT_BUS, (context) -> MTEHolderBuilder(MetaTileEntities.ITEM_IMPORT_BUS[IOMTEClamper(context.voltageTier)], context.facing));
         PlaceholderBlockRegistry.register(PlaceholderType.OUTPUT_BUS, (context) -> MTEHolderBuilder(MetaTileEntities.ITEM_EXPORT_BUS[IOMTEClamper(context.voltageTier)], context.facing));
         PlaceholderBlockRegistry.register(PlaceholderType.ENERGY_INPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.ENERGY_INPUT_HATCH[context.voltageTier], context.facing));
         PlaceholderBlockRegistry.register(PlaceholderType.ENERGY_OUTPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.ENERGY_OUTPUT_HATCH[context.voltageTier], context.facing));
-
-
-
     }
 
 
@@ -70,15 +63,12 @@ public class PlaceholderBlockRegistry {
         public final int coilTier;
         public final EnumFacing facing;
         public final BlockPos pos;
-        public final int minTier;
 
-        public PlaceholderContext(int voltageTier, int coilTier, EnumFacing facing, BlockPos pos, int minTier) {
+        public PlaceholderContext(int voltageTier, int coilTier, EnumFacing facing, BlockPos pos) {
             this.voltageTier = voltageTier;
             this.coilTier = coilTier;
             this.facing = facing;
             this.pos = pos;
-            this.minTier = minTier;
-
         }
     }
 
