@@ -34,7 +34,11 @@ public abstract class FueledMultiblockController extends MultiblockWithDisplayBa
     protected IMultipleTankHandler importFluidHandler;
 
     public FueledMultiblockController(ResourceLocation metaTileEntityId, FuelRecipeMap recipeMap, long maxVoltage) {
-        super(metaTileEntityId);
+        this(metaTileEntityId, recipeMap, maxVoltage,1,1);
+    }
+
+    public FueledMultiblockController(ResourceLocation metaTileEntityId, FuelRecipeMap recipeMap, long maxVoltage, int minExtent, int maxExtent) {
+        super(metaTileEntityId, minExtent, maxExtent);
         this.recipeMap = recipeMap;
         this.workableHandler = createWorkable(maxVoltage);
     }
