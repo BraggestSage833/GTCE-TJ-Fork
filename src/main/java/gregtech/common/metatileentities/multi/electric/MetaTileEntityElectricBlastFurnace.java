@@ -1,14 +1,12 @@
 package gregtech.common.metatileentities.multi.electric;
 
+import gregtech.api.GTValues;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.RecipeMapMultiblockController;
-import gregtech.api.multiblock.BlockPattern;
-import gregtech.api.multiblock.BlockWorldState;
-import gregtech.api.multiblock.FactoryBlockPattern;
-import gregtech.api.multiblock.PatternMatchContext;
+import gregtech.api.multiblock.*;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeMaps;
 import gregtech.api.render.ICubeRenderer;
@@ -18,20 +16,28 @@ import gregtech.common.blocks.BlockMetalCasing.MetalCasingType;
 import gregtech.common.blocks.BlockWireCoil;
 import gregtech.common.blocks.BlockWireCoil.CoilType;
 import gregtech.common.blocks.MetaBlocks;
+import gregtech.common.metatileentities.MetaTileEntities;
+import gregtech.integration.jei.multiblock.MultiblockShapeInfo;
+import gregtech.integration.jei.multiblock.channel.PlaceholderType;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static gregtech.api.metatileentity.multiblock.MultiblockAbility.*;
+
 public class MetaTileEntityElectricBlastFurnace extends RecipeMapMultiblockController {
 
     private static final MultiblockAbility<?>[] ALLOWED_ABILITIES = {
-        MultiblockAbility.IMPORT_ITEMS, MultiblockAbility.IMPORT_FLUIDS,
-        MultiblockAbility.EXPORT_ITEMS, MultiblockAbility.EXPORT_FLUIDS,
+        IMPORT_ITEMS, IMPORT_FLUIDS,
+        EXPORT_ITEMS, MultiblockAbility.EXPORT_FLUIDS,
         MultiblockAbility.INPUT_ENERGY
     };
 
@@ -84,6 +90,7 @@ public class MetaTileEntityElectricBlastFurnace extends RecipeMapMultiblockContr
         };
     }
 
+
     @Override
     protected BlockPattern createStructurePattern() {
         return FactoryBlockPattern.start()
@@ -97,6 +104,16 @@ public class MetaTileEntityElectricBlastFurnace extends RecipeMapMultiblockContr
             .where('C', heatingCoilPredicate())
             .where('#', isAirPredicate())
             .build();
+    }
+
+    private EnumFacing getFacingForPos(int x, int y, int z, int maxX, int maxY, int maxZ) {
+        if (x == 0) return EnumFacing.WEST;
+        if (x == maxX) return EnumFacing.EAST;
+        if (z == 0) return EnumFacing.NORTH;
+        if (z == maxZ) return EnumFacing.SOUTH;
+        if (y == 0) return EnumFacing.DOWN;
+        if (y == maxY) return EnumFacing.UP;
+        return EnumFacing.NORTH; // fallback
     }
 
     protected IBlockState getCasingState() {

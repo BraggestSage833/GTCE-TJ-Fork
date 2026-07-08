@@ -56,6 +56,7 @@ public class MetaTileEntityCokeOven extends MultiblockControllerBase {
         super(metaTileEntityId);
     }
 
+
     @Override
     protected void updateFormedValid() {
         if (maxProgressDuration == 0) {

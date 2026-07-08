@@ -14,6 +14,7 @@ import gregtech.common.metatileentities.electric.multiblockpart.MetaTileEntityRo
 import gregtech.common.metatileentities.multi.electric.generator.MetaTileEntityLargeTurbine;
 import gregtech.integration.jei.multiblock.MultiblockInfoPage;
 import gregtech.integration.jei.multiblock.MultiblockShapeInfo;
+import gregtech.integration.jei.multiblock.channel.PlaceholderType;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
@@ -35,7 +36,7 @@ public class LargeTurbineInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public List<MultiblockShapeInfo> getMatchingShapes() {
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
         MetaTileEntityHolder holder = new MetaTileEntityHolder();
         holder.setMetaTileEntity(MetaTileEntities.ROTOR_HOLDER[2]);
         holder.getMetaTileEntity().setFrontFacing(EnumFacing.WEST);
@@ -44,21 +45,23 @@ public class LargeTurbineInfo extends MultiblockInfoPage {
         TurbineRotorBehavior.getInstanceFor(rotorStack).setPartMaterial(rotorStack, Materials.Darmstadtium);
         ((MetaTileEntityRotorHolder) holder.getMetaTileEntity()).getRotorInventory().setStackInSlot(0, rotorStack);
         MultiblockShapeInfo.Builder shapeInfo = MultiblockShapeInfo.builder()
-            .aisle("CCCC", "CIOC", "CCCC")
-            .aisle("CCCC", "R##D", "CCCC")
-            .aisle("CCCC", "CSCC", "CCCC")
-            .where('S', turbine, EnumFacing.SOUTH)
-            .where('C', turbine.turbineType.casingState)
-            .where('R', new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder))
-            .where('D', MetaTileEntities.ENERGY_OUTPUT_HATCH[GTValues.EV], EnumFacing.EAST)
-            .where('#', Blocks.AIR.getDefaultState())
-            .where('I', MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.HV], EnumFacing.NORTH);
+                .aisle("CCCC", "CIOC", "CCCC")
+                .aisle("CCCC", "R##D", "CCCC")
+                .aisle("CCCC", "CSCC", "CCCC")
+                .where('S', turbine, EnumFacing.SOUTH)
+                .where('C', turbine.turbineType.casingState)
+                .where('R', new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder, null))
+                .where('D', PlaceholderType.ENERGY_OUTPUT_HATCH, MetaTileEntities.ENERGY_OUTPUT_HATCH[GTValues.EV], EnumFacing.EAST)
+                .where('#', Blocks.AIR.getDefaultState())
+                .where('I', PlaceholderType.INPUT_HATCH, MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.HV], EnumFacing.NORTH);
+
         if (turbine.turbineType.hasOutputHatch) {
-            shapeInfo.where('O', MetaTileEntities.FLUID_EXPORT_HATCH[GTValues.EV], EnumFacing.NORTH);
+            shapeInfo.where('O', PlaceholderType.OUTPUT_HATCH, MetaTileEntities.FLUID_EXPORT_HATCH[GTValues.EV], EnumFacing.NORTH);
         } else {
             shapeInfo.where('O', turbine.turbineType.casingState);
         }
-        return Lists.newArrayList(shapeInfo.build());
+
+        return shapeInfo.build();
     }
 
     @Override

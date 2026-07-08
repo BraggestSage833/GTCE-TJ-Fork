@@ -8,12 +8,18 @@ import gregtech.api.GTValues;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.api.metatileentity.multiblock.IMultiblockPart;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.scene.SceneRenderCallback;
 import gregtech.api.render.scene.WorldSceneRenderer;
 import gregtech.api.util.BlockInfo;
 import gregtech.api.util.GTUtility;
 import gregtech.api.util.ItemStackKey;
+import gregtech.common.blocks.BlockMetalCasing;
+import gregtech.integration.jei.multiblock.channel.ChannelDescription;
+import gregtech.integration.jei.multiblock.channel.ChannelState;
+import gregtech.integration.jei.multiblock.channel.PlaceholderBlockRegistry;
+import gregtech.integration.jei.multiblock.channel.StructureChannels;
 import mezz.jei.api.IGuiHelper;
 import mezz.jei.api.gui.IDrawable;
 import mezz.jei.api.gui.IGuiItemStackGroup;
@@ -48,6 +54,8 @@ import javax.vecmath.Vector3f;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static java.lang.Math.max;
+
 public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderCallback {
     private static final int MAX_PARTS = 30;
     private static final int PARTS_HEIGHT = 29;
@@ -67,7 +75,15 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     }
 
     private final MultiblockInfoPage infoPage;
-    private final MBPattern[] patterns;
+
+    private WorldSceneRenderer renderer = null;
+    private List<ItemStack> baseParts;
+    private List<ChannelDescription> channels;
+    private final ChannelState channelState = new ChannelState();
+    private Map<BlockPos, BlockInfo> placeholderBlocks = new HashMap<>();
+    private BlockPos controllerPos = null;
+    private int currentExtent = 0;
+
     private final Map<GuiButton, Runnable> buttons = new HashMap<>();
     private RecipeLayout recipeLayout;
     private final List<ItemStack> allItemStackInputs = new ArrayList<>();
@@ -76,7 +92,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private int layerXIndex;
     private int layerYIndex;
     private int layerZIndex;
-    private int currentRendererPage = 0;
+    private int currentChannelIndex = 0;
     private int lastMouseX;
     private int lastMouseY;
     private float panX;
@@ -85,7 +101,8 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private float rotationPitch;
     private float zoom;
     private boolean isCameraFree;
-    private boolean hasVoltagePages;
+    private final boolean hasVoltagePages;
+    private final boolean canExtend;
 
     private GuiButton buttonPreviousPattern;
     private GuiButton buttonNextPattern;
@@ -104,13 +121,24 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.controllerStack = infoPage.getController().getStackForm();
         HashSet<ItemStackKey> drops = new HashSet<>();
         drops.add(new ItemStackKey(controllerStack));
-        List<MultiblockShapeInfo> shapeInfos = infoPage.getMatchingShapes();
-        this.patterns = shapeInfos.stream()
-                .map(it -> initializePattern(it, drops))
-                .toArray(MBPattern[]::new);
+        currentExtent = infoPage.getController().getMinExtent();
+
+        this.channels = new ArrayList<>();
+        for (StructureChannels ch : StructureChannels.values()) {
+            if (ChannelDescription.has(ch.get())) {
+                this.channels.add(ChannelDescription.get(ch.get()));
+            }
+        }
+
+        MultiblockShapeInfo shapeInfo = infoPage.getMatchingShapes(currentExtent);
+        currentChannelIndex = infoPage.getController().getMinTier();
+        MBPattern pattern = initializePattern(shapeInfo, drops);
+        this.renderer = pattern.sceneRenderer;
+        this.baseParts = pattern.parts;
+        this.canExtend = infoPage.getController().getMaxExtent() > 1;
+        this.hasVoltagePages = shapeInfo.isTiered();
+
         drops.forEach(it -> allItemStackInputs.add(it.getItemStack()));
-        if (shapeInfos.size() == 15)
-            this.hasVoltagePages = true;
     }
 
     @Override
@@ -124,6 +152,13 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     }
 
     public void setRecipeLayout(RecipeLayout layout, IGuiHelper guiHelper) {
+        currentChannelIndex = infoPage.getController().getMinTier();
+
+        for (StructureChannels ch : StructureChannels.values()) {
+            channelState.set(ch, currentChannelIndex);
+        }
+
+        currentExtent = infoPage.getController().getMinExtent();
         this.recipeLayout = layout;
 
         this.slot = guiHelper.drawableBuilder(GuiTextures.SLOT.imageLocation, 0, 0, SLOT_SIZE, SLOT_SIZE).setTextureSize(SLOT_SIZE, SLOT_SIZE).build();
@@ -138,25 +173,26 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.buttonPreviousPattern = new GuiButton(0, border.getWidth() - ((2 * ICON_SIZE) + RIGHT_PADDING + 1), 90, ICON_SIZE, ICON_SIZE, "<");
         this.buttonNextPattern = new GuiButton(0, border.getWidth() - (ICON_SIZE + RIGHT_PADDING), 90, ICON_SIZE, ICON_SIZE, ">");
         this.cameraModeButton = new GuiButton(0, border.getWidth() - ((2 * ICON_SIZE) + RIGHT_PADDING + 1), 70, ICON_SIZE, ICON_SIZE, this.isCameraFree ? "↺" : "↔");
+
+        this.buttonPreviousPattern.visible = this.hasVoltagePages || this.canExtend;
+        this.buttonPreviousPattern.enabled = false;
+
+        this.buttonNextPattern.visible = this.hasVoltagePages || this.canExtend;
+        this.buttonNextPattern.enabled = true;
+
+
         this.buttons.put(nextLayerXButton, () -> setNextLayerX(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(nextLayerYButton, () -> setNextLayerY(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(nextLayerZButton, () -> setNextLayerZ(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
-        this.buttons.put(buttonPreviousPattern, () -> switchRenderPage(-1));
-        this.buttons.put(buttonNextPattern, () -> switchRenderPage(1));
+        this.buttons.put(buttonPreviousPattern, () -> switchChannel(-1));
+        this.buttons.put(buttonNextPattern, () -> switchChannel(1));
         this.buttons.put(cameraModeButton, this::setCameraFree);
-
-        boolean isPagesDisabled = patterns.length == 1;
-        this.buttonPreviousPattern.visible = !isPagesDisabled;
-        this.buttonNextPattern.visible = !isPagesDisabled;
-        this.buttonPreviousPattern.enabled = false;
-        this.buttonNextPattern.enabled = patterns.length > 1;
 
         this.panX = 0.0f;
         this.panY = 0.0f;
         this.zoom = infoPage.getDefaultZoom();
         this.rotationYaw = -45.0f;
         this.rotationPitch = 0.0f;
-        this.currentRendererPage = 0;
 
         this.layerXIndex = -1;
         this.layerYIndex = -1;
@@ -164,11 +200,12 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.nextLayerXButton.displayString = "X:A";
         this.nextLayerYButton.displayString = "Y:A";
         this.nextLayerZButton.displayString = "Z:A";
+        rebuildScene();
         updateParts();
     }
 
     public WorldSceneRenderer getCurrentRenderer() {
-        return patterns[currentRendererPage].sceneRenderer;
+        return renderer;
     }
 
     private void setCameraFree() {
@@ -185,14 +222,13 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         int width = (int) renderer.getSize().getX() - 1;
         newLayer = this.layerXIndex + newLayer;
         if (newLayer > width) {
-            //if current layer index is more than max width, reset it
-            //to display all layers
             newLayer = -1;
         } else if (newLayer < -1) {
             newLayer = width;
         }
-        this.layerXIndex = Math.max(-1, newLayer);
+        this.layerXIndex = max(-1, newLayer);
         this.nextLayerXButton.displayString = "X:" + (layerXIndex == -1 ? "A" : Integer.toString(layerXIndex + 1));
+        renderer.markGeometryDirty();
     }
 
     private void setNextLayerY(int newLayer) {
@@ -200,14 +236,13 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         int height = (int) renderer.getSize().getY() - 1;
         newLayer = this.layerYIndex + newLayer;
         if (newLayer > height) {
-            //if current layer index is more than max height, reset it
-            //to display all layers
             newLayer = -1;
         } else if (newLayer < -1) {
             newLayer = height;
         }
-        this.layerYIndex = Math.max(-1, newLayer);
+        this.layerYIndex = max(-1, newLayer);
         this.nextLayerYButton.displayString = "Y:" + (layerYIndex == -1 ? "A" : Integer.toString(layerYIndex + 1));
+        renderer.markGeometryDirty();
     }
 
     private void setNextLayerZ(int newLayer) {
@@ -215,47 +250,101 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         int depth = (int) renderer.getSize().getZ() - 1;
         newLayer = this.layerZIndex + newLayer;
         if (newLayer > depth) {
-            //if current layer index is more than max depth, reset it
-            //to display all layers
             newLayer = -1;
         } else if (newLayer < -1) {
             newLayer = depth;
         }
-        this.layerZIndex = Math.max(-1, newLayer);
+        this.layerZIndex = max(-1, newLayer);
         this.nextLayerZButton.displayString = "Z:" + (layerZIndex == -1 ? "A" : Integer.toString(layerZIndex + 1));
+        renderer.markGeometryDirty();
     }
 
-    private void switchRenderPage(int amount) {
-        int maxIndex = patterns.length - 1;
-        int newIndex = Math.max(0, Math.min(currentRendererPage + amount, maxIndex));
-        if (currentRendererPage != newIndex) {
-            this.currentRendererPage = newIndex;
-            this.buttonNextPattern.enabled = newIndex < maxIndex;
-            this.buttonPreviousPattern.enabled = newIndex > 0;
-            updateParts();
+    private void rebuildScene() {
+        HashSet<ItemStackKey> drops = new HashSet<>();
+        drops.add(new ItemStackKey(controllerStack));
+
+        placeholderBlocks = new HashMap<>();
+
+        MultiblockShapeInfo shapeInfo = infoPage.getMatchingShapes(currentExtent);
+        MBPattern pattern = initializePattern(shapeInfo, drops);
+        this.renderer = pattern.sceneRenderer;
+        this.baseParts = pattern.parts;
+
+        controllerPos = null;
+        findControllerPos(renderer.getBlockInfoMap());
+
+        updateParts();
+    }
+
+    private void switchChannel(int amount) {
+        int minIndex = infoPage.getController().getMinTier();
+        int maxIndex = 14;
+        int newIndex = max(minIndex, Math.min(currentChannelIndex + amount, maxIndex));
+
+        if (currentChannelIndex == newIndex) {
+            return;
+        }
+
+        this.buttonPreviousPattern.enabled = newIndex > minIndex;
+        this.buttonNextPattern.enabled = newIndex < maxIndex;
+
+        currentChannelIndex = newIndex;
+
+
+        for (StructureChannels ch : StructureChannels.values()) {
+            channelState.set(ch, newIndex);
+        }
+
+        MultiblockControllerBase controller = infoPage.getController();
+        if (controller.getMaxExtent() != 1) {
+            int minExtent = controller.getMinExtent();
+            int maxExtent = controller.getMaxExtent();
+            currentExtent = Math.min(maxExtent, minExtent + currentChannelIndex);
+
+            rebuildScene();
+
+            this.layerXIndex = -1;
+            this.layerYIndex = -1;
+            this.layerZIndex = -1;
+            this.nextLayerXButton.displayString = "X:A";
+            this.nextLayerYButton.displayString = "Y:A";
+            this.nextLayerZButton.displayString = "Z:A";
+        } else {
+            rebuildScene();
+            triggerStructureCheck(renderer.world);
+        }
+    }
+
+    private void triggerStructureCheck(WorldSceneRenderer.TrackedDummyWorld world) {
+        if (controllerPos == null) return;
+        TileEntity te = world.getTileEntity(controllerPos);
+        if (te instanceof MetaTileEntityHolder) {
+            MetaTileEntity mte = ((MetaTileEntityHolder) te).getMetaTileEntity();
+            if (mte instanceof MultiblockControllerBase) {
+                MultiblockControllerBase ctrl = (MultiblockControllerBase) mte;
+                ctrl.invalidateStructure();
+                ctrl.checkStructurePatternJEI();
+            }
         }
     }
 
     private void preparePlaceForParts(int recipeHeight) {
         IGuiItemStackGroup itemStackGroup = recipeLayout.getItemStacks();
-
         for (int i = 0; i < MAX_PARTS; ++i)
             itemStackGroup.init(i, true, SLOT_SIZE * i - (SLOT_SIZE * SLOTS_PER_ROW) * (i / SLOTS_PER_ROW), recipeHeight - PARTS_HEIGHT + SLOT_SIZE * (i / SLOTS_PER_ROW));
     }
 
     private void updateParts() {
         IGuiItemStackGroup itemStackGroup = recipeLayout.getItemStacks();
-        List<ItemStack> parts = this.patterns[currentRendererPage].parts;
-
-        int limit = Math.min(parts.size(), MAX_PARTS);
+        int limit = Math.min(baseParts.size(), MAX_PARTS);
         for (int i = 0; i < limit; ++i)
-            itemStackGroup.set(i, parts.get(i));
-        for (int i = parts.size(); i < limit; ++i)
+            itemStackGroup.set(i, baseParts.get(i));
+        for (int i = baseParts.size(); i < limit; ++i)
             itemStackGroup.set(i, (ItemStack) null);
     }
 
     private boolean shouldDisplayBlock(BlockPos pos) {
-        if (this.layerXIndex == - 1 && getLayerYIndex() == -1 && this.layerZIndex == -1)
+        if (this.layerXIndex == -1 && getLayerYIndex() == -1 && this.layerZIndex == -1)
             return true;
         WorldSceneRenderer renderer = getCurrentRenderer();
         int relativeWidth = pos.getX() - (int) renderer.world.getMinPos().getX();
@@ -298,22 +387,20 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         renderer.render(recipeLayout.getPosX(), recipeLayout.getPosY(), recipeWidth, sceneHeight, 0xC6C6C6);
         drawMultiblockName(recipeWidth);
 
-        //reset colors (so any elements render after this point are not dark)
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
         this.infoIcon.draw(minecraft, recipeWidth - (ICON_SIZE + RIGHT_PADDING), 9);
+
         if (this.hasVoltagePages) {
             GuiTextures.DISPLAY.draw(recipeWidth - (ICON_SIZE + ICON_SIZE + RIGHT_PADDING), 110, 40, 20);
-            String text = (this.currentRendererPage == 9 ? TextFormatting.DARK_RED.toString() : GTUtility.TIER_COLOR[this.currentRendererPage]) + GTValues.VN2[this.currentRendererPage];
-            Minecraft.getMinecraft().fontRenderer.drawString(text, recipeWidth - 30 - (GTValues.VN2[this.currentRendererPage].length() > 2 ? 4 : 0), 116, 0xFFFFFF);
+            String text = (this.currentChannelIndex == 9 ? TextFormatting.DARK_RED.toString() : GTUtility.TIER_COLOR[this.currentChannelIndex]) + GTValues.VN2[this.currentChannelIndex];
+            Minecraft.getMinecraft().fontRenderer.drawString(text, recipeWidth - 30 - (GTValues.VN2[this.currentChannelIndex].length() > 2 ? 4 : 0), 116, 0xFFFFFF);
         }
 
         for (int i = 0; i < MAX_PARTS; ++i) {
             this.slot.draw(minecraft, SLOT_SIZE * i - (SLOTS_PER_ROW * SLOT_SIZE) * (i / SLOTS_PER_ROW), sceneHeight + SLOT_SIZE * (i / SLOTS_PER_ROW));
         }
 
-        // Hmmm, the buttons need to be last otherwise sometimes highlighting 
-        // the button by mousing over it, leaks into other gui elements?
         for (GuiButton button : buttons.keySet()) {
             button.drawButton(minecraft, mouseX, mouseY, 0.0f);
         }
@@ -322,8 +409,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
         this.tooltipBlockStack = null;
         BlockPos pos = renderer.getLastHitBlock();
-        boolean insideView = mouseX >= 0 && mouseY >= 0 &&
-                mouseX < recipeWidth && mouseY < sceneHeight;
+        boolean insideView = mouseX >= 0 && mouseY >= 0 && mouseX < recipeWidth && mouseY < sceneHeight;
         boolean leftClickHeld = Mouse.isButtonDown(0);
         boolean rightClickHeld = Mouse.isButtonDown(1);
         boolean isHoldingShift = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT);
@@ -370,15 +456,12 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         int minX = recipeLayout.getRecipeCategory().getBackground().getWidth();
         int[] yRange = new int[]{9, 29};
         int[] xRange = new int[]{minX - (ICON_SIZE + RIGHT_PADDING), minX - RIGHT_PADDING};
-        //Only draw the hovering information tooltip above the information icon
         if (isMouseWithinRange(yRange, xRange, mouseY, mouseX)) {
-            GuiUtils.drawHoveringText(tooltip, mouseX, mouseY,
-                    176, 176, -1, minecraft.fontRenderer);
+            GuiUtils.drawHoveringText(tooltip, mouseX, mouseY, 176, 176, -1, minecraft.fontRenderer);
         }
     }
 
     private boolean isMouseWithinRange(int[] yRange, int[] xRange, int mouseY, int mouseX) {
-
         return (yRange[0] < mouseY && mouseY < yRange[1] && xRange[0] < mouseX && mouseX < xRange[1]);
     }
 
@@ -413,10 +496,9 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                 }
             }
             Map<ItemStack, List<ITextComponent>> blockTooltipMap = infoPage.getBlockTooltipMap();
-            if(blockTooltipMap.containsKey(tooltipBlockStack)) {
+            if (blockTooltipMap.containsKey(tooltipBlockStack)) {
                 List<ITextComponent> tooltips = blockTooltipMap.get(tooltipBlockStack);
-                for(int i = 0; i < tooltips.size(); i++) {
-                    //Start at i+1 due to ItemStack name
+                for (int i = 0; i < tooltips.size(); i++) {
                     tooltip.add(i + 1, tooltips.get(i).getFormattedText());
                 }
             }
@@ -427,9 +509,9 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     public void addBlockTooltips(int slotIndex, boolean input, ItemStack itemStack, List<String> tooltip) {
         Map<ItemStack, List<ITextComponent>> blockTooltipMap = infoPage.getBlockTooltipMap();
-        if(blockTooltipMap.containsKey(itemStack)) {
+        if (blockTooltipMap.containsKey(itemStack)) {
             List<ITextComponent> tooltips = blockTooltipMap.get(itemStack);
-            for(int i = 0; i < tooltips.size(); i++) {
+            for (int i = 0; i < tooltips.size(); i++) {
                 tooltip.add(i + 1, tooltips.get(i).getFormattedText());
             }
         }
@@ -485,10 +567,14 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         }
     }
 
-
-    private MBPattern initializePattern(MultiblockShapeInfo shapeInfo, Set<ItemStackKey> blockDrops) {
+    private Map<BlockPos, BlockInfo> createBlockMap(MultiblockShapeInfo shapeInfo) {
         Map<BlockPos, BlockInfo> blockMap = new HashMap<>();
+        this.placeholderBlocks = new HashMap<>();
         BlockInfo[][][] blocks = shapeInfo.getBlocks();
+
+        int coilTier = Math.min(channelState.get(StructureChannels.COIL), 16);
+        int voltageTier = Math.min(channelState.get(StructureChannels.VOLTAGE), 14);
+
         for (int z = 0; z < blocks.length; z++) {
             BlockInfo[][] aisle = blocks[z];
             for (int y = 0; y < aisle.length; y++) {
@@ -496,10 +582,51 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                 for (int x = 0; x < column.length; x++) {
                     BlockPos blockPos = new BlockPos(x, y, z);
                     BlockInfo blockInfo = column[x];
-                    blockMap.put(blockPos, blockInfo);
+
+                    if (blockInfo.getBlockState() == null && blockInfo.getPlaceHolderType() == null) continue;
+
+                    if (blockInfo.getPlaceHolderType() == null) {
+                        blockMap.put(blockPos, blockInfo);
+                        continue;
+                    }
+
+                    placeholderBlocks.put(blockPos, blockInfo);
+
+                    EnumFacing facing = EnumFacing.NORTH;
+                    TileEntity originalTe = blockInfo.getTileEntity();
+                    if (originalTe instanceof MetaTileEntityHolder) {
+                        facing = ((MetaTileEntityHolder) originalTe).getMetaTileEntity().getFrontFacing();
+                    }
+
+                    PlaceholderBlockRegistry.PlaceholderContext context = new PlaceholderBlockRegistry.PlaceholderContext(voltageTier, coilTier, facing, blockPos);
+
+                    BlockInfo resolved = PlaceholderBlockRegistry.resolve(blockInfo.getPlaceHolderType(), context);
+                    if (resolved == null) continue;
+                    blockMap.put(blockPos, resolved);
                 }
             }
         }
+        return blockMap;
+    }
+
+    private void findControllerPos(Map<BlockPos, BlockInfo> blockMap) {
+        for (Map.Entry<BlockPos, BlockInfo> entry : blockMap.entrySet()) {
+            TileEntity te = entry.getValue().getTileEntity();
+            if (te instanceof MetaTileEntityHolder) {
+                MetaTileEntity mte = ((MetaTileEntityHolder) te).getMetaTileEntity();
+                if (mte instanceof MultiblockControllerBase) {
+                    controllerPos = entry.getKey();
+                    break;
+                }
+            }
+        }
+    }
+
+    private MBPattern initializePattern(MultiblockShapeInfo shapeInfo, Set<ItemStackKey> blockDrops) {
+        Map<BlockPos, BlockInfo> blockMap = createBlockMap(shapeInfo);
+
+        findControllerPos(blockMap);
+
         WorldSceneRenderer worldSceneRenderer = new WorldSceneRenderer(blockMap);
         worldSceneRenderer.world.updateEntities();
         HashMap<ItemStackKey, PartInfo> partsMap = new HashMap<>();
@@ -519,7 +646,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         for (PartInfo partInfo : partInfos) {
             parts.add(partInfo.getItemStack());
         }
+
         return new MBPattern(worldSceneRenderer, parts);
     }
-
 }

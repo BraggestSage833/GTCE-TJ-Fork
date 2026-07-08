@@ -30,7 +30,7 @@ import static gregtech.api.multiblock.BlockPattern.RelativeDirection.*;
 public class MetaTileEntityDistillationTower extends RecipeMapMultiblockController {
 
     public MetaTileEntityDistillationTower(ResourceLocation metaTileEntityId) {
-        super(metaTileEntityId, RecipeMaps.DISTILLATION_RECIPES);
+        super(metaTileEntityId, RecipeMaps.DISTILLATION_RECIPES,0,11);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class MetaTileEntityDistillationTower extends RecipeMapMultiblockControll
         Predicate<PatternMatchContext> exactlyOneHatch = context -> context.getInt("HatchesAmount") == 1;
         return FactoryBlockPattern.start(RIGHT, FRONT, UP)
             .aisle("YSY", "YZY", "YYY")
-            .aisle("XXX", "X#X", "XXX").setRepeatable(0, 11)
+            .aisle("XXX", "X#X", "XXX").setRepeatable(getMinExtent(), getMaxExtent())
             .aisle("XXX", "XXX", "XXX")
             .where('S', selfPredicate())
             .where('Z', abilityPartPredicate(MultiblockAbility.IMPORT_FLUIDS))
