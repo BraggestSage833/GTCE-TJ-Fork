@@ -11,6 +11,8 @@ import gregtech.api.gui.impl.ModularUIContainer;
 import gregtech.api.items.IToolItem;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.api.unification.material.type.IngotMaterial;
+import gregtech.api.unification.material.type.Material;
 import gregtech.common.ConfigHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRedstoneWire;
@@ -88,21 +90,21 @@ public class GTUtility {
     }
 
     public static final String[] TIER_COLOR = new String[] {
-    TextFormatting.RED.toString(), // ULV, 0
-    TextFormatting.GRAY.toString(), // LV, 1
-    TextFormatting.GOLD.toString(), // MV, 2
-    TextFormatting.YELLOW.toString(), // HV, 3
-    TextFormatting.DARK_GRAY.toString(), // EV, 4
-    TextFormatting.GREEN.toString(), // IV, 5
-    TextFormatting.LIGHT_PURPLE.toString(), // LuV, 6
-    TextFormatting.AQUA.toString(), // ZPM, 7
-    TextFormatting.DARK_GREEN.toString(), // UV, 8
-    TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
-    TextFormatting.DARK_PURPLE.toString(), // UEV, 10
-    TextFormatting.DARK_BLUE.toString() + TextFormatting.BOLD, // UIV, 11
-    TextFormatting.RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UMV, 12
-    TextFormatting.DARK_RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UXV, 13
-    TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
+            TextFormatting.RED.toString(), // ULV, 0
+            TextFormatting.GRAY.toString(), // LV, 1
+            TextFormatting.GOLD.toString(), // MV, 2
+            TextFormatting.YELLOW.toString(), // HV, 3
+            TextFormatting.DARK_GRAY.toString(), // EV, 4
+            TextFormatting.GREEN.toString(), // IV, 5
+            TextFormatting.LIGHT_PURPLE.toString(), // LuV, 6
+            TextFormatting.AQUA.toString(), // ZPM, 7
+            TextFormatting.DARK_GREEN.toString(), // UV, 8
+            TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
+            TextFormatting.DARK_PURPLE.toString(), // UEV, 10
+            TextFormatting.DARK_BLUE.toString() + TextFormatting.BOLD, // UIV, 11
+            TextFormatting.RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UMV, 12
+            TextFormatting.DARK_RED.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // UXV, 13
+            TextFormatting.WHITE.toString() + TextFormatting.BOLD + TextFormatting.UNDERLINE, // MAX, 14
     };
 
     public static Stream<Object> flatten(Object[] array) {
@@ -182,8 +184,8 @@ public class GTUtility {
     public static void setItem(ItemStack itemStack, ItemStack newStack) {
         try {
             Field itemField = Arrays.stream(ItemStack.class.getDeclaredFields())
-                .filter(field -> field.getType() == Item.class)
-                .findFirst().orElseThrow(ReflectiveOperationException::new);
+                    .filter(field -> field.getType() == Item.class)
+                    .findFirst().orElseThrow(ReflectiveOperationException::new);
             itemField.setAccessible(true);
             //replace item field instance
             itemField.set(itemStack, newStack.getItem());
@@ -232,7 +234,7 @@ public class GTUtility {
                 continue; //if itemstack cannot be placed into that slot, continue
             ItemStack stackInSlot = slot.getStack();
             if (!ItemStack.areItemsEqual(itemStack, stackInSlot) ||
-                !ItemStack.areItemStackTagsEqual(itemStack, stackInSlot))
+                    !ItemStack.areItemStackTagsEqual(itemStack, stackInSlot))
                 continue; //if itemstacks don't match, continue
             int slotMaxStackSize = Math.min(stackInSlot.getMaxStackSize(), slot.getItemStackLimit(stackInSlot));
             int amountToInsert = Math.min(itemStack.getCount(), slotMaxStackSize - stackInSlot.getCount());
@@ -594,14 +596,14 @@ public class GTUtility {
     public static List<EntityPlayerMP> findPlayersUsing(MetaTileEntity metaTileEntity, double radius) {
         ArrayList<EntityPlayerMP> result = new ArrayList<>();
         AxisAlignedBB box = new AxisAlignedBB(metaTileEntity.getPos())
-            .expand(radius, radius, radius)
-            .expand(-radius, -radius, -radius);
+                .expand(radius, radius, radius)
+                .expand(-radius, -radius, -radius);
         List<EntityPlayerMP> entities = metaTileEntity.getWorld().getEntitiesWithinAABB(EntityPlayerMP.class, box);
         for (EntityPlayerMP player : entities) {
             if (player.openContainer instanceof ModularUIContainer) {
                 ModularUI modularUI = ((ModularUIContainer) player.openContainer).getModularUI();
                 if (modularUI.holder instanceof MetaTileEntityHolder &&
-                    ((MetaTileEntityHolder) modularUI.holder).getMetaTileEntity() == metaTileEntity) {
+                        ((MetaTileEntityHolder) modularUI.holder).getMetaTileEntity() == metaTileEntity) {
                     result.add(player);
                 }
             }
@@ -687,8 +689,8 @@ public class GTUtility {
 
     public static <T> Collector<T, ?, ImmutableList<T>> toImmutableList() {
         return Collector.of(ImmutableList::builder, Builder::add,
-            (b1, b2) -> { b1.addAll(b2.build()); return b2; },
-            ImmutableList.Builder<T>::build);
+                (b1, b2) -> { b1.addAll(b2.build()); return b2; },
+                ImmutableList.Builder<T>::build);
     }
 
     public static <M, E extends M> E selectItemInList(int index, E replacement, List<? extends M> list, Class<E> minClass) {
@@ -726,7 +728,7 @@ public class GTUtility {
             double posY = pos.getY() + 0.5;
             double posZ = pos.getZ() + 0.5;
             ((WorldServer) metaTileEntity.getWorld()).spawnParticle(EnumParticleTypes.SMOKE_LARGE, posX, posY, posZ,
-                10, 0.2, 0.2, 0.2, 0.0);
+                    10, 0.2, 0.2, 0.2, 0.0);
             metaTileEntity.getWorld().createExplosion(null, posX, posY, posZ, getTierByVoltage(voltage), ConfigHolder.doExplosions);
         }
     }
@@ -748,10 +750,10 @@ public class GTUtility {
 
     public static Comparator<ItemStack> createItemStackComparator() {
         return Comparator.<ItemStack, Integer>comparing(it -> Item.REGISTRY.getIDForObject(it.getItem()))
-            .thenComparing(ItemStack::getItemDamage)
-            .thenComparing(ItemStack::hasTagCompound)
-            .thenComparing(it -> -Objects.hashCode(it.getTagCompound()))
-            .thenComparing(it -> -it.getCount());
+                .thenComparing(ItemStack::getItemDamage)
+                .thenComparing(ItemStack::hasTagCompound)
+                .thenComparing(it -> -Objects.hashCode(it.getTagCompound()))
+                .thenComparing(it -> -it.getCount());
     }
 
     public static int getRandomIntXSTR(int bound) {
@@ -914,5 +916,48 @@ public class GTUtility {
             }
         }
         return stack;
+    }
+
+    //for tiered metal
+    public static int getTieredVoltageMultiplier(Material material) {
+        int eut = 16;
+        int heat = ((IngotMaterial) material).blastFurnaceTemperature;
+        if (heat < 2700) {
+            eut = 28;
+        }
+        if (heat >= 2700 && heat < 3600) {
+            eut = 500;
+        }
+        if (heat >= 3600 && heat < 4500) {
+            eut = 1000;
+        }
+        if (heat >= 4500 && heat < 5400) {
+            eut = 4000;
+        }
+        if (heat >= 5400 && heat < 7200) {
+            eut = 8000;
+        }
+        if (heat >= 7200 && heat < 8600) {
+            eut = 32000;
+        }
+        if (heat >= 8600 && heat < 9600) {
+            eut = 131000;
+        }
+        if (heat >= 9600 && heat < 10700) {
+            eut = 500000;
+        }
+        if (heat >= 10700 && heat < 11200) {
+            eut = 2000000;
+        }
+        if (heat >= 11200 && heat < 12600) {
+            eut = 8000000;
+        }
+        if (heat >= 12600 && heat < 14200) {
+            eut = 33000000;
+        }
+        if (heat >= 14200 && heat < 56800) {
+            eut = 134000000;
+        }
+        return eut;
     }
 }
