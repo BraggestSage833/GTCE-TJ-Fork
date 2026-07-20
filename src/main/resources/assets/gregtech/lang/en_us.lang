@@ -12,7 +12,8 @@ enchantment.disjunction=Disjunction
 
 gregtech.top.energy_stored=Energy:
 gregtech.top.progress=Progress:
-gregtech.top.working_disabled=Working Disabled
+gregtech.top.working_disabled=§eWorking Disabled
+gregtech.top.has_problems=§6Has Problems
 
 gregtech.top.transform_up=§cStep Up§r
 gregtech.top.transform_down=§aStep Down§r
@@ -3057,9 +3058,9 @@ gregtech.fluid_pipe.throughput=Transfer: §e%,d mb/t
 gregtech.fluid_pipe.max_temperature=Max Temperature: §c%,dK
 gregtech.fluid_pipe.non_gas_proof=Can't transfer gases.
 
-gregtech.multiblock.work_paused=Work Paused.
-gregtech.multiblock.running=Running perfectly.
-gregtech.multiblock.idling=Idling.
+gregtech.multiblock.work_paused=§eWork Paused.
+gregtech.multiblock.running=§aRunning perfectly.
+gregtech.multiblock.idling=§7Idling.
 gregtech.multiblock.not_enough_energy=WARNING: Machine needs more energy.
 gregtech.multiblock.progress=Progress: %s%%
 gregtech.multiblock.invalid_structure=Invalid structure.

@@ -512,6 +512,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         metaTileEntity.markDirty();
     }
 
+    @Override
     public boolean isHasProblems() {
         return this.hasProblems;
     }
