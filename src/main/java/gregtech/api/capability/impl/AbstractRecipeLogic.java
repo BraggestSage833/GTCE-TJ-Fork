@@ -35,6 +35,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
 
     private static final String ALLOW_OVERCLOCKING = "AllowOverclocking";
     private static final String OVERCLOCK_VOLTAGE = "OverclockVoltage";
+    private static final String CHECK_OUTPUTS_FIT = "checkOutputsFitBeforeStarting";
 
     public final RecipeMap<?> recipeMap;
 
@@ -59,6 +60,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     protected boolean workingEnabled = true;
     protected boolean hasNotEnoughEnergy;
     protected boolean wasActiveAndNeedsUpdate;
+    protected boolean checkOutputsFitBeforeStarting;
     private final long[] V;
     private final String[] VN;
 
@@ -293,10 +295,14 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         int[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
         long totalEUt = (long) resultOverclock[0] * resultOverclock[1];
         IItemHandlerModifiable importInventory = getInputInventory();
+        IItemHandlerModifiable exportInventory = getOutputInventory();
         IMultipleTankHandler importFluids = getInputTank();
+        IMultipleTankHandler exportFluids = getOutputTank();
         return (totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
                 (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())) &&
-                recipe.matchesFound(true, importInventory, importFluids);
+                recipe.matchesFound(true, importInventory, importFluids) &&
+                (!this.checkOutputsFitBeforeStarting || (MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
+                        MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs())));
     }
 
     protected int[] calculateOverclock(int EUt, int duration) {
@@ -368,7 +374,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     protected void completeRecipe() {
         for (int i = this.itemOutputIndex; i < this.itemOutputs.size(); i++) {
             ItemStack stack = this.itemOutputs.get(i);
-            if (this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isItemInfSink() || GTUtility.insertIntoItemHandler(this.getOutputInventory(), stack, true).isEmpty()) {
+            if (this.checkOutputsFitBeforeStarting || this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isItemInfSink() || GTUtility.insertIntoItemHandler(this.getOutputInventory(), stack, true).isEmpty()) {
                 GTUtility.insertIntoItemHandler(this.getOutputInventory(), stack, false);
                 this.itemOutputIndex++;
             } else {
@@ -378,7 +384,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         }
         for (int i = this.fluidOutputIndex; i < this.fluidOutputs.size(); i++) {
             FluidStack stack = this.fluidOutputs.get(i);
-            if (this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isFluidInfSink() || this.getOutputTank().fill(stack, false) == stack.amount) {
+            if (this.checkOutputsFitBeforeStarting || this.metaTileEntity instanceof MultiblockWithDisplayBase && ((MultiblockWithDisplayBase) this.metaTileEntity).isFluidInfSink() || this.getOutputTank().fill(stack, false) == stack.amount) {
                 this.getOutputTank().fill(stack, true);
                 this.fluidOutputIndex++;
             } else {
@@ -534,6 +540,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         NBTTagCompound compound = new NBTTagCompound();
         compound.setBoolean("WorkEnabled", workingEnabled);
         compound.setBoolean(ALLOW_OVERCLOCKING, allowOverclocking);
+        compound.setBoolean(CHECK_OUTPUTS_FIT, this.checkOutputsFitBeforeStarting);
         compound.setLong(OVERCLOCK_VOLTAGE, this.overclockVoltage);
         compound.setInteger("itemOutputIndex", this.itemOutputIndex);
         compound.setInteger("fluidOutputIndex", this.fluidOutputIndex);
@@ -558,6 +565,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     @Override
     public void deserializeNBT(NBTTagCompound compound) {
         this.workingEnabled = compound.getBoolean("WorkEnabled");
+        this.checkOutputsFitBeforeStarting = compound.getBoolean(CHECK_OUTPUTS_FIT);
         this.progressTime = compound.getInteger("Progress");
         this.itemOutputIndex = compound.getInteger("itemOutputIndex");
         this.fluidOutputIndex = compound.getInteger("fluidOutputIndex");
@@ -588,4 +596,13 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         }
     }
 
+    public void setCheckOutputsFitBeforeStarting(boolean checkOutputsFitBeforeStarting) {
+        if (this.isActive) return; // don't toggle while machine is running.
+        this.checkOutputsFitBeforeStarting = checkOutputsFitBeforeStarting;
+        this.metaTileEntity.markDirty();
+    }
+
+    public boolean isCheckOutputsFitBeforeStarting() {
+        return this.checkOutputsFitBeforeStarting;
+    }
 }
