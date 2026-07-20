@@ -327,13 +327,16 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
 
     protected ModularUI.Builder createGuiTemplate(EntityPlayer player) {
         ModularUI.Builder builder = workable.recipeMap.createUITemplate(workable::getProgressPercent, importItems, exportItems, importFluids, exportFluids)
-            .widget(new LabelWidget(7, 5, getMetaFullName()))
-            .widget(new DischargerSlotWidget(chargerInventory, 0, 79, 62)
-                .setBackgroundTexture(GuiTextures.SLOT, GuiTextures.CHARGER_OVERLAY))
-            .widget(new ImageWidget(79, 42, 18, 18, GuiTextures.INDICATOR_NO_ENERGY)
-                .setPredicate(workable::isHasNotEnoughEnergy))
-            .widget(new GhostCircuitWidget(ghostCircuitInventory, 151, 62))
-            .bindPlayerInventory(player.inventory);
+                .widget(new LabelWidget(7, 5, getMetaFullName()))
+                .widget(new DischargerSlotWidget(chargerInventory, 0, 79, 62)
+                        .setBackgroundTexture(GuiTextures.SLOT, GuiTextures.CHARGER_OVERLAY))
+                .widget(new ImageWidget(79, 42, 18, 18, GuiTextures.INDICATOR_NO_ENERGY)
+                        .setPredicate(workable::isHasNotEnoughEnergy))
+                .widget(new ImageWidget(79, 42, 18, 18, GuiTextures.CAUTION_ICON)
+                        .setHoverTooltip(this.workable::getHasProblemsReason)
+                        .setPredicate(this.workable::isHasProblems))
+                .widget(new GhostCircuitWidget(ghostCircuitInventory, 151, 62))
+                .bindPlayerInventory(player.inventory);
 
         int leftButtonStartX = 7;
         int rightButtonStartX = 176 - 7 - 45;

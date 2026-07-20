@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 public class ImageWidget extends Widget {
 
     protected TextureArea area;
-    private Supplier<String> hoverTooltip;
+    private Supplier<String> hoverTooltip = () -> "";
     private BooleanSupplier predicate;
     private boolean isVisible = true;
 
@@ -67,8 +67,11 @@ public class ImageWidget extends Widget {
     @Override
     @SideOnly(Side.CLIENT)
     public void drawInForeground(int mouseX, int mouseY) {
-        if (this.isMouseOverElement(mouseX, mouseY))
-            drawHoveringText(ItemStack.EMPTY, Collections.singletonList(I18n.format(this.hoverTooltip.get())), 300, mouseX, mouseY);
+        if (this.isVisible && this.hoverTooltip != null && this.isMouseOverElement(mouseX, mouseY)) {
+            String hoverTooltip = this.hoverTooltip.get();
+            if (hoverTooltip != null && !hoverTooltip.isEmpty())
+                drawHoveringText(ItemStack.EMPTY, Collections.singletonList(I18n.format(hoverTooltip)), 300, mouseX, mouseY);
+        }
     }
 
     @Override
