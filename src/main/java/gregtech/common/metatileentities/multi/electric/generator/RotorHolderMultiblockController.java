@@ -14,7 +14,11 @@ public abstract class RotorHolderMultiblockController extends FueledMultiblockCo
     public static final MultiblockAbility<MetaTileEntityRotorHolder> ABILITY_ROTOR_HOLDER = new MultiblockAbility<>();
 
     public RotorHolderMultiblockController(ResourceLocation metaTileEntityId, FuelRecipeMap recipeMap, long maxVoltage) {
-        super(metaTileEntityId, recipeMap, maxVoltage);
+        this(metaTileEntityId, recipeMap, maxVoltage,1,1);
+    }
+
+    public RotorHolderMultiblockController(ResourceLocation metaTileEntityId, FuelRecipeMap recipeMap, long maxVoltage, int minExtent, int maxExtent) {
+        super(metaTileEntityId, recipeMap, maxVoltage, minExtent, maxExtent);
     }
 
     public MetaTileEntityRotorHolder getRotorHolder() {

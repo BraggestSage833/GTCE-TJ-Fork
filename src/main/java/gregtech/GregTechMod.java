@@ -11,6 +11,7 @@ import gregtech.api.metatileentity.MetaTileEntityUIFactory;
 import gregtech.api.model.ResourcePackHook;
 import gregtech.api.net.NetworkHandler;
 import gregtech.api.recipes.RecipeMap;
+import gregtech.common.channels.ChannelRegistry;
 import gregtech.common.sound.GTSoundEvents;
 import gregtech.common.sound.GTSoundSystem;
 import gregtech.api.unification.OreDictUnifier;
@@ -114,6 +115,11 @@ public class GregTechMod {
         MetaFluids.init();
         MetaTileEntities.init();
         MetaEntities.init();
+
+
+        //StructureChannelRegistry.register();
+        ChannelRegistry.init();
+
 
         proxy.onPreLoad();
     }

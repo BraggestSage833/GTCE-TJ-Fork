@@ -7,6 +7,7 @@ import gregtech.common.metatileentities.MetaTileEntities;
 import gregtech.common.metatileentities.multi.MetaTileEntityLargeBoiler;
 import gregtech.integration.jei.multiblock.MultiblockInfoPage;
 import gregtech.integration.jei.multiblock.MultiblockShapeInfo;
+import gregtech.integration.jei.multiblock.channel.PlaceholderType;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.EnumFacing;
 
@@ -26,20 +27,19 @@ public class LargeBoilerInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public List<MultiblockShapeInfo> getMatchingShapes() {
-        MultiblockShapeInfo shapeInfo = MultiblockShapeInfo.builder()
-            .aisle("FXX", "CCC", "CCC", "CCC")
-            .aisle("XXX", "SPC", "CPC", "CCC")
-            .aisle("IXX", "COC", "CCC", "CCC")
-            .where('S', boiler, EnumFacing.WEST)
-            .where('P', boiler.boilerType.pipeState)
-            .where('X', boiler.boilerType.fireboxState)
-            .where('C', boiler.boilerType.casingState)
-            .where('O', MetaTileEntities.FLUID_EXPORT_HATCH[GTValues.MV], EnumFacing.SOUTH)
-            .where('I', MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.MV], EnumFacing.WEST)
-            .where('F', MetaTileEntities.ITEM_IMPORT_BUS[GTValues.MV], EnumFacing.WEST)
-            .build();
-        return Lists.newArrayList(shapeInfo);
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
+        return MultiblockShapeInfo.builder()
+                .aisle("FXX", "CCC", "CCC", "CCC")
+                .aisle("XXX", "SPC", "CPC", "CCC")
+                .aisle("IXX", "COC", "CCC", "CCC")
+                .where('S', boiler, EnumFacing.WEST)
+                .where('P', boiler.boilerType.pipeState)
+                .where('X', boiler.boilerType.fireboxState)
+                .where('C', boiler.boilerType.casingState)
+                .where('O', PlaceholderType.OUTPUT_HATCH, MetaTileEntities.FLUID_EXPORT_HATCH[GTValues.MV], EnumFacing.SOUTH)
+                .where('I', PlaceholderType.INPUT_HATCH, MetaTileEntities.FLUID_IMPORT_HATCH[GTValues.MV], EnumFacing.WEST)
+                .where('F', PlaceholderType.INPUT_BUS, MetaTileEntities.ITEM_IMPORT_BUS[GTValues.MV], EnumFacing.WEST)
+                .build();
     }
 
     @Override

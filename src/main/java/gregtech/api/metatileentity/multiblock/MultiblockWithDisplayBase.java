@@ -20,9 +20,20 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     private boolean enableItemInfSink;
     private boolean enableFluidInfSink;
 
-    public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId) {
-        super(metaTileEntityId);
+
+    public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId, int minExtent, int maxExtent) {
+        super(metaTileEntityId, minExtent, maxExtent, 0);
     }
+
+
+    public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId, int minExtent, int maxExtent, int minTier) {
+        super(metaTileEntityId, minExtent, maxExtent, minTier);
+    }
+
+    public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId) {
+        super(metaTileEntityId, 1, 1, 0);
+    }
+
 
     /**
      * Called serverside to obtain text displayed in GUI

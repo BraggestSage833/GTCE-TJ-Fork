@@ -21,8 +21,8 @@ public class PrimitiveBlastFurnaceInfo extends MultiblockInfoPage {
     }
 
     @Override
-    public List<MultiblockShapeInfo> getMatchingShapes() {
-        MultiblockShapeInfo shapeInfo = MultiblockShapeInfo.builder()
+    public MultiblockShapeInfo getMatchingShapes(int extent) {
+        return MultiblockShapeInfo.builder()
             .aisle("XXX", "XXX", "XXX", "XXX")
             .aisle("XXX", "C#X", "X#X", "X#X")
             .aisle("XXX", "XXX", "XXX", "XXX")
@@ -30,7 +30,6 @@ public class PrimitiveBlastFurnaceInfo extends MultiblockInfoPage {
             .where('C', MetaTileEntities.PRIMITIVE_BLAST_FURNACE, EnumFacing.WEST)
             .where('#', Blocks.AIR.getDefaultState())
             .build();
-        return Lists.newArrayList(shapeInfo);
     }
 
     @Override
