@@ -29,16 +29,18 @@ public class PlaceholderBlockRegistry {
         return Math.min(voltageTier, GTValues.V.length-1);
     }
 
-
+    public static int clampIndex(int registeredValue, int arrayLen) {
+        return Math.max(0,Math.min(registeredValue - 1,arrayLen - 1));
+    }
 
     public static void init() {
-        PlaceholderBlockRegistry.register(PlaceholderType.COIL, (context) -> new BlockInfo(MetaBlocks.WIRE_COIL.getState(BlockWireCoil.CoilType.values()[context.coilTier])));
-        PlaceholderBlockRegistry.register(PlaceholderType.INPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.FLUID_IMPORT_HATCH[IOMTEClamper(context.voltageTier)], context.facing));
-        PlaceholderBlockRegistry.register(PlaceholderType.OUTPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.FLUID_EXPORT_HATCH[IOMTEClamper(context.voltageTier)], context.facing));
-        PlaceholderBlockRegistry.register(PlaceholderType.INPUT_BUS, (context) -> MTEHolderBuilder(MetaTileEntities.ITEM_IMPORT_BUS[IOMTEClamper(context.voltageTier)], context.facing));
-        PlaceholderBlockRegistry.register(PlaceholderType.OUTPUT_BUS, (context) -> MTEHolderBuilder(MetaTileEntities.ITEM_EXPORT_BUS[IOMTEClamper(context.voltageTier)], context.facing));
-        PlaceholderBlockRegistry.register(PlaceholderType.ENERGY_INPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.ENERGY_INPUT_HATCH[context.voltageTier], context.facing));
-        PlaceholderBlockRegistry.register(PlaceholderType.ENERGY_OUTPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.ENERGY_OUTPUT_HATCH[context.voltageTier], context.facing));
+        PlaceholderBlockRegistry.register(PlaceholderType.COIL, (context) -> new BlockInfo(MetaBlocks.WIRE_COIL.getState(BlockWireCoil.CoilType.values()[clampIndex(context.getTier(StructureChannels.COIL), BlockWireCoil.CoilType.values().length - 2)])));
+        PlaceholderBlockRegistry.register(PlaceholderType.INPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.FLUID_IMPORT_HATCH[IOMTEClamper(context.getTier(StructureChannels.VOLTAGE))], context.facing));
+        PlaceholderBlockRegistry.register(PlaceholderType.OUTPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.FLUID_EXPORT_HATCH[IOMTEClamper(context.getTier(StructureChannels.VOLTAGE))], context.facing));
+        PlaceholderBlockRegistry.register(PlaceholderType.INPUT_BUS, (context) -> MTEHolderBuilder(MetaTileEntities.ITEM_IMPORT_BUS[IOMTEClamper(context.getTier(StructureChannels.VOLTAGE))], context.facing));
+        PlaceholderBlockRegistry.register(PlaceholderType.OUTPUT_BUS, (context) -> MTEHolderBuilder(MetaTileEntities.ITEM_EXPORT_BUS[IOMTEClamper(context.getTier(StructureChannels.VOLTAGE))], context.facing));
+        PlaceholderBlockRegistry.register(PlaceholderType.ENERGY_INPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.ENERGY_INPUT_HATCH[context.getTier(StructureChannels.VOLTAGE)], context.facing));
+        PlaceholderBlockRegistry.register(PlaceholderType.ENERGY_OUTPUT_HATCH, (context) -> MTEHolderBuilder(MetaTileEntities.ENERGY_OUTPUT_HATCH[context.getTier(StructureChannels.VOLTAGE)], context.facing));
     }
 
 
@@ -59,16 +61,18 @@ public class PlaceholderBlockRegistry {
 
 
     public static class PlaceholderContext {
-        public final int voltageTier;
-        public final int coilTier;
+        private final ChannelState channelState;
         public final EnumFacing facing;
         public final BlockPos pos;
 
-        public PlaceholderContext(int voltageTier, int coilTier, EnumFacing facing, BlockPos pos) {
-            this.voltageTier = voltageTier;
-            this.coilTier = coilTier;
+        public PlaceholderContext(ChannelState state, EnumFacing facing, BlockPos pos) {
+            this.channelState = state;
             this.facing = facing;
             this.pos = pos;
+        }
+
+        public int getTier(StructureChannels channel) {
+            return channelState.get(channel);
         }
     }
 

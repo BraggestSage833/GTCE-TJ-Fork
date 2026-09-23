@@ -48,4 +48,8 @@ public class ChannelDescription {
     public Map<ItemStackKey, Integer> getItems() {
         return Collections.unmodifiableMap(items);
     }
+
+    public int getMaxValue() {
+        return items.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+    }
 }

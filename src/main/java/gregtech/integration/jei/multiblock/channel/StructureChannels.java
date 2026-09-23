@@ -17,7 +17,12 @@ public enum StructureChannels {
     PISTON("piston"),
     PUMP("pump"),
     ROBOT_ARM("robot Arm"),
-    SENSOR("sensor");
+    SENSOR("sensor"),
+
+    FUSION_COIL("fusion_coil"),
+    CRYOSTAT_CASING("cryostat_casing"),
+    VACUUM_CASING("vacuum_casing"),
+    DIVERTOR_CASING("divertor_casing");
 
     private final String channel;
 

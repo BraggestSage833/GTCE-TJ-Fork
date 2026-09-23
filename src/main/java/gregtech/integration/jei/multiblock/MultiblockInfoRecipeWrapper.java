@@ -124,9 +124,9 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         currentExtent = infoPage.getController().getMinExtent();
 
         this.channels = new ArrayList<>();
-        for (StructureChannels ch : StructureChannels.values()) {
-            if (ChannelDescription.has(ch.get())) {
-                this.channels.add(ChannelDescription.get(ch.get()));
+        for (StructureChannels channel : StructureChannels.values()) {
+            if (ChannelDescription.has(channel.get())) {
+                this.channels.add(ChannelDescription.get(channel.get()));
             }
         }
 
@@ -153,10 +153,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     public void setRecipeLayout(RecipeLayout layout, IGuiHelper guiHelper) {
         currentChannelIndex = infoPage.getController().getMinTier();
-
-        for (StructureChannels ch : StructureChannels.values()) {
-            channelState.set(ch, currentChannelIndex);
-        }
+        applyChannelState(currentChannelIndex);
 
         currentExtent = infoPage.getController().getMinExtent();
         this.recipeLayout = layout;
@@ -289,11 +286,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.buttonNextPattern.enabled = newIndex < maxIndex;
 
         currentChannelIndex = newIndex;
-
-
-        for (StructureChannels ch : StructureChannels.values()) {
-            channelState.set(ch, newIndex);
-        }
+        applyChannelState(newIndex);
 
         MultiblockControllerBase controller = infoPage.getController();
         if (controller.getMaxExtent() != 1) {
@@ -314,6 +307,31 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
             triggerStructureCheck(renderer.world);
         }
     }
+
+
+    private void applyChannelState(int index) {
+        int minIndex = infoPage.getController().getMinTier();
+        int step = index - minIndex + 1;
+
+        for (StructureChannels channel : StructureChannels.values()) {
+            if (channel == StructureChannels.VOLTAGE) {
+                channelState.set(channel, index);
+                continue;
+            }
+            if (!ChannelDescription.has(channel.get())) {
+                continue;
+            }
+
+            int channelMax = ChannelDescription.get(channel.get()).getMaxValue();
+
+            if (channelMax == 0) {
+                continue;
+            }
+
+            channelState.set(channel, Math.min(step, channelMax));
+        }
+    }
+
 
     private void triggerStructureCheck(WorldSceneRenderer.TrackedDummyWorld world) {
         if (controllerPos == null) return;
@@ -572,9 +590,6 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.placeholderBlocks = new HashMap<>();
         BlockInfo[][][] blocks = shapeInfo.getBlocks();
 
-        int coilTier = Math.min(channelState.get(StructureChannels.COIL), 16);
-        int voltageTier = Math.min(channelState.get(StructureChannels.VOLTAGE), 14);
-
         for (int z = 0; z < blocks.length; z++) {
             BlockInfo[][] aisle = blocks[z];
             for (int y = 0; y < aisle.length; y++) {
@@ -598,7 +613,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                         facing = ((MetaTileEntityHolder) originalTe).getMetaTileEntity().getFrontFacing();
                     }
 
-                    PlaceholderBlockRegistry.PlaceholderContext context = new PlaceholderBlockRegistry.PlaceholderContext(voltageTier, coilTier, facing, blockPos);
+                    PlaceholderBlockRegistry.PlaceholderContext context = new PlaceholderBlockRegistry.PlaceholderContext(channelState, facing, blockPos);
 
                     BlockInfo resolved = PlaceholderBlockRegistry.resolve(blockInfo.getPlaceHolderType(), context);
                     if (resolved == null) continue;
