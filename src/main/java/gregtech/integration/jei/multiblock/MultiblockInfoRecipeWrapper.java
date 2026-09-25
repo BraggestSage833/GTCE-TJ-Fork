@@ -8,18 +8,15 @@ import gregtech.api.GTValues;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
-import gregtech.api.metatileentity.multiblock.IMultiblockPart;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.scene.SceneRenderCallback;
 import gregtech.api.render.scene.WorldSceneRenderer;
 import gregtech.api.util.BlockInfo;
 import gregtech.api.util.GTUtility;
 import gregtech.api.util.ItemStackKey;
-import gregtech.common.blocks.BlockMetalCasing;
-import gregtech.integration.jei.multiblock.channel.ChannelDescription;
+import gregtech.integration.jei.multiblock.channel.Channel;
 import gregtech.integration.jei.multiblock.channel.ChannelState;
-import gregtech.integration.jei.multiblock.channel.PlaceholderBlockRegistry;
-import gregtech.integration.jei.multiblock.channel.StructureChannels;
+import gregtech.integration.jei.multiblock.channel.PlaceholderType;
 import mezz.jei.api.IGuiHelper;
 import mezz.jei.api.gui.IDrawable;
 import mezz.jei.api.gui.IGuiItemStackGroup;
@@ -78,11 +75,11 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     private WorldSceneRenderer renderer = null;
     private List<ItemStack> baseParts;
-    private List<ChannelDescription> channels;
+    private List<Channel> channels;
     private final ChannelState channelState = new ChannelState();
     private Map<BlockPos, BlockInfo> placeholderBlocks = new HashMap<>();
     private BlockPos controllerPos = null;
-    private int currentExtent = 0;
+    private int currentExtent;
 
     private final Map<GuiButton, Runnable> buttons = new HashMap<>();
     private RecipeLayout recipeLayout;
@@ -124,9 +121,9 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         currentExtent = infoPage.getController().getMinExtent();
 
         this.channels = new ArrayList<>();
-        for (StructureChannels channel : StructureChannels.values()) {
-            if (ChannelDescription.has(channel.get())) {
-                this.channels.add(ChannelDescription.get(channel.get()));
+        for (Channel channel : Channel.values()) {
+            if (channel.getIndicatorMaxValue() > 0) {
+                this.channels.add(channel);
             }
         }
 
@@ -313,22 +310,16 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         int minIndex = infoPage.getController().getMinTier();
         int step = index - minIndex + 1;
 
-        for (StructureChannels channel : StructureChannels.values()) {
-            if (channel == StructureChannels.VOLTAGE) {
-                channelState.set(channel, index);
+        for (Channel channel : Channel.values()) {
+            if (channel.isDriver()) {
+                channelState.set(channel,index);
                 continue;
             }
-            if (!ChannelDescription.has(channel.get())) {
+            int max =channel.getIndicatorMaxValue();
+            if (max == 0) {
                 continue;
             }
-
-            int channelMax = ChannelDescription.get(channel.get()).getMaxValue();
-
-            if (channelMax == 0) {
-                continue;
-            }
-
-            channelState.set(channel, Math.min(step, channelMax));
+            channelState.set(channel,Math.min(step,max));
         }
     }
 
@@ -598,7 +589,9 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                     BlockPos blockPos = new BlockPos(x, y, z);
                     BlockInfo blockInfo = column[x];
 
-                    if (blockInfo.getBlockState() == null && blockInfo.getPlaceHolderType() == null) continue;
+                    if (blockInfo.getBlockState() == null && blockInfo.getPlaceHolderType() == null) {
+                        continue;
+                    }
 
                     if (blockInfo.getPlaceHolderType() == null) {
                         blockMap.put(blockPos, blockInfo);
@@ -613,10 +606,13 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                         facing = ((MetaTileEntityHolder) originalTe).getMetaTileEntity().getFrontFacing();
                     }
 
-                    PlaceholderBlockRegistry.PlaceholderContext context = new PlaceholderBlockRegistry.PlaceholderContext(channelState, facing, blockPos);
+                    PlaceholderType.PlaceholderContext context = new PlaceholderType.PlaceholderContext(channelState, facing, blockPos);
+                    BlockInfo resolved = blockInfo.getPlaceHolderType().resolve(context);
 
-                    BlockInfo resolved = PlaceholderBlockRegistry.resolve(blockInfo.getPlaceHolderType(), context);
-                    if (resolved == null) continue;
+                    if (resolved == null)  {
+                        continue;
+                    }
+
                     blockMap.put(blockPos, resolved);
                 }
             }
