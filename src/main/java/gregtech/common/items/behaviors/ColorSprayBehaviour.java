@@ -1,5 +1,6 @@
 package gregtech.common.items.behaviors;
 
+import gregtech.api.GTValues;
 import gregtech.api.metatileentity.ITieredMetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -18,6 +19,9 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import appeng.api.util.AEColor;
+import appeng.tile.networking.TileCableBus;
+import net.minecraftforge.fml.common.Loader;
 
 import java.util.*;
 
@@ -48,7 +52,7 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         if (!player.canPlayerEdit(pos, side, stack)) {
             return EnumActionResult.FAIL;
         }
-        if (!tryPaintBlock(world, pos, side)) {
+        if (!tryPaintBlock(world, pos, side, player)) {
             return EnumActionResult.PASS;
         }
 
@@ -58,13 +62,13 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         return EnumActionResult.SUCCESS;
     }
 
-    protected boolean tryPaintBlock(World world, BlockPos pos, EnumFacing side) {
+    public boolean tryPaintBlock(World world, BlockPos pos, EnumFacing side, EntityPlayer player) {
         IBlockState blockState = world.getBlockState(pos);
         Block block = blockState.getBlock();
-        return block.recolorBlock(world, pos, side, this.color) || tryPaintSpecialBlock(world, pos, block);
+        return block.recolorBlock(world, pos, side, this.color) || tryPaintSpecialBlock(world, pos, block, player);
     }
 
-    protected boolean tryPaintSpecialBlock(World world, BlockPos pos, Block block) {
+    private boolean tryPaintSpecialBlock(World world, BlockPos pos, Block block, EntityPlayer player) {
         if (block == Blocks.GLASS) {
             IBlockState newBlockState = Blocks.STAINED_GLASS.getDefaultState()
                 .withProperty(BlockStainedGlass.COLOR, this.color);
@@ -77,12 +81,23 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
             world.setBlockState(pos, newBlockState);
             return true;
         }
+        if (Loader.isModLoaded(GTValues.MODID_AE2)) {
+            TileEntity te = world.getTileEntity(pos);
+            if (te instanceof TileCableBus) {
+                TileCableBus cable = (TileCableBus) te;
+
+                if (cable.getColor().ordinal() != color.ordinal()) {
+                    cable.recolourBlock(null, AEColor.values()[color.ordinal()], player);
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
 
 
-    protected int paintConnectedBlocks(World world, BlockPos origin, EnumFacing side, int range) {
+    protected void paintConnectedBlocks(World world, BlockPos origin, EnumFacing side, int range, EntityPlayer player) {
         Block originBlock = normalizeBlock(world.getBlockState(origin).getBlock());
         TileEntity originTE = world.getTileEntity(origin);
 
@@ -91,15 +106,13 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         queue.add(origin);
         visited.add(origin);
 
-        int painted = 0;
+
         int maxNodes = getMaxFloodFillNodes();
 
         while (!queue.isEmpty() && visited.size() <= maxNodes) {
             BlockPos current = queue.poll();
 
-            if (tryPaintBlock(world, current, side)) {
-                painted++;
-            }
+            tryPaintBlock(world, current, side, player);
 
             for (EnumFacing facing : EnumFacing.VALUES) {
                 BlockPos neighbor = current.offset(facing);
@@ -113,7 +126,6 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
             }
         }
 
-        return painted;
     }
 
     protected int getMaxFloodFillNodes() {
