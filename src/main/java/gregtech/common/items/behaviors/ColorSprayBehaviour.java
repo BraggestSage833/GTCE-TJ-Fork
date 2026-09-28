@@ -1,10 +1,15 @@
 package gregtech.common.items.behaviors;
 
 import gregtech.api.GTValues;
+import gregtech.api.metatileentity.ITieredMetaTileEntity;
+import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.common.ConfigHolder;
 import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStainedGlass;
 import net.minecraft.block.BlockStainedGlassPane;
+import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
@@ -12,27 +17,34 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import appeng.api.util.AEColor;
 import appeng.tile.networking.TileCableBus;
 import net.minecraftforge.fml.common.Loader;
 
-import java.util.List;
+import java.util.*;
 
 public class ColorSprayBehaviour extends AbstractUsableBehaviour {
 
     private final ItemStack empty;
-    private final EnumDyeColor color;
+    protected EnumDyeColor color;
+
 
     public ColorSprayBehaviour(ItemStack empty, int totalUses, int color) {
         super(totalUses);
         this.empty = empty;
         this.color = EnumDyeColor.values()[color];
+    }
+
+
+    protected EnumDyeColor getColor() {
+        return color;
+    }
+
+    protected void setColor(EnumDyeColor color) {
+        this.color = color;
     }
 
     @Override
@@ -45,12 +57,13 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
             return EnumActionResult.PASS;
         }
 
+
         world.playSound(player, pos, GTSoundEvents.SPRAY_CAN, SoundCategory.PLAYERS,1F,1F);
         useItemDurability(player, hand, stack, empty.copy());
         return EnumActionResult.SUCCESS;
     }
 
-    private boolean tryPaintBlock(World world, BlockPos pos, EnumFacing side, EntityPlayer player) {
+    public boolean tryPaintBlock(World world, BlockPos pos, EnumFacing side, EntityPlayer player) {
         IBlockState blockState = world.getBlockState(pos);
         Block block = blockState.getBlock();
         return block.recolorBlock(world, pos, side, this.color) || tryPaintSpecialBlock(world, pos, block, player);
@@ -71,9 +84,8 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         }
         if (Loader.isModLoaded(GTValues.MODID_AE2)) {
             TileEntity te = world.getTileEntity(pos);
-            if (te instanceof TileCableBus) {
-                TileCableBus cable = (TileCableBus) te;
-                // do not try to recolor if it already is this color
+            if (te instanceof TileCableBus cable) {
+
                 if (cable.getColor().ordinal() != color.ordinal()) {
                     cable.recolourBlock(null, AEColor.values()[color.ordinal()], player);
                     return true;
@@ -82,6 +94,129 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         }
         return false;
     }
+
+
+
+    protected void paintConnectedBlocks(World world, BlockPos origin, EnumFacing side, int range, EntityPlayer player) {
+        Block originBlock = normalizeBlock(world.getBlockState(origin).getBlock());
+        TileEntity originTE = world.getTileEntity(origin);
+        int originColor = getCurrentColor(world, origin);
+
+        Set<BlockPos> visited = new HashSet<>();
+        Deque<BlockPos> queue = new ArrayDeque<>();
+        queue.add(origin);
+        visited.add(origin);
+
+
+        int maxNodes = getMaxFloodFillNodes();
+
+        while (!queue.isEmpty() && visited.size() <= maxNodes) {
+            BlockPos current = queue.poll();
+
+            tryPaintBlock(world, current, side, player);
+
+            for (EnumFacing facing : EnumFacing.VALUES) {
+                BlockPos neighbor = current.offset(facing);
+                if (visited.contains(neighbor) || !withinRange(origin, neighbor, range)) {
+                    continue;
+                }
+                if (isSameBlockFamily(world, neighbor, originBlock, originTE) && getCurrentColor(world, neighbor) == originColor) {
+                    visited.add(neighbor);
+                    queue.add(neighbor);
+                }
+            }
+        }
+
+    }
+
+
+    protected int getCurrentColor(World world, BlockPos pos) {
+        IBlockState state = world.getBlockState(pos);
+
+        for (IProperty<?> prop : state.getPropertyKeys()) {
+            if (prop.getValueClass() == EnumDyeColor.class) {
+                return ((EnumDyeColor) state.getValue(prop)).getMetadata();
+            }
+        }
+
+        TileEntity te = world.getTileEntity(pos);
+
+        if (te instanceof MetaTileEntityHolder) {
+            MetaTileEntity mte = ((MetaTileEntityHolder) te).getMetaTileEntity();
+            if (mte != null) {
+                return mte.getPaintingColorForRendering();
+            }
+        }
+
+        if (te instanceof TileCableBus && Loader.isModLoaded(GTValues.MODID_AE2)) {
+            return ((TileCableBus) te).getColor().ordinal();
+        }
+
+        return -1;
+    }
+
+
+
+    protected int getMaxFloodFillNodes() {
+        return ConfigHolder.SprayCanOptions.floodFillRange;
+    }
+
+    private static boolean withinRange(BlockPos origin, BlockPos pos, int range) {
+        return Math.abs(pos.getX() - origin.getX()) <= range
+                && Math.abs(pos.getY() - origin.getY()) <= range
+                && Math.abs(pos.getZ() - origin.getZ()) <= range;
+    }
+
+    protected boolean isSameBlockFamily(World world, BlockPos pos, Block originBlock, TileEntity originTE) {
+        Block block = normalizeBlock(world.getBlockState(pos).getBlock());
+        if (block != originBlock) {
+            return false;
+        }
+
+        TileEntity te = world.getTileEntity(pos);
+        if ((te == null) != (originTE == null)) {
+            return false;
+        }
+        if (te == null) {
+            return true; 
+        }
+        if (!te.getClass().isInstance(originTE)) {
+            return false;
+        }
+
+
+        if (!(te instanceof MetaTileEntityHolder) && !(originTE instanceof MetaTileEntityHolder)) {
+           return true;
+        }
+
+        MetaTileEntity teMTE = ((MetaTileEntityHolder) te).getMetaTileEntity();
+        MetaTileEntity originMTE = ((MetaTileEntityHolder) originTE).getMetaTileEntity();
+
+        if ((teMTE == null) != (originMTE == null)) {
+            return false;
+        }
+
+        if (teMTE == null) {
+            return true;
+        }
+
+        if (!teMTE.metaTileEntityId.equals(originMTE.metaTileEntityId)) {
+            return false;
+        }
+
+        if (teMTE instanceof ITieredMetaTileEntity && originMTE instanceof ITieredMetaTileEntity) {
+            return ((ITieredMetaTileEntity) teMTE).getTier() == ((ITieredMetaTileEntity) originMTE).getTier();
+        }
+
+        return true;
+    }
+
+    private static Block normalizeBlock(Block block) {
+        if (block == Blocks.GLASS || block == Blocks.STAINED_GLASS) return Blocks.GLASS;
+        if (block == Blocks.GLASS_PANE || block == Blocks.STAINED_GLASS_PANE) return Blocks.GLASS_PANE;
+        return block;
+    }
+
 
     @Override
     public void addInformation(ItemStack itemStack, List<String> lines) {

@@ -565,6 +565,17 @@ public class MachineRecipeLoader {
                 .buildAndRegister();
         }
 
+        RecipeMaps.ASSEMBLER_RECIPES.recipeBuilder()
+                .inputs(SPRAY_CAN_DYES[EnumDyeColor.RED.getMetadata()].getStackForm(),
+                        SPRAY_CAN_DYES[EnumDyeColor.BLUE.getMetadata()].getStackForm(),
+                        SPRAY_CAN_DYES[EnumDyeColor.YELLOW.getMetadata()].getStackForm(),
+                        SPRAY_CAN_DYES[EnumDyeColor.GREEN.getMetadata()].getStackForm())
+                .inputs(FIELD_GENERATOR_LUV.getStackForm())
+                .outputs(INFINITY_SPRAY_CAN.getStackForm())
+                .EUt((int) GTValues.V2[6]).duration(512)
+                .buildAndRegister();
+
+
         for (IngotMaterial cableMaterial : new IngotMaterial[]{Materials.YttriumBariumCuprate, Materials.NiobiumTitanium, Materials.VanadiumGallium}) {
             RecipeMaps.ASSEMBLER_RECIPES.recipeBuilder()
                 .input(OrePrefix.wireGtSingle, cableMaterial, 3)

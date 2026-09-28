@@ -131,6 +131,9 @@ public class MetaItem1 extends MaterialMetaItem {
             SPRAY_CAN_DYES[i].addComponents(behaviour);
         }
 
+
+        INFINITY_SPRAY_CAN = addItem(470,"infinity.spray.can").addComponents(new InfiniteSprayCanBehavior(null,1,1));
+
         TOOL_MATCHES = addItem(471, "tool.matches")
             .addComponents(new LighterBehaviour(1));
         TOOL_MATCHBOX = addItem(473, "tool.matchbox")

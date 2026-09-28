@@ -57,6 +57,20 @@ public class ConfigHolder {
     @Config.RequiresMcRestart
     public static boolean harderMachineHulls = false;
 
+    @Config.Comment("Spray Cans")
+    public static SprayCanOptions sprayCanOptions = new SprayCanOptions();
+
+    public static class SprayCanOptions {
+        @Config.RangeInt(min = 1,max = 100)
+        @Config.Comment("Chance the amount of blocks Infinite Spray Can can paint")
+        public static int paintRange = 16;
+
+        @Config.Comment("Range (in blocks, per axis) the flood-fill search box extends from the clicked block.")
+        @Config.RangeInt(min = 1, max = 500)
+        public static int floodFillRange = 64;
+    }
+
+
     @Config.Comment("If true, insufficient energy supply will reset recipe progress to zero. If false, progress will decrease to zero with 2x speed. Default: false")
     @Config.RequiresWorldRestart
     public static boolean insufficientEnergySupplyWipesRecipeProgress = false;

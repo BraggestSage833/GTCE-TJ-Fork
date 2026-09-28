@@ -14,6 +14,7 @@ import gregtech.api.unification.stack.UnificationEntry;
 import gregtech.api.util.FluidTooltipUtil;
 import gregtech.api.util.GTLog;
 import gregtech.api.util.ModCompatibility;
+import gregtech.api.util.SprayCanScrollHandler;
 import gregtech.common.blocks.*;
 import gregtech.common.blocks.surfacerock.BlockSurfaceRockDeprecated;
 import gregtech.common.covers.facade.FacadeRenderer;
@@ -122,6 +123,7 @@ public class ClientProxy extends CommonProxy {
         MetaEntities.initRenderers();
         TextureUtils.addIconRegister(MetaFluids::registerSprites);
         MinecraftForge.EVENT_BUS.register(ToolRenderHandler.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(new SprayCanScrollHandler());
     }
 
     @Override
