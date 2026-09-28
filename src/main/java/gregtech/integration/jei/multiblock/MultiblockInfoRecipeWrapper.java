@@ -80,6 +80,9 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
     private Map<BlockPos, BlockInfo> placeholderBlocks = new HashMap<>();
     private BlockPos controllerPos = null;
     private int currentExtent;
+    private int maxChannelIndex;
+
+    private static final int MAX_VOLTAGE_INDEX = GTValues.V2.length - 1;
 
     private final Map<GuiButton, Runnable> buttons = new HashMap<>();
     private RecipeLayout recipeLayout;
@@ -135,6 +138,11 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.canExtend = infoPage.getController().getMaxExtent() > 1;
         this.hasVoltagePages = shapeInfo.isTiered();
 
+
+
+        recomputeMaxChannelIndex();
+
+
         drops.forEach(it -> allItemStackInputs.add(it.getItemStack()));
     }
 
@@ -172,7 +180,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.buttonPreviousPattern.enabled = false;
 
         this.buttonNextPattern.visible = this.hasVoltagePages || this.canExtend;
-        this.buttonNextPattern.enabled = true;
+        this.buttonNextPattern.enabled = infoPage.getController().getMinTier() < maxChannelIndex;
 
 
         this.buttons.put(nextLayerXButton, () -> setNextLayerX(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
@@ -272,15 +280,14 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     private void switchChannel(int amount) {
         int minIndex = infoPage.getController().getMinTier();
-        int maxIndex = 14;
-        int newIndex = max(minIndex, Math.min(currentChannelIndex + amount, maxIndex));
+        int newIndex = max(minIndex, Math.min(currentChannelIndex + amount, maxChannelIndex));
 
         if (currentChannelIndex == newIndex) {
             return;
         }
 
         this.buttonPreviousPattern.enabled = newIndex > minIndex;
-        this.buttonNextPattern.enabled = newIndex < maxIndex;
+        this.buttonNextPattern.enabled = newIndex < maxChannelIndex;
 
         currentChannelIndex = newIndex;
         applyChannelState(newIndex);
@@ -289,7 +296,11 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         if (controller.getMaxExtent() != 1) {
             int minExtent = controller.getMinExtent();
             int maxExtent = controller.getMaxExtent();
-            currentExtent = Math.min(maxExtent, minExtent + currentChannelIndex);
+
+
+            int extentIndex = getVoltageIndex(currentChannelIndex);
+
+            currentExtent = Math.min(maxExtent, minExtent + extentIndex);
 
             rebuildScene();
 
@@ -305,6 +316,51 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         }
     }
 
+    private int getVoltageIndex(int progressionIndex) {
+        return Math.min(progressionIndex,getMaxVoltageIndex());
+    }
+
+    private int getMaxVoltageIndex() {
+        int maxTier = infoPage.getController().getMaxTier();
+        int cap = maxTier >= 0 ? maxTier : MAX_VOLTAGE_INDEX;
+        return Math.min(cap, MAX_VOLTAGE_INDEX);
+    }
+
+    private void recomputeMaxChannelIndex() {
+        int minIndex = infoPage.getController().getMinTier();
+        int maxIndex = getMaxVoltageIndex();
+
+
+        Set<PlaceholderType> usedTypes = new HashSet<>();
+        for (BlockInfo blockInfo : placeholderBlocks.values()) {
+            PlaceholderType type = blockInfo.getPlaceHolderType();
+            if (type != null) {
+                usedTypes.add(type);
+            }
+        }
+
+
+        Map<Channel, Integer> effectiveMax = new IdentityHashMap<>();
+        for (PlaceholderType type : usedTypes) {
+            for (Channel channel :  type.getDependentChannels()) {
+                if (channel.isDriver()) {
+                    continue;
+                }
+
+                int channelMax = channel.getIndicatorMaxValue();
+                if (channelMax == 0)  {
+                    continue;
+                }
+                effectiveMax.merge(channel, type.getEffectiveChannelMax(channel, channelMax), Math::max);
+            }
+        }
+
+        for (Integer steps : effectiveMax.values()) {
+            maxIndex = Math.max(maxIndex, minIndex + steps - 1);
+        }
+
+        this.maxChannelIndex = maxIndex;
+    }
 
     private void applyChannelState(int index) {
         int minIndex = infoPage.getController().getMinTier();
@@ -312,14 +368,15 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
         for (Channel channel : Channel.values()) {
             if (channel.isDriver()) {
-                channelState.set(channel,index);
+                int value = (channel == Channel.VOLTAGE) ? getVoltageIndex(index) : index;
+                channelState.set(channel, value);
                 continue;
             }
-            int max =channel.getIndicatorMaxValue();
-            if (max == 0) {
+            int channelMax = channel.getIndicatorMaxValue();
+            if (channelMax == 0) {
                 continue;
             }
-            channelState.set(channel,Math.min(step,max));
+            channelState.set(channel, Math.min(step, channelMax));
         }
     }
 
@@ -401,9 +458,10 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.infoIcon.draw(minecraft, recipeWidth - (ICON_SIZE + RIGHT_PADDING), 9);
 
         if (this.hasVoltagePages) {
+            int voltageDisplayIndex = getVoltageIndex(this.currentChannelIndex);
             GuiTextures.DISPLAY.draw(recipeWidth - (ICON_SIZE + ICON_SIZE + RIGHT_PADDING), 110, 40, 20);
-            String text = (this.currentChannelIndex == 9 ? TextFormatting.DARK_RED.toString() : GTUtility.TIER_COLOR[this.currentChannelIndex]) + GTValues.VN2[this.currentChannelIndex];
-            Minecraft.getMinecraft().fontRenderer.drawString(text, recipeWidth - 30 - (GTValues.VN2[this.currentChannelIndex].length() > 2 ? 4 : 0), 116, 0xFFFFFF);
+            String text = (voltageDisplayIndex == 9 ? TextFormatting.DARK_RED.toString() : GTUtility.TIER_COLOR[voltageDisplayIndex]) + GTValues.VN2[voltageDisplayIndex];
+            Minecraft.getMinecraft().fontRenderer.drawString(text, recipeWidth - 30 - (GTValues.VN2[voltageDisplayIndex].length() > 2 ? 4 : 0), 116, 0xFFFFFF);
         }
 
         for (int i = 0; i < MAX_PARTS; ++i) {

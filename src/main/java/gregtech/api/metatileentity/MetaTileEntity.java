@@ -867,7 +867,7 @@ public abstract class MetaTileEntity implements ICoverable {
             getHolder().scheduleChunkForRenderUpdate();
         } else if (dataId == UPDATE_SOUND_MUFFLED) {
             this.muffled = buf.readBoolean();
-            if (muffled) {
+            if (muffled && getWorld().isRemote) {
                 MachineSoundManager.stop(getPos());
             }
         }
@@ -1268,7 +1268,11 @@ public abstract class MetaTileEntity implements ICoverable {
 
 
     public void onRemoval() {
-       MachineSoundManager.stop(getPos());
+        if (!getWorld().isRemote) {
+            return;
+        }
+
+        MachineSoundManager.stop(getPos());
     }
 
     public EnumFacing getFrontFacing() {

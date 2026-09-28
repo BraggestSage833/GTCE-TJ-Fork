@@ -22,16 +22,16 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
 
 
     public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId, int minExtent, int maxExtent) {
-        super(metaTileEntityId, minExtent, maxExtent, 0);
+        super(metaTileEntityId, minExtent, maxExtent, 0,14);
     }
 
 
-    public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId, int minExtent, int maxExtent, int minTier) {
-        super(metaTileEntityId, minExtent, maxExtent, minTier);
+    public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId, int minExtent, int maxExtent, int minTier, int maxTier) {
+        super(metaTileEntityId, minExtent, maxExtent, minTier, maxTier);
     }
 
     public MultiblockWithDisplayBase(ResourceLocation metaTileEntityId) {
-        super(metaTileEntityId, 1, 1, 0);
+        super(metaTileEntityId, 1, 1, 0,14);
     }
 
 

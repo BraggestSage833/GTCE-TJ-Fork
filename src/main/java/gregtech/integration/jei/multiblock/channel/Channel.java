@@ -10,13 +10,8 @@ public final class Channel {
     private static final Map<String, Channel> REGISTRY = new LinkedHashMap<>();
     private static final Map<ItemStackKey, Map<String, Integer>> ITEM_TO_CHANNELS = new HashMap<>();
 
-
     public static final Channel VOLTAGE = createDriver("voltage");
-
-
     public static final Channel COIL = create("coil");
-    // TODO: io hatches and busses & energy
-
 
     private final String id;
     private final boolean driver;
