@@ -67,10 +67,10 @@ public class InfiniteSprayCanBehavior extends ColorSprayBehaviour{
         setColor(getStackColor(stack));
 
         if (player.isSneaking()) {
-            paintConnectedBlocks(world, pos,side, getPaintRange());
+            paintConnectedBlocks(world, pos,side, getPaintRange(), player);
         }
         else {
-            tryPaintBlock(world,pos,side);
+            tryPaintBlock(world, pos,side, player);
         }
 
         world.playSound(player, pos, GTSoundEvents.SPRAY_CAN, SoundCategory.PLAYERS,1F,1F);

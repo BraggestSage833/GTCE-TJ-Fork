@@ -9,6 +9,7 @@ import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStainedGlass;
 import net.minecraft.block.BlockStainedGlassPane;
+import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
@@ -83,8 +84,7 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         }
         if (Loader.isModLoaded(GTValues.MODID_AE2)) {
             TileEntity te = world.getTileEntity(pos);
-            if (te instanceof TileCableBus) {
-                TileCableBus cable = (TileCableBus) te;
+            if (te instanceof TileCableBus cable) {
 
                 if (cable.getColor().ordinal() != color.ordinal()) {
                     cable.recolourBlock(null, AEColor.values()[color.ordinal()], player);
@@ -100,6 +100,7 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
     protected void paintConnectedBlocks(World world, BlockPos origin, EnumFacing side, int range, EntityPlayer player) {
         Block originBlock = normalizeBlock(world.getBlockState(origin).getBlock());
         TileEntity originTE = world.getTileEntity(origin);
+        int originColor = getCurrentColor(world, origin);
 
         Set<BlockPos> visited = new HashSet<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
@@ -119,7 +120,7 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
                 if (visited.contains(neighbor) || !withinRange(origin, neighbor, range)) {
                     continue;
                 }
-                if (isSameBlockFamily(world, neighbor, originBlock, originTE)) {
+                if (isSameBlockFamily(world, neighbor, originBlock, originTE) && getCurrentColor(world, neighbor) == originColor) {
                     visited.add(neighbor);
                     queue.add(neighbor);
                 }
@@ -127,6 +128,34 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         }
 
     }
+
+
+    protected int getCurrentColor(World world, BlockPos pos) {
+        IBlockState state = world.getBlockState(pos);
+
+        for (IProperty<?> prop : state.getPropertyKeys()) {
+            if (prop.getValueClass() == EnumDyeColor.class) {
+                return ((EnumDyeColor) state.getValue(prop)).getMetadata();
+            }
+        }
+
+        TileEntity te = world.getTileEntity(pos);
+
+        if (te instanceof MetaTileEntityHolder) {
+            MetaTileEntity mte = ((MetaTileEntityHolder) te).getMetaTileEntity();
+            if (mte != null) {
+                return mte.getPaintingColorForRendering();
+            }
+        }
+
+        if (te instanceof TileCableBus && Loader.isModLoaded(GTValues.MODID_AE2)) {
+            return ((TileCableBus) te).getColor().ordinal();
+        }
+
+        return -1;
+    }
+
+
 
     protected int getMaxFloodFillNodes() {
         return ConfigHolder.SprayCanOptions.floodFillRange;
@@ -138,7 +167,6 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
                 && Math.abs(pos.getZ() - origin.getZ()) <= range;
     }
 
-   
     protected boolean isSameBlockFamily(World world, BlockPos pos, Block originBlock, TileEntity originTE) {
         Block block = normalizeBlock(world.getBlockState(pos).getBlock());
         if (block != originBlock) {
@@ -156,24 +184,28 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
             return false;
         }
 
-      
-        if (te instanceof MetaTileEntityHolder && originTE instanceof MetaTileEntityHolder) {
-            MetaTileEntity teMTE = ((MetaTileEntityHolder) te).getMetaTileEntity();
-            MetaTileEntity originMTE = ((MetaTileEntityHolder) originTE).getMetaTileEntity();
 
-            if ((teMTE == null) != (originMTE == null)) {
-                return false;
-            }
-            if (teMTE != null && originMTE != null) {
-                if (!teMTE.metaTileEntityId.equals(originMTE.metaTileEntityId)) {
-                    return false;
-                }
-                if (teMTE instanceof ITieredMetaTileEntity && originMTE instanceof ITieredMetaTileEntity) {
-                    if (((ITieredMetaTileEntity) teMTE).getTier() != ((ITieredMetaTileEntity) originMTE).getTier()) {
-                        return false;
-                    }
-                }
-            }
+        if (!(te instanceof MetaTileEntityHolder) && !(originTE instanceof MetaTileEntityHolder)) {
+           return true;
+        }
+
+        MetaTileEntity teMTE = ((MetaTileEntityHolder) te).getMetaTileEntity();
+        MetaTileEntity originMTE = ((MetaTileEntityHolder) originTE).getMetaTileEntity();
+
+        if ((teMTE == null) != (originMTE == null)) {
+            return false;
+        }
+
+        if (teMTE == null) {
+            return true;
+        }
+
+        if (!teMTE.metaTileEntityId.equals(originMTE.metaTileEntityId)) {
+            return false;
+        }
+
+        if (teMTE instanceof ITieredMetaTileEntity && originMTE instanceof ITieredMetaTileEntity) {
+            return ((ITieredMetaTileEntity) teMTE).getTier() == ((ITieredMetaTileEntity) originMTE).getTier();
         }
 
         return true;
