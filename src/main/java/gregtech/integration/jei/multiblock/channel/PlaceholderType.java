@@ -50,7 +50,6 @@ public final class PlaceholderType {
     }
 
     public void registerResolver(PlaceholderResolver resolver) {
-        //this.resolver = resolver;
         registerResolver(resolver, new Channel[0]);
     }
 

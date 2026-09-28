@@ -75,7 +75,6 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     private WorldSceneRenderer renderer = null;
     private List<ItemStack> baseParts;
-    private List<Channel> channels;
     private final ChannelState channelState = new ChannelState();
     private Map<BlockPos, BlockInfo> placeholderBlocks = new HashMap<>();
     private BlockPos controllerPos = null;
@@ -123,13 +122,6 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         drops.add(new ItemStackKey(controllerStack));
         currentExtent = infoPage.getController().getMinExtent();
 
-        this.channels = new ArrayList<>();
-        for (Channel channel : Channel.values()) {
-            if (channel.getIndicatorMaxValue() > 0) {
-                this.channels.add(channel);
-            }
-        }
-
         MultiblockShapeInfo shapeInfo = infoPage.getMatchingShapes(currentExtent);
         currentChannelIndex = infoPage.getController().getMinTier();
         MBPattern pattern = initializePattern(shapeInfo, drops);
@@ -138,10 +130,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.canExtend = infoPage.getController().getMaxExtent() > 1;
         this.hasVoltagePages = shapeInfo.isTiered();
 
-
-
         recomputeMaxChannelIndex();
-
 
         drops.forEach(it -> allItemStackInputs.add(it.getItemStack()));
     }
@@ -293,27 +282,26 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         applyChannelState(newIndex);
 
         MultiblockControllerBase controller = infoPage.getController();
-        if (controller.getMaxExtent() != 1) {
-            int minExtent = controller.getMinExtent();
-            int maxExtent = controller.getMaxExtent();
-
-
-            int extentIndex = getVoltageIndex(currentChannelIndex);
-
-            currentExtent = Math.min(maxExtent, minExtent + extentIndex);
-
-            rebuildScene();
-
-            this.layerXIndex = -1;
-            this.layerYIndex = -1;
-            this.layerZIndex = -1;
-            this.nextLayerXButton.displayString = "X:A";
-            this.nextLayerYButton.displayString = "Y:A";
-            this.nextLayerZButton.displayString = "Z:A";
-        } else {
+        if (controller.getMaxExtent() == 1) {
             rebuildScene();
             triggerStructureCheck(renderer.world);
         }
+
+        int minExtent = controller.getMinExtent();
+        int maxExtent = controller.getMaxExtent();
+
+        int extentIndex = getVoltageIndex(currentChannelIndex);
+
+        currentExtent = Math.min(maxExtent, minExtent + extentIndex);
+
+        rebuildScene();
+
+        this.layerXIndex = -1;
+        this.layerYIndex = -1;
+        this.layerZIndex = -1;
+        this.nextLayerXButton.displayString = "X:A";
+        this.nextLayerYButton.displayString = "Y:A";
+        this.nextLayerZButton.displayString = "Z:A";
     }
 
     private int getVoltageIndex(int progressionIndex) {
