@@ -217,6 +217,7 @@ metaitem.spray.can.dyes.brown.name=Spray Can (Brown)
 metaitem.spray.can.dyes.green.name=Spray Can (Green)
 metaitem.spray.can.dyes.red.name=Spray Can (Red)
 metaitem.spray.can.dyes.black.name=Spray Can (Black)
+metaitem.infinity.spray.can.name=Infinity Spray Can
 
 metaitem.tool.matches.name=Match
 metaitem.tool.matchbox.name=Match Box
@@ -2850,6 +2851,15 @@ behaviour.paintspray.green.tooltip=Can paint things in Green
 behaviour.paintspray.red.tooltip=Can paint things in Red
 behaviour.paintspray.black.tooltip=Can paint things in Black
 behaviour.paintspray.uses=Remaining Uses: %,d
+
+
+behaviour.infinite.paintspray.tooltip=An infinite spray can
+behaviour.infinite.paintspray.current_color=Current color: %s
+behaviour.infinite.paintspray.usage.scroll=§7Shift + Scroll: change color
+behaviour.infinite.paintspray.usage.paint_multiple=§7Shift + Right Click: paint connected blocks
+behaviour.infinite.paintspray.usage.paint_single=§7Right Click: paint a single block
+behaviour.infinite.paintspray.color_changed=Color changed to %s
+
 behaviour.prospecting=Usable for Prospecting
 
 # Multiblock machine controllers

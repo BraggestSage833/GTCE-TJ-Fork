@@ -1,5 +1,9 @@
 package gregtech.common.items.behaviors;
 
+import gregtech.api.metatileentity.ITieredMetaTileEntity;
+import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.common.ConfigHolder;
 import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStainedGlass;
@@ -10,24 +14,32 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-import java.util.List;
+import java.util.*;
 
 public class ColorSprayBehaviour extends AbstractUsableBehaviour {
 
     private final ItemStack empty;
-    private final EnumDyeColor color;
+    protected EnumDyeColor color;
+
 
     public ColorSprayBehaviour(ItemStack empty, int totalUses, int color) {
         super(totalUses);
         this.empty = empty;
         this.color = EnumDyeColor.values()[color];
+    }
+
+
+    protected EnumDyeColor getColor() {
+        return color;
+    }
+
+    protected void setColor(EnumDyeColor color) {
+        this.color = color;
     }
 
     @Override
@@ -40,18 +52,19 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
             return EnumActionResult.PASS;
         }
 
+
         world.playSound(player, pos, GTSoundEvents.SPRAY_CAN, SoundCategory.PLAYERS,1F,1F);
         useItemDurability(player, hand, stack, empty.copy());
         return EnumActionResult.SUCCESS;
     }
 
-    private boolean tryPaintBlock(World world, BlockPos pos, EnumFacing side) {
+    protected boolean tryPaintBlock(World world, BlockPos pos, EnumFacing side) {
         IBlockState blockState = world.getBlockState(pos);
         Block block = blockState.getBlock();
         return block.recolorBlock(world, pos, side, this.color) || tryPaintSpecialBlock(world, pos, block);
     }
 
-    private boolean tryPaintSpecialBlock(World world, BlockPos pos, Block block) {
+    protected boolean tryPaintSpecialBlock(World world, BlockPos pos, Block block) {
         if (block == Blocks.GLASS) {
             IBlockState newBlockState = Blocks.STAINED_GLASS.getDefaultState()
                 .withProperty(BlockStainedGlass.COLOR, this.color);
@@ -66,6 +79,100 @@ public class ColorSprayBehaviour extends AbstractUsableBehaviour {
         }
         return false;
     }
+
+
+
+    protected int paintConnectedBlocks(World world, BlockPos origin, EnumFacing side, int range) {
+        Block originBlock = normalizeBlock(world.getBlockState(origin).getBlock());
+        TileEntity originTE = world.getTileEntity(origin);
+
+        Set<BlockPos> visited = new HashSet<>();
+        Deque<BlockPos> queue = new ArrayDeque<>();
+        queue.add(origin);
+        visited.add(origin);
+
+        int painted = 0;
+        int maxNodes = getMaxFloodFillNodes();
+
+        while (!queue.isEmpty() && visited.size() <= maxNodes) {
+            BlockPos current = queue.poll();
+
+            if (tryPaintBlock(world, current, side)) {
+                painted++;
+            }
+
+            for (EnumFacing facing : EnumFacing.VALUES) {
+                BlockPos neighbor = current.offset(facing);
+                if (visited.contains(neighbor) || !withinRange(origin, neighbor, range)) {
+                    continue;
+                }
+                if (isSameBlockFamily(world, neighbor, originBlock, originTE)) {
+                    visited.add(neighbor);
+                    queue.add(neighbor);
+                }
+            }
+        }
+
+        return painted;
+    }
+
+    protected int getMaxFloodFillNodes() {
+        return ConfigHolder.SprayCanOptions.floodFillRange;
+    }
+
+    private static boolean withinRange(BlockPos origin, BlockPos pos, int range) {
+        return Math.abs(pos.getX() - origin.getX()) <= range
+                && Math.abs(pos.getY() - origin.getY()) <= range
+                && Math.abs(pos.getZ() - origin.getZ()) <= range;
+    }
+
+   
+    protected boolean isSameBlockFamily(World world, BlockPos pos, Block originBlock, TileEntity originTE) {
+        Block block = normalizeBlock(world.getBlockState(pos).getBlock());
+        if (block != originBlock) {
+            return false;
+        }
+
+        TileEntity te = world.getTileEntity(pos);
+        if ((te == null) != (originTE == null)) {
+            return false;
+        }
+        if (te == null) {
+            return true; 
+        }
+        if (!te.getClass().isInstance(originTE)) {
+            return false;
+        }
+
+      
+        if (te instanceof MetaTileEntityHolder && originTE instanceof MetaTileEntityHolder) {
+            MetaTileEntity teMTE = ((MetaTileEntityHolder) te).getMetaTileEntity();
+            MetaTileEntity originMTE = ((MetaTileEntityHolder) originTE).getMetaTileEntity();
+
+            if ((teMTE == null) != (originMTE == null)) {
+                return false;
+            }
+            if (teMTE != null && originMTE != null) {
+                if (!teMTE.metaTileEntityId.equals(originMTE.metaTileEntityId)) {
+                    return false;
+                }
+                if (teMTE instanceof ITieredMetaTileEntity && originMTE instanceof ITieredMetaTileEntity) {
+                    if (((ITieredMetaTileEntity) teMTE).getTier() != ((ITieredMetaTileEntity) originMTE).getTier()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static Block normalizeBlock(Block block) {
+        if (block == Blocks.GLASS || block == Blocks.STAINED_GLASS) return Blocks.GLASS;
+        if (block == Blocks.GLASS_PANE || block == Blocks.STAINED_GLASS_PANE) return Blocks.GLASS_PANE;
+        return block;
+    }
+
 
     @Override
     public void addInformation(ItemStack itemStack, List<String> lines) {

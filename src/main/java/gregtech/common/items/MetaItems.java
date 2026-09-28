@@ -369,6 +369,8 @@ public final class MetaItems {
 
     public static MetaItem<?>.MetaValueItem[] DYE_ONLY_ITEMS = new MetaItem.MetaValueItem[EnumDyeColor.values().length];
     public static MetaItem<?>.MetaValueItem[] SPRAY_CAN_DYES = new MetaItem.MetaValueItem[EnumDyeColor.values().length];
+    public static MetaItem<?>.MetaValueItem INFINITY_SPRAY_CAN;
+
 
     public static MetaItem<?>.MetaValueItem TURBINE_ROTOR;
 

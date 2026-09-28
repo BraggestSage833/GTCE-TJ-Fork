@@ -195,6 +195,12 @@ public class NetworkHandler {
             (buf) -> new PacketClipboard(buf.readString(32767))
         ));
 
+
+        registerPacket(6,PacketSprayCanScroll.class, new PacketCodec<>(
+                PacketSprayCanScroll::encode,
+                PacketSprayCanScroll::decode
+        ));
+
         registerServerExecutor(PacketUIClientAction.class, (packet, handler) -> {
             Container openContainer = handler.player.openContainer;
             if (openContainer instanceof ModularUIContainer &&
@@ -204,6 +210,8 @@ public class NetworkHandler {
                 modularUI.guiWidgets.get(packet.widgetId).handleClientAction(buffer.readVarInt(), buffer);
             }
         });
+
+        registerServerExecutor(PacketSprayCanScroll.class, PacketSprayCanScroll::handle);
 
         if (FMLCommonHandler.instance().getSide().isClient()) {
             initClient();
