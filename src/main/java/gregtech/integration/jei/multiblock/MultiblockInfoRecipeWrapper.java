@@ -175,8 +175,12 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.buttons.put(nextLayerXButton, () -> setNextLayerX(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(nextLayerYButton, () -> setNextLayerY(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(nextLayerZButton, () -> setNextLayerZ(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
-        this.buttons.put(buttonPreviousPattern, () -> switchChannel(-1));
-        this.buttons.put(buttonNextPattern, () -> switchChannel(1));
+        this.buttons.put(buttonPreviousPattern, () -> switchChannel(
+                Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? -10 : -1
+        ));
+        this.buttons.put(buttonNextPattern, () -> switchChannel(
+                Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 10 : -1
+        ));
         this.buttons.put(cameraModeButton, this::setCameraFree);
 
         this.panX = 0.0f;
@@ -686,6 +690,19 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
         WorldSceneRenderer worldSceneRenderer = new WorldSceneRenderer(blockMap);
         worldSceneRenderer.world.updateEntities();
+
+        MultiblockControllerBase controller = null;
+        if (controllerPos != null) {
+            TileEntity te = worldSceneRenderer.world.getTileEntity(controllerPos);
+            if (te instanceof MetaTileEntityHolder holder) {
+                MetaTileEntity mte = holder.getMetaTileEntity();
+                if (mte instanceof MultiblockControllerBase) {
+                    controller = (MultiblockControllerBase) mte;
+                }
+            }
+        }
+        MultiBlockPreviewHooks.fireSceneBuilt(worldSceneRenderer.world, controller);
+
         HashMap<ItemStackKey, PartInfo> partsMap = new HashMap<>();
         gatherBlockDrops(worldSceneRenderer.world, blockMap, blockDrops, partsMap);
         worldSceneRenderer.setRenderCallback(this);
