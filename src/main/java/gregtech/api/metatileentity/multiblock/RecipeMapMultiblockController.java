@@ -45,20 +45,24 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
     protected IEnergyContainer energyContainer;
 
     public RecipeMapMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap) {
-        this(metaTileEntityId, recipeMap, 1, 1, 0);
+        this(metaTileEntityId, recipeMap, 1, 1, 0,14);
     }
 
     public RecipeMapMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap,int minExtent, int maxExtent) {
-        this(metaTileEntityId, recipeMap, 16, minExtent, maxExtent, 0);
+        this(metaTileEntityId, recipeMap, 16, minExtent, maxExtent, 0, 14);
+    }
+
+    public RecipeMapMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap,int minExtent, int maxExtent, int maxTier) {
+        this(metaTileEntityId, recipeMap, 16, minExtent, maxExtent, 0, 14);
     }
 
 
-    public RecipeMapMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap,int minExtent, int maxExtent, int minTier) {
-        this(metaTileEntityId, recipeMap, 16, minExtent, maxExtent, minTier);
+    public RecipeMapMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap,int minExtent, int maxExtent, int minTier, int maxTier) {
+        this(metaTileEntityId, recipeMap, 16, minExtent, maxExtent, minTier, maxTier);
     }
 
-    public RecipeMapMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, int recipeCacheSize, int minExtent, int maxExtent, int minTier) {
-        super(metaTileEntityId, minExtent, maxExtent, minTier);
+    public RecipeMapMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, int recipeCacheSize, int minExtent, int maxExtent, int minTier, int maxTier) {
+        super(metaTileEntityId, minExtent, maxExtent, minTier, maxTier);
         this.recipeMap = recipeMap;
         this.recipeMapWorkable = new MultiblockRecipeLogic(this, recipeCacheSize);
         resetTileAbilities();

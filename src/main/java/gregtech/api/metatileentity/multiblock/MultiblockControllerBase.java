@@ -5,6 +5,7 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
+import gregtech.api.GTValues;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.multiblock.BlockPattern;
@@ -49,16 +50,18 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     protected final int minExtent;
     protected final int maxExtent;
     protected final int minTier; // min tier for machines that might have min voltage tier or tiered block
+    protected final int maxTier; // both of these are used for jei previews
 
     public MultiblockControllerBase(ResourceLocation metaTileEntityId) {
-        this(metaTileEntityId, 1, 1, 0);
+        this(metaTileEntityId, 1, 1, 0, 14);
     }
 
-    public MultiblockControllerBase(ResourceLocation metaTileEntityId, int minExtent, int maxExtent, int minTier) {
+    public MultiblockControllerBase(ResourceLocation metaTileEntityId, int minExtent, int maxExtent, int minTier, int maxTier) {
         super(metaTileEntityId);
         this.minExtent = minExtent;
         this.maxExtent = maxExtent;
         this.minTier = minTier;
+        this.maxTier = maxTier;
         reinitializeStructurePattern();
         this.setPaintingColor(0xFFFFFF);
     }
@@ -126,6 +129,10 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
 
     public int getMinTier() {
         return minTier;
+    }
+
+    public int getMaxTier() {
+        return maxTier;
     }
 
 

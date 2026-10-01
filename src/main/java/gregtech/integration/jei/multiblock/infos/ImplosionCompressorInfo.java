@@ -5,6 +5,7 @@ import gregtech.api.GTValues;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.common.blocks.BlockMetalCasing.MetalCasingType;
 import gregtech.common.blocks.MetaBlocks;
+import gregtech.common.channels.ChannelRegistry;
 import gregtech.common.metatileentities.MetaTileEntities;
 import gregtech.integration.jei.multiblock.MultiblockInfoPage;
 import gregtech.integration.jei.multiblock.MultiblockShapeInfo;
@@ -35,9 +36,9 @@ public class ImplosionCompressorInfo extends MultiblockInfoPage {
                 .where('C', MetaTileEntities.IMPLOSION_COMPRESSOR, EnumFacing.WEST)
                 .where('X', MetaBlocks.METAL_CASING.getState(MetalCasingType.STEEL_SOLID))
                 .where('#', Blocks.AIR.getDefaultState())
-                .where('I', PlaceholderType.INPUT_BUS, MetaTileEntities.ITEM_IMPORT_BUS[GTValues.HV], EnumFacing.SOUTH)
-                .where('E', PlaceholderType.ENERGY_INPUT_HATCH, MetaTileEntities.ENERGY_INPUT_HATCH[GTValues.HV], EnumFacing.EAST)
-                .where('B', PlaceholderType.OUTPUT_BUS, MetaTileEntities.ITEM_EXPORT_BUS[GTValues.HV], EnumFacing.NORTH)
+                .where('I', ChannelRegistry.INPUT_BUS, MetaTileEntities.ITEM_IMPORT_BUS[GTValues.HV], EnumFacing.SOUTH)
+                .where('E', ChannelRegistry.ENERGY_INPUT_HATCH, MetaTileEntities.ENERGY_INPUT_HATCH[GTValues.HV], EnumFacing.EAST)
+                .where('B', ChannelRegistry.OUTPUT_BUS, MetaTileEntities.ITEM_EXPORT_BUS[GTValues.HV], EnumFacing.NORTH)
                 .build();
     }
 

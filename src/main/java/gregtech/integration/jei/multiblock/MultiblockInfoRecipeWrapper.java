@@ -8,18 +8,15 @@ import gregtech.api.GTValues;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
-import gregtech.api.metatileentity.multiblock.IMultiblockPart;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.scene.SceneRenderCallback;
 import gregtech.api.render.scene.WorldSceneRenderer;
 import gregtech.api.util.BlockInfo;
 import gregtech.api.util.GTUtility;
 import gregtech.api.util.ItemStackKey;
-import gregtech.common.blocks.BlockMetalCasing;
-import gregtech.integration.jei.multiblock.channel.ChannelDescription;
+import gregtech.integration.jei.multiblock.channel.Channel;
 import gregtech.integration.jei.multiblock.channel.ChannelState;
-import gregtech.integration.jei.multiblock.channel.PlaceholderBlockRegistry;
-import gregtech.integration.jei.multiblock.channel.StructureChannels;
+import gregtech.integration.jei.multiblock.channel.PlaceholderType;
 import mezz.jei.api.IGuiHelper;
 import mezz.jei.api.gui.IDrawable;
 import mezz.jei.api.gui.IGuiItemStackGroup;
@@ -78,11 +75,13 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     private WorldSceneRenderer renderer = null;
     private List<ItemStack> baseParts;
-    private List<ChannelDescription> channels;
     private final ChannelState channelState = new ChannelState();
     private Map<BlockPos, BlockInfo> placeholderBlocks = new HashMap<>();
     private BlockPos controllerPos = null;
-    private int currentExtent = 0;
+    private int currentExtent;
+    private int maxChannelIndex;
+
+    private static final int MAX_VOLTAGE_INDEX = GTValues.V2.length - 1;
 
     private final Map<GuiButton, Runnable> buttons = new HashMap<>();
     private RecipeLayout recipeLayout;
@@ -123,13 +122,6 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         drops.add(new ItemStackKey(controllerStack));
         currentExtent = infoPage.getController().getMinExtent();
 
-        this.channels = new ArrayList<>();
-        for (StructureChannels ch : StructureChannels.values()) {
-            if (ChannelDescription.has(ch.get())) {
-                this.channels.add(ChannelDescription.get(ch.get()));
-            }
-        }
-
         MultiblockShapeInfo shapeInfo = infoPage.getMatchingShapes(currentExtent);
         currentChannelIndex = infoPage.getController().getMinTier();
         MBPattern pattern = initializePattern(shapeInfo, drops);
@@ -137,6 +129,8 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.baseParts = pattern.parts;
         this.canExtend = infoPage.getController().getMaxExtent() > 1;
         this.hasVoltagePages = shapeInfo.isTiered();
+
+        recomputeMaxChannelIndex();
 
         drops.forEach(it -> allItemStackInputs.add(it.getItemStack()));
     }
@@ -153,10 +147,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     public void setRecipeLayout(RecipeLayout layout, IGuiHelper guiHelper) {
         currentChannelIndex = infoPage.getController().getMinTier();
-
-        for (StructureChannels ch : StructureChannels.values()) {
-            channelState.set(ch, currentChannelIndex);
-        }
+        applyChannelState(currentChannelIndex);
 
         currentExtent = infoPage.getController().getMinExtent();
         this.recipeLayout = layout;
@@ -178,14 +169,18 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.buttonPreviousPattern.enabled = false;
 
         this.buttonNextPattern.visible = this.hasVoltagePages || this.canExtend;
-        this.buttonNextPattern.enabled = true;
+        this.buttonNextPattern.enabled = infoPage.getController().getMinTier() < maxChannelIndex;
 
 
         this.buttons.put(nextLayerXButton, () -> setNextLayerX(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(nextLayerYButton, () -> setNextLayerY(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
         this.buttons.put(nextLayerZButton, () -> setNextLayerZ(Mouse.isButtonDown(0) ? 1 : Mouse.isButtonDown(1) ? -1 : 0));
-        this.buttons.put(buttonPreviousPattern, () -> switchChannel(-1));
-        this.buttons.put(buttonNextPattern, () -> switchChannel(1));
+        this.buttons.put(buttonPreviousPattern, () -> switchChannel(
+                Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? -10 : -1
+        ));
+        this.buttons.put(buttonNextPattern, () -> switchChannel(
+                Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 10 : -1
+        ));
         this.buttons.put(cameraModeButton, this::setCameraFree);
 
         this.panX = 0.0f;
@@ -278,42 +273,105 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
     private void switchChannel(int amount) {
         int minIndex = infoPage.getController().getMinTier();
-        int maxIndex = 14;
-        int newIndex = max(minIndex, Math.min(currentChannelIndex + amount, maxIndex));
+        int newIndex = max(minIndex, Math.min(currentChannelIndex + amount, maxChannelIndex));
 
         if (currentChannelIndex == newIndex) {
             return;
         }
 
         this.buttonPreviousPattern.enabled = newIndex > minIndex;
-        this.buttonNextPattern.enabled = newIndex < maxIndex;
+        this.buttonNextPattern.enabled = newIndex < maxChannelIndex;
 
         currentChannelIndex = newIndex;
-
-
-        for (StructureChannels ch : StructureChannels.values()) {
-            channelState.set(ch, newIndex);
-        }
+        applyChannelState(newIndex);
 
         MultiblockControllerBase controller = infoPage.getController();
-        if (controller.getMaxExtent() != 1) {
-            int minExtent = controller.getMinExtent();
-            int maxExtent = controller.getMaxExtent();
-            currentExtent = Math.min(maxExtent, minExtent + currentChannelIndex);
-
-            rebuildScene();
-
-            this.layerXIndex = -1;
-            this.layerYIndex = -1;
-            this.layerZIndex = -1;
-            this.nextLayerXButton.displayString = "X:A";
-            this.nextLayerYButton.displayString = "Y:A";
-            this.nextLayerZButton.displayString = "Z:A";
-        } else {
+        if (controller.getMaxExtent() == 1) {
             rebuildScene();
             triggerStructureCheck(renderer.world);
         }
+
+        int minExtent = controller.getMinExtent();
+        int maxExtent = controller.getMaxExtent();
+
+        int extentIndex = getVoltageIndex(currentChannelIndex);
+
+        currentExtent = Math.min(maxExtent, minExtent + extentIndex);
+
+        rebuildScene();
+
+        this.layerXIndex = -1;
+        this.layerYIndex = -1;
+        this.layerZIndex = -1;
+        this.nextLayerXButton.displayString = "X:A";
+        this.nextLayerYButton.displayString = "Y:A";
+        this.nextLayerZButton.displayString = "Z:A";
     }
+
+    private int getVoltageIndex(int progressionIndex) {
+        return Math.min(progressionIndex,getMaxVoltageIndex());
+    }
+
+    private int getMaxVoltageIndex() {
+        int maxTier = infoPage.getController().getMaxTier();
+        int cap = maxTier >= 0 ? maxTier : MAX_VOLTAGE_INDEX;
+        return Math.min(cap, MAX_VOLTAGE_INDEX);
+    }
+
+    private void recomputeMaxChannelIndex() {
+        int minIndex = infoPage.getController().getMinTier();
+        int maxIndex = getMaxVoltageIndex();
+
+
+        Set<PlaceholderType> usedTypes = new HashSet<>();
+        for (BlockInfo blockInfo : placeholderBlocks.values()) {
+            PlaceholderType type = blockInfo.getPlaceHolderType();
+            if (type != null) {
+                usedTypes.add(type);
+            }
+        }
+
+
+        Map<Channel, Integer> effectiveMax = new IdentityHashMap<>();
+        for (PlaceholderType type : usedTypes) {
+            for (Channel channel :  type.getDependentChannels()) {
+                if (channel.isDriver()) {
+                    continue;
+                }
+
+                int channelMax = channel.getIndicatorMaxValue();
+                if (channelMax == 0)  {
+                    continue;
+                }
+                effectiveMax.merge(channel, type.getEffectiveChannelMax(channel, channelMax), Math::max);
+            }
+        }
+
+        for (Integer steps : effectiveMax.values()) {
+            maxIndex = Math.max(maxIndex, minIndex + steps - 1);
+        }
+
+        this.maxChannelIndex = maxIndex;
+    }
+
+    private void applyChannelState(int index) {
+        int minIndex = infoPage.getController().getMinTier();
+        int step = index - minIndex + 1;
+
+        for (Channel channel : Channel.values()) {
+            if (channel.isDriver()) {
+                int value = (channel == Channel.VOLTAGE) ? getVoltageIndex(index) : index;
+                channelState.set(channel, value);
+                continue;
+            }
+            int channelMax = channel.getIndicatorMaxValue();
+            if (channelMax == 0) {
+                continue;
+            }
+            channelState.set(channel, Math.min(step, channelMax));
+        }
+    }
+
 
     private void triggerStructureCheck(WorldSceneRenderer.TrackedDummyWorld world) {
         if (controllerPos == null) return;
@@ -392,9 +450,10 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.infoIcon.draw(minecraft, recipeWidth - (ICON_SIZE + RIGHT_PADDING), 9);
 
         if (this.hasVoltagePages) {
+            int voltageDisplayIndex = getVoltageIndex(this.currentChannelIndex);
             GuiTextures.DISPLAY.draw(recipeWidth - (ICON_SIZE + ICON_SIZE + RIGHT_PADDING), 110, 40, 20);
-            String text = (this.currentChannelIndex == 9 ? TextFormatting.DARK_RED.toString() : GTUtility.TIER_COLOR[this.currentChannelIndex]) + GTValues.VN2[this.currentChannelIndex];
-            Minecraft.getMinecraft().fontRenderer.drawString(text, recipeWidth - 30 - (GTValues.VN2[this.currentChannelIndex].length() > 2 ? 4 : 0), 116, 0xFFFFFF);
+            String text = (voltageDisplayIndex == 9 ? TextFormatting.DARK_RED.toString() : GTUtility.TIER_COLOR[voltageDisplayIndex]) + GTValues.VN2[voltageDisplayIndex];
+            Minecraft.getMinecraft().fontRenderer.drawString(text, recipeWidth - 30 - (GTValues.VN2[voltageDisplayIndex].length() > 2 ? 4 : 0), 116, 0xFFFFFF);
         }
 
         for (int i = 0; i < MAX_PARTS; ++i) {
@@ -572,9 +631,6 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
         this.placeholderBlocks = new HashMap<>();
         BlockInfo[][][] blocks = shapeInfo.getBlocks();
 
-        int coilTier = Math.min(channelState.get(StructureChannels.COIL), 16);
-        int voltageTier = Math.min(channelState.get(StructureChannels.VOLTAGE), 14);
-
         for (int z = 0; z < blocks.length; z++) {
             BlockInfo[][] aisle = blocks[z];
             for (int y = 0; y < aisle.length; y++) {
@@ -583,7 +639,9 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                     BlockPos blockPos = new BlockPos(x, y, z);
                     BlockInfo blockInfo = column[x];
 
-                    if (blockInfo.getBlockState() == null && blockInfo.getPlaceHolderType() == null) continue;
+                    if (blockInfo.getBlockState() == null && blockInfo.getPlaceHolderType() == null) {
+                        continue;
+                    }
 
                     if (blockInfo.getPlaceHolderType() == null) {
                         blockMap.put(blockPos, blockInfo);
@@ -598,10 +656,13 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                         facing = ((MetaTileEntityHolder) originalTe).getMetaTileEntity().getFrontFacing();
                     }
 
-                    PlaceholderBlockRegistry.PlaceholderContext context = new PlaceholderBlockRegistry.PlaceholderContext(voltageTier, coilTier, facing, blockPos);
+                    PlaceholderType.PlaceholderContext context = new PlaceholderType.PlaceholderContext(channelState, facing, blockPos);
+                    BlockInfo resolved = blockInfo.getPlaceHolderType().resolve(context);
 
-                    BlockInfo resolved = PlaceholderBlockRegistry.resolve(blockInfo.getPlaceHolderType(), context);
-                    if (resolved == null) continue;
+                    if (resolved == null)  {
+                        continue;
+                    }
+
                     blockMap.put(blockPos, resolved);
                 }
             }
@@ -629,6 +690,19 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
 
         WorldSceneRenderer worldSceneRenderer = new WorldSceneRenderer(blockMap);
         worldSceneRenderer.world.updateEntities();
+
+        MultiblockControllerBase controller = null;
+        if (controllerPos != null) {
+            TileEntity te = worldSceneRenderer.world.getTileEntity(controllerPos);
+            if (te instanceof MetaTileEntityHolder holder) {
+                MetaTileEntity mte = holder.getMetaTileEntity();
+                if (mte instanceof MultiblockControllerBase) {
+                    controller = (MultiblockControllerBase) mte;
+                }
+            }
+        }
+        MultiBlockPreviewHooks.fireSceneBuilt(worldSceneRenderer.world, controller);
+
         HashMap<ItemStackKey, PartInfo> partsMap = new HashMap<>();
         gatherBlockDrops(worldSceneRenderer.world, blockMap, blockDrops, partsMap);
         worldSceneRenderer.setRenderCallback(this);
