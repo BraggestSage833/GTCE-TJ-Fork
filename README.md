@@ -13,6 +13,6 @@ GTCE is **neither created nor maintained by GregoriusT** but was created with hi
 * It is a reminder that the ideas and design are primarily driven by the community
 * It is a reminder that the implementation and work are solely provided by the community.
 
-Coil Textures are from the [GregTech: New Horizons Modpack.](https://www.curseforge.com/minecraft/modpacks/gt-new-horizons)
+Coil and cosmic materials Textures are from the [GregTech: New Horizons Modpack.](https://www.curseforge.com/minecraft/modpacks/gt-new-horizons)
 
 Sounds are from the [GregTech CEu Mod](https://github.com/GregTechCEu/GregTech)
