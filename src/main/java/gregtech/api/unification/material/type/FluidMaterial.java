@@ -85,6 +85,12 @@ public class FluidMaterial extends Material {
     }
 
     /**
+     * Add to allow for custom fluid textures
+     */
+    public static final long CUSTOM_FLUID_TEXTURE = GTUtility.createFlag(54);
+
+
+    /**
      * internal usage only
      */
     public final void setMaterialFluid(@Nonnull Fluid materialFluid) {
