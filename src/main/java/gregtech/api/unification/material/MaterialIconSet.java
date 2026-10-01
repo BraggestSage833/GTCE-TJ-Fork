@@ -28,13 +28,19 @@ public enum MaterialIconSet {
     GAS,
     LIGNITE,
     OPAL,
+
     GLASS,
     WOOD,
     LEAF,
     GEM_HORIZONTAL,
     GEM_VERTICAL,
     PAPER,
-    NETHERSTAR;
+    NETHERSTAR,
+    AWAKENED,
+    DRACONIUM,
+    ETERNITY,
+    COSMIC_NEUTRONIUM,
+    INFINITY;
 
     @ZenGetter("name")
     public String getName() {
