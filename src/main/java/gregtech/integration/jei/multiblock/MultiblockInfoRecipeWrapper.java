@@ -179,7 +179,7 @@ public class MultiblockInfoRecipeWrapper implements IRecipeWrapper, SceneRenderC
                 Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? -10 : -1
         ));
         this.buttons.put(buttonNextPattern, () -> switchChannel(
-                Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 10 : -1
+                Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 10 : 1
         ));
         this.buttons.put(cameraModeButton, this::setCameraFree);
 
