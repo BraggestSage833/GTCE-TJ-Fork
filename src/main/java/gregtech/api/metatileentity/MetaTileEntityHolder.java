@@ -11,7 +11,6 @@ import com.google.common.base.Preconditions;
 import gregtech.api.GTValues;
 import gregtech.api.GregTechAPI;
 import gregtech.api.block.machines.BlockMachine;
-import gregtech.api.cover.CoverBehavior;
 import gregtech.api.gui.IUIHolder;
 import gregtech.api.render.SideRendererCache;
 import gregtech.api.util.GTControlledRegistry;
@@ -314,7 +313,6 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
             }
         }
 
-
         if (mteIsDynamicRender) {
             return ((IRenderMetaTileEntity) metaTileEntity).shouldRenderInPass(pass);
         } else if (mteIsFastRender) {
@@ -331,18 +329,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
 
         mteIsFastRender = metaTileEntity instanceof IFastRenderMetaTileEntity;
         mteIsDynamicRender = metaTileEntity instanceof IRenderMetaTileEntity;
-
-        metaTileEntity.sideRendererCache.clear();
-
-        for (EnumFacing side : EnumFacing.VALUES) {
-            CoverBehavior cover = metaTileEntity.getCoverAtSide(side);
-
-            if (cover instanceof IFastRenderMetaTileEntity) {
-                metaTileEntity.sideRendererCache.set(side, SideRendererCache.RendererType.FAST);
-            } else if (cover instanceof IRenderMetaTileEntity) {
-                metaTileEntity.sideRendererCache.set(side, SideRendererCache.RendererType.DYNAMIC);
-            }
-        }
+        metaTileEntity.refreshAllSideRenderers();
     }
 
 
@@ -361,22 +348,8 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
     @Override
     @SideOnly(Side.CLIENT)
     public boolean hasFastRenderer() {
-        return true;
+        return !(mteIsDynamicRender || (metaTileEntity != null && metaTileEntity.sideRendererCache.hasAnyDynamic()));
     }
-
-    @SideOnly(Side.CLIENT)
-    public boolean hasTESR() {
-        if (metaTileEntity == null) {
-            return false;
-        }
-
-        return mteIsDynamicRender
-                || mteIsFastRender
-                || metaTileEntity.sideRendererCache.hasAnyRenderer();
-
-
-    }
-
 
     @Override
     public boolean canRenderBreaking() {

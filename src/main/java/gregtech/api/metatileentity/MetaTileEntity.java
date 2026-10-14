@@ -6,7 +6,6 @@ import appeng.me.helpers.AENetworkProxy;
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.render.CCRenderState;
-import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.vec.Cuboid6;
@@ -480,13 +479,8 @@ public abstract class MetaTileEntity implements ICoverable {
             removeCover(side);
         }
 
-        if (coverBehavior instanceof IFastRenderMetaTileEntity) {
-            sideRendererCache.set(side, SideRendererCache.RendererType.FAST);
-        } else if (coverBehavior instanceof IRenderMetaTileEntity) {
-            sideRendererCache.set(side, SideRendererCache.RendererType.DYNAMIC);
-        }
-
         this.coverBehaviors[side.getIndex()] = coverBehavior;
+        refreshSideRenderer(side);
         coverBehavior.onAttached(itemStack);
         writeCustomData(-5, buffer -> {
             buffer.writeByte(side.getIndex());
@@ -510,7 +504,9 @@ public abstract class MetaTileEntity implements ICoverable {
             return false;
         }
 
-        sideRendererCache.set(side, SideRendererCache.RendererType.NONE);
+        this.coverBehaviors[side.getIndex()] = null;
+        refreshSideRenderer(side);
+
         List<ItemStack> drops = coverBehavior.getDrops();
         coverBehavior.onRemoved();
         this.coverBehaviors[side.getIndex()] = null;
@@ -825,6 +821,8 @@ public abstract class MetaTileEntity implements ICoverable {
                 this.coverBehaviors[coverSide.getIndex()] = coverBehavior;
             }
         }
+
+        refreshAllSideRenderers();
         this.isFragile = buf.readBoolean();
         this.muffled = buf.readBoolean();
     }
@@ -865,21 +863,14 @@ public abstract class MetaTileEntity implements ICoverable {
             CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, placementSide);
             this.coverBehaviors[placementSide.getIndex()] = coverBehavior;
             coverBehavior.readInitialSyncData(buf);
-
-            if (coverBehavior instanceof IFastRenderMetaTileEntity) {          // <-- add
-                sideRendererCache.set(placementSide, SideRendererCache.RendererType.FAST);
-            } else if (coverBehavior instanceof IRenderMetaTileEntity) {
-                sideRendererCache.set(placementSide, SideRendererCache.RendererType.DYNAMIC);
-            } else {
-                sideRendererCache.set(placementSide, SideRendererCache.RendererType.NONE);
-            }
-
+            refreshSideRenderer(placementSide);
             onCoverPlacementUpdate();
             getHolder().scheduleChunkForRenderUpdate();
         } else if (dataId == -6) {
             //cover removed event
             EnumFacing placementSide = EnumFacing.VALUES[buf.readByte()];
             this.coverBehaviors[placementSide.getIndex()] = null;
+            refreshSideRenderer(placementSide);
             onCoverPlacementUpdate();
             getHolder().scheduleChunkForRenderUpdate();
         } else if (dataId == -7) {
@@ -1261,6 +1252,7 @@ public abstract class MetaTileEntity implements ICoverable {
             }
         }
 
+        refreshAllSideRenderers();
         this.isFragile = data.getBoolean(TAG_KEY_FRAGILE);
         this.muffled = data.getBoolean(TAG_KEY_MUFFLED);
     }
@@ -1351,6 +1343,23 @@ public abstract class MetaTileEntity implements ICoverable {
     public float getBlockResistance() {
         return 6.0f;
     }
+
+
+
+    public void refreshSideRenderer(EnumFacing side) {
+        CoverBehavior cover = coverBehaviors[side.getIndex()];
+        sideRendererCache.set(side, cover instanceof IFastRenderMetaTileEntity ? SideRendererCache.RendererType.FAST :
+                        cover instanceof IRenderMetaTileEntity     ? SideRendererCache.RendererType.DYNAMIC :
+                                SideRendererCache.RendererType.NONE
+        );
+    }
+
+    public void refreshAllSideRenderers() {
+        for (EnumFacing side : EnumFacing.VALUES) {
+            refreshSideRenderer(side);
+        }
+    }
+
 
     /**
      * Override this if the MTE will keep its Item inventory on-break.

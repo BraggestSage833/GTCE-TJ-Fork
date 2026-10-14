@@ -44,9 +44,10 @@ import java.util.List;
 
 @SideOnly(Side.CLIENT)
 @Mod.EventBusSubscriber(Side.CLIENT)
-public class WrenchOverlayRenderer {
+public class ToolOverlayRenderer {
 
     private static float r, g, b;
+    private static final float HIGHLIGHT_ALPHA = 0.35F;
 
     @SubscribeEvent
     public static void onDrawBlockHighlight(DrawBlockHighlightEvent event) {
@@ -94,17 +95,14 @@ public class WrenchOverlayRenderer {
     }
 
     public static boolean useGridForRayTraceResult(RayTraceResult result) {
-        if(result instanceof CuboidRayTraceResult) {
-            CuboidRayTraceResult traceResult = (CuboidRayTraceResult) result;
-            //use grid only for center hit or for primary box with placement grid enabled
+        if(result instanceof CuboidRayTraceResult traceResult) {
             if(traceResult.cuboid6.data == null) {
-                return true; //default is true
-            } else if(traceResult.cuboid6.data instanceof PrimaryBoxData) {
-                PrimaryBoxData primaryBoxData = (PrimaryBoxData) traceResult.cuboid6.data;
+                return true;
+            } else if(traceResult.cuboid6.data instanceof PrimaryBoxData primaryBoxData) {
                 return primaryBoxData.usePlacementGrid;
-            } else return false; //otherwise, do not use grid
+            } else return false;
         }
-        //also use it for default collision blocks
+
         return true;
     }
 
@@ -123,8 +121,7 @@ public class WrenchOverlayRenderer {
             if(itemStack.hasCapability(GregtechCapabilities.CAPABILITY_SCREWDRIVER, null)) {
                 return true;
             }
-            if (itemStack.getItem() instanceof MetaItem) {
-                MetaItem<?> metaItem = (MetaItem<?>) itemStack.getItem();
+            if (itemStack.getItem() instanceof MetaItem<?> metaItem) {
                 MetaItem<?>.MetaValueItem valueItem = metaItem.getItem(itemStack);
                 if (valueItem != null) {
                     List<IItemBehaviour> behaviourList = valueItem.getBehaviours();
@@ -246,7 +243,7 @@ public class WrenchOverlayRenderer {
 
         boolean backConnected = pipeTile.isConnected(facing.getOpposite());
 
-        GlStateManager.enableTexture2D();   // the handler disabled it for the lines
+        GlStateManager.enableTexture2D();
         GlStateManager.color(1F, 1F, 1F, 1F);
 
         ResourceLocation texture = getConnectionTexture(pipeTile);
@@ -260,7 +257,7 @@ public class WrenchOverlayRenderer {
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
 
-        // center = front
+        // center = center
         addIcon(buffer, faceCenter, right, up, 0, 0, 0.15, pipeTile.isConnected(facing));
 
         // edges
@@ -269,13 +266,13 @@ public class WrenchOverlayRenderer {
         addIcon(buffer, faceCenter, right, up, 0, 0.375, 0.07, pipeTile.isConnected(upSide));
         addIcon(buffer, faceCenter, right, up, 0, -0.375, 0.07, pipeTile.isConnected(upSide.getOpposite()));
 
-        // corners = back (all four toggle the same connection)
+        // corners = back (all same)
         addIcon(buffer, faceCenter, right, up, 0.375, 0.375, 0.07, backConnected);
         addIcon(buffer, faceCenter, right, up, -0.375, 0.375, 0.07, backConnected);
         addIcon(buffer, faceCenter, right, up, 0.375, -0.375, 0.07, backConnected);
         addIcon(buffer, faceCenter, right, up, -0.375, -0.375, 0.07, backConnected);
 
-        tessellator.draw();   // one draw call for all 9 icons
+        tessellator.draw();
         GlStateManager.disableTexture2D();
     }
 
@@ -335,9 +332,6 @@ public class WrenchOverlayRenderer {
         return null;
     }
 
-    private static final double GRID_INSET = 0.25;       // same value the grid lines use
-    private static final float HIGHLIGHT_ALPHA = 0.35F;
-
     private static void drawHoverHighlight(EnumFacing facing, AxisAlignedBB box, Vec3d hit) {
         Vector3 right = unitOnFace(1, 0, 0, facing);
         Vector3 up = unitOnFace(0, 1, 0, facing);
@@ -346,15 +340,13 @@ public class WrenchOverlayRenderer {
         double hw = halfExtent(right, box);
         double hh = halfExtent(up, box);
         double hn = halfExtent(normal, box);
-        Vector3 c = new Vector3(box.getCenter()).add(normal.copy().multiply(hn));   // face center
+        Vector3 c = new Vector3(box.getCenter()).add(normal.copy().multiply(hn));
 
-        // hit point in face-local coordinates
         double dx = (hit.x - c.x) * right.x + (hit.y - c.y) * right.y + (hit.z - c.z) * right.z;
         double dy = (hit.x - c.x) * up.x    + (hit.y - c.y) * up.y    + (hit.z - c.z) * up.z;
 
-        // the grid lines sit at +-(half size - inset), same as in drawOverlayLines
-        double tx = hw - GRID_INSET;
-        double ty = hh - GRID_INSET;
+        double tx = hw - 0.25;
+        double ty = hh - 0.25;
 
         int col = dx < -tx ? -1 : dx > tx ? 1 : 0;
         int row = dy < -ty ? -1 : dy > ty ? 1 : 0;

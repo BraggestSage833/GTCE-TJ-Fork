@@ -1,9 +1,11 @@
 package gregtech.api.render;
 
-import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.util.EnumFacing;
 
 public final class SideRendererCache {
+
+    private static final int FAST_BITS = 0x555;
+    private static final int DYNAMIC_BITS = 0xAAA;
 
     public enum RendererType {
         NONE,
@@ -46,6 +48,13 @@ public final class SideRendererCache {
         return mask != 0;
     }
 
+    public boolean hasAnyFast() {
+        return (mask & FAST_BITS) != 0;
+    }
+
+    public boolean hasAnyDynamic() {
+        return (mask & DYNAMIC_BITS) != 0;
+    }
 
     public boolean hasRenderer(EnumFacing side) {
         return get(side) != RendererType.NONE;

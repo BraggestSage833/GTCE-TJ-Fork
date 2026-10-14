@@ -20,10 +20,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static gregtech.api.render.OrientedOverlayRenderer.OverlayFace.*;
 
@@ -194,33 +191,48 @@ public class Textures {
     public static SimpleOverlayRenderer BLOWER_ACTIVE_OVERLAY = new SimpleOverlayRenderer("overlay/machine/overlay_blower_active");
 
 
-    private static final ThreadLocal<Map<TextureAtlasSprite, UVTransformationList>> uvCache = ThreadLocal.withInitial(HashMap::new);
-    private static final ThreadLocal<Map<TextureAtlasSprite, UVTransformationList>> uvCacheMirrored = ThreadLocal.withInitial(HashMap::new);
-    private static final UVMirror FULL_MIRROR = new UVMirror(0, 0, 0, 1);
 
-    private static final ThreadLocal<IVertexOperation[]> PIPELINE_BUFFER = ThreadLocal.withInitial(() -> new IVertexOperation[32]);
-
-
-    private static UVTransformationList getUVList(TextureAtlasSprite sprite, boolean mirrored) {
-        ThreadLocal<Map<TextureAtlasSprite, UVTransformationList>> cache = mirrored ? uvCacheMirrored : uvCache;
-        return cache.get().computeIfAbsent(sprite, s -> {
-            UVTransformationList list = new UVTransformationList(new IconTransformation(s));
-            if (mirrored) {
-                list.prepend(FULL_MIRROR); // mutation happens once, at construction, never again
-            }
-            return list;
-        });
+    private static final class UVCache {
+        int epoch = -1;
+        final Map<TextureAtlasSprite, UVTransformationList> plain = new IdentityHashMap<>();
+        final Map<TextureAtlasSprite, UVTransformationList> mirrored = new IdentityHashMap<>();
     }
+    private static final ThreadLocal<UVCache> UV_CACHE = ThreadLocal.withInitial(UVCache::new);
+    private static volatile int atlasEpoch;
 
-
+    private static final UVMirror FULL_MIRROR = new UVMirror(0, 0, 0, 1);
     private static final ThreadLocal<BlockFace> blockFaces = ThreadLocal.withInitial(BlockFace::new);
 
-    // New: precomputed, read-only geometry for the one shape that's actually hot — the full cube
+    public static void invalidateSpriteCaches() { atlasEpoch++; }
+
+    private static boolean isFull(Cuboid6 b) {
+        return b == Cuboid6.full || (b.min.x == 0 && b.min.y == 0 && b.min.z == 0 && b.max.x == 1 && b.max.y == 1 && b.max.z == 1);
+    }
+
+    private static UVTransformationList getUVList(TextureAtlasSprite sprite, int side, Cuboid6 bounds) {
+        boolean down = side == 0;
+        if (down && !(bounds.min.z == 0 && bounds.max.z == 1)) {
+            UVTransformationList list = new UVTransformationList(new IconTransformation(sprite));
+            list.prepend(new UVMirror(0, 0, bounds.min.z, bounds.max.z));
+            return list;
+        }
+        UVCache c = UV_CACHE.get();
+        int epoch = atlasEpoch;
+        if (c.epoch != epoch) { c.plain.clear(); c.mirrored.clear(); c.epoch = epoch; }
+        Map<TextureAtlasSprite, UVTransformationList> map = down ? c.mirrored : c.plain;
+        UVTransformationList list = map.get(sprite);
+        if (list == null) {
+            list = new UVTransformationList(new IconTransformation(sprite));
+            if (down) list.prepend(FULL_MIRROR);
+            map.put(sprite, list);
+        }
+        return list;
+    }
+
     private static final ThreadLocal<BlockFace[]> fullCubeFaces = ThreadLocal.withInitial(() -> {
         BlockFace[] faces = new BlockFace[6];
         for (int s = 0; s < 6; s++) {
-            // loadCuboidFace runs exactly once per side, per thread, ever —
-            // not once per TE, not once per chunk rebuild
+
             faces[s] = new BlockFace().loadCuboidFace(Cuboid6.full, s);
         }
         return faces;
@@ -229,35 +241,6 @@ public class Textures {
 
     @SideOnly(Side.CLIENT)
     public static ThreadLocal<CubeRendererState> RENDER_STATE;
-
-
-    private static IVertexOperation[] getPipelineBuffer(int requiredLength) {
-        IVertexOperation[] buffer = PIPELINE_BUFFER.get();
-
-        if (buffer.length < requiredLength) {
-            buffer = new IVertexOperation[requiredLength];
-            PIPELINE_BUFFER.set(buffer);
-        }
-
-        return buffer;
-    }
-
-
-    private static IVertexOperation[] buildPipeline(
-            IVertexOperation[] ops,
-            TransformationList translationOp,
-            UVTransformationList uvList) {
-
-        int length = ops.length + 2;
-        IVertexOperation[] buffer = getPipelineBuffer(length);
-
-        System.arraycopy(ops, 0, buffer, 0, ops.length);
-        buffer[ops.length] = translationOp;
-        buffer[ops.length + 1] = uvList;
-
-        return buffer;
-    }
-
 
     static {
         for (int i = 0; i < VOLTAGE_CASINGS.length; i++) {
@@ -278,40 +261,21 @@ public class Textures {
     }
 
     @SideOnly(Side.CLIENT)
-    public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops, EnumFacing face, Cuboid6 bounds, TextureAtlasSprite sprite, BlockRenderLayer layer) {
-        CubeRendererState op = RENDER_STATE.get();
-        if (layer != null && op != null && op.layer != null &&
-                (op.layer != layer || !op.shouldSideBeRendered(face, bounds))) {
+    public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops,
+                                  EnumFacing face, Cuboid6 bounds, TextureAtlasSprite sprite, BlockRenderLayer layer) {
+        CubeRendererState state = RENDER_STATE.get();
+        if (layer != null && state != null && state.layer != null && (state.layer != layer || !state.shouldSideBeRendered(face, bounds))) {
             return;
         }
-
-        int side = face.getIndex();
-        BlockFace blockFace = (bounds == Cuboid6.full) ? fullCubeFaces.get()[side] :blockFaces.get().loadCuboidFace(bounds, side);
-
-        UVTransformationList uvList = getUVList(sprite, side == 0);
-        //TransformationList translationOp = new TransformationList(translation);
-
-        //IVertexOperation[] pipeline = buildPipeline(ops, translationOp, uvList);
-
-        //renderState.setPipeline(blockFace, 0, blockFace.verts.length, pipeline);
-
-        renderState.setPipeline(blockFace, 0, blockFace.verts.length, ArrayUtils.addAll(ops, new TransformationList(translation), uvList));
-        renderState.render();
+        renderFace(renderState, translation, ops, face, bounds, sprite);
     }
 
     @SideOnly(Side.CLIENT)
-    public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops, EnumFacing face, Cuboid6 bounds, TextureAtlasSprite sprite) {
+    public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops,
+                                  EnumFacing face, Cuboid6 bounds, TextureAtlasSprite sprite) {
         int side = face.getIndex();
-        BlockFace blockFace = (bounds == Cuboid6.full) ? fullCubeFaces.get()[side] :blockFaces.get().loadCuboidFace(bounds, side);
-
-        UVTransformationList uvList = getUVList(sprite, side == 0);
-        //TransformationList translationOp = new TransformationList(translation);
-
-        //IVertexOperation[] pipeline = buildPipeline(ops, translationOp, uvList);
-
-        //renderState.setPipeline(blockFace, 0, blockFace.verts.length, pipeline);
-
-        renderState.setPipeline(blockFace, 0, blockFace.verts.length, ArrayUtils.addAll(ops, new TransformationList(translation), uvList));
+        BlockFace blockFace = isFull(bounds) ? fullCubeFaces.get()[side] : blockFaces.get().loadCuboidFace(bounds, side);
+        renderState.setPipeline(blockFace, 0, blockFace.verts.length, ArrayUtils.addAll(ops, new TransformationList(translation), getUVList(sprite, side, bounds)));
         renderState.render();
     }
 }

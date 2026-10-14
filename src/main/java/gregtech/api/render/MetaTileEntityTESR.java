@@ -35,60 +35,95 @@ public class MetaTileEntityTESR extends TileEntitySpecialRenderer<MetaTileEntity
             return;
         }
 
-        if (!te.isDynamicRender()) {
+        if (te.isDynamicRender()) {
             ((IRenderMetaTileEntity) metaTileEntity).renderMetaTileEntityDynamic(x,y,z,partialTicks);
         }
 
         SideRendererCache cache = metaTileEntity.getSideRendererCache();
 
-        if (!cache.hasAnyRenderer()) {
-            return;
+        if (cache.hasAnyDynamic()) {
+            for (EnumFacing side : EnumFacing.VALUES) {
+                if (!cache.isDynamic(side)) {
+                    continue;
+                }
+                CoverBehavior cover = metaTileEntity.getCoverAtSide(side);
+                if (cover != null) {
+                    ((IRenderMetaTileEntity) cover).renderMetaTileEntityDynamic(x, y, z, partialTicks);
+                }
+            }
         }
 
-        for (EnumFacing side : EnumFacing.VALUES) {
-            if (cache.isDynamic(side)) {
-                ((IRenderMetaTileEntity) metaTileEntity.getCoverAtSide(side)).renderMetaTileEntityDynamic(x, y, z, partialTicks);
-            }
+        if (te.isFastRenderer() || cache.hasAnyFast()) {
+            renderFastImmediate(te, x, y, z, partialTicks);
         }
     }
 
 
     @Override
     public void renderTileEntityFast(MetaTileEntityHolder te, double x, double y, double z, float partialTicks, int destroyStage, float partial, BufferBuilder buffer) {
-        MetaTileEntity metaTileEntity = te.getMetaTileEntity();
+        renderFastParts(te, x, y, z, partialTicks, buffer);
+    }
 
-        if (metaTileEntity == null) {
+    private void renderFastParts(MetaTileEntityHolder te, double x, double y, double z, float partialTicks, BufferBuilder buffer) {
+        MetaTileEntity mte = te.getMetaTileEntity();
+        if (mte == null) {
+            return;
+        }
+
+        boolean machineFast = te.isFastRenderer();
+        SideRendererCache cache = mte.getSideRendererCache();
+        if (!machineFast && !cache.hasAnyFast())  {
             return;
         }
 
         CCRenderState renderState = CCRenderState.instance();
+        Matrix4 translation = new Matrix4().translate(x, y, z);
 
-        renderState.reset();
-        renderState.bind(buffer);
-        renderState.setBrightness(te.getWorld(),te.getPos());
-
-        Matrix4 translation = new Matrix4().translate(x,y,z);
-
-        if (te.isFastRenderer()) {
-            ((IFastRenderMetaTileEntity) metaTileEntity).renderMetaTileEntityFast(renderState,translation,partialTicks);
+        if (machineFast) {
+            renderState.reset();
+            renderState.bind(buffer);
+            renderState.setBrightness(te.getWorld(), te.getPos());
+            ((IFastRenderMetaTileEntity) mte).renderMetaTileEntityFast(renderState, translation, partialTicks);
         }
-
-        SideRendererCache cache = metaTileEntity.getSideRendererCache();
-
-        if (!cache.hasAnyRenderer()) {
+        if (!cache.hasAnyFast()) {
             return;
         }
 
         for (EnumFacing side : EnumFacing.VALUES) {
-            if (cache.isFast(side)) {
-                renderState.reset();
-                renderState.bind(buffer);
-                renderState.setBrightness(te.getWorld(), te.getPos().offset(side));
-                CoverBehavior cover = metaTileEntity.getCoverAtSide(side);
-                ((IFastRenderMetaTileEntity) cover).renderMetaTileEntityFast(renderState,translation,partialTicks);
+            if (!cache.isFast(side)) {
+                continue;
             }
+
+            CoverBehavior cover = mte.getCoverAtSide(side);
+            if (cover == null) {
+                continue;
+            }
+
+            renderState.reset();
+            renderState.bind(buffer);
+            renderState.setBrightness(te.getWorld(), te.getPos().offset(side));
+            ((IFastRenderMetaTileEntity) cover).renderMetaTileEntityFast(renderState, translation, partialTicks);
         }
     }
+
+    private void renderFastImmediate(MetaTileEntityHolder te, double x, double y, double z, float partialTicks) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+        RenderHelper.disableStandardItemLighting();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.enableBlend();
+        GlStateManager.disableCull();
+        GlStateManager.shadeModel(Minecraft.isAmbientOcclusionEnabled() ? GL11.GL_SMOOTH : GL11.GL_FLAT);
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+        renderFastParts(te, x, y, z, partialTicks, buffer);
+        buffer.setTranslation(0, 0, 0);
+        tessellator.draw();
+        GlStateManager.enableCull();
+        RenderHelper.enableStandardItemLighting();
+    }
+
+
 
     @Override
     public boolean isGlobalRenderer(MetaTileEntityHolder te) {

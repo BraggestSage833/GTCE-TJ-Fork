@@ -7,6 +7,7 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 import com.mojang.realmsclient.gui.ChatFormatting;
 import gregtech.api.GTValues;
 import gregtech.api.render.MetaTileEntityRenderer;
+import gregtech.api.render.Textures;
 import gregtech.api.render.ToolRenderHandler;
 import gregtech.api.unification.OreDictUnifier;
 import gregtech.api.unification.material.type.Material;
@@ -120,7 +121,7 @@ public class ClientProxy extends CommonProxy {
         super.onPreLoad();
         GTSoundSystem.getInstance().init();
         MetaTileEntityRenderer.preInit();
-        //CableRenderer.preInit();
+
         CableRenderer.INSTANCE.preInit();
         FluidPipeRenderer.INSTANCE.preInit();
         StoneRenderer.preInit();
@@ -163,6 +164,11 @@ public class ClientProxy extends CommonProxy {
         TextureMap map = event.getMap();
         CableRenderer.INSTANCE.registerIcon(map);
         FluidPipeRenderer.INSTANCE.registerIcon(map);
+    }
+
+    @SubscribeEvent
+    public static void textureStitchPost(TextureStitchEvent.Post event) {
+        Textures.invalidateSpriteCaches();
     }
 
     @SubscribeEvent

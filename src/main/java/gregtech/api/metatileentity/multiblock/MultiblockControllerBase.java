@@ -201,7 +201,7 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
 
     @Override
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
-        getBaseTexture(null).render(renderState, translation, ArrayUtils.add(pipeline,  MetaTileEntityRenderer.getColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColor()))));
+        getBaseTexture(null).render(renderState, translation, ArrayUtils.add(pipeline,  MetaTileEntityRenderer.getColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering()))));
     }
 
     @Override
