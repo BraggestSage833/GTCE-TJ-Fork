@@ -8,6 +8,7 @@ import gregtech.api.GTValues;
 import gregtech.api.capability.IEnergyContainer;
 import gregtech.api.capability.impl.EnergyContainerHandler;
 import gregtech.api.capability.impl.EnergyContainerHandler.IEnergyChangeListener;
+import gregtech.api.render.MetaTileEntityRenderer;
 import gregtech.api.render.SimpleSidedCubeRenderer;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
@@ -64,7 +65,7 @@ public abstract class TieredMetaTileEntity extends MetaTileEntity implements IEn
 
     @Override
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
-        IVertexOperation[] colouredPipeline = ArrayUtils.add(pipeline, new ColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering())));
+        IVertexOperation[] colouredPipeline = ArrayUtils.add(pipeline, MetaTileEntityRenderer.getColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering())));
         getBaseRenderer().render(renderState, translation, colouredPipeline);
     }
 

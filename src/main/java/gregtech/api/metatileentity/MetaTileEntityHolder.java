@@ -13,6 +13,7 @@ import gregtech.api.GregTechAPI;
 import gregtech.api.block.machines.BlockMachine;
 import gregtech.api.cover.CoverBehavior;
 import gregtech.api.gui.IUIHolder;
+import gregtech.api.render.SideRendererCache;
 import gregtech.api.util.GTControlledRegistry;
 import gregtech.api.util.GTLog;
 import net.minecraft.block.state.IBlockState;
@@ -28,11 +29,15 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.fml.common.Optional;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
+
+
 @Optional.InterfaceList(value = {
         @Optional.Interface(iface = "appeng.api.networking.security.IActionHost", modid = GTValues.MODID_AE2, striprefs = true),
         @Optional.Interface(iface = "appeng.me.helpers.IGridProxyable", modid = GTValues.MODID_AE2, striprefs = true)
@@ -41,6 +46,11 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
 
     private MetaTileEntity metaTileEntity;
     private boolean needToUpdateLightning = false;
+
+    private boolean mteIsFastRender;
+    private boolean mteIsDynamicRender;
+
+
 
     public MetaTileEntity getMetaTileEntity() {
         return metaTileEntity;
@@ -56,6 +66,8 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
         this.metaTileEntity = sampleMetaTileEntity.createMetaTileEntity(this);
         this.metaTileEntity.holder = this;
         this.metaTileEntity.onAttached();
+        this.updateRenderSideCache();
+
         if (hasWorld() && !getWorld().isRemote) {
             updateBlockOpacity();
             writeCustomData(-1, buffer -> {
@@ -89,6 +101,14 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
         getWorld().notifyNeighborsOfStateChange(pos, getBlockType(), false);
     }
 
+    public boolean isDynamicRender() {
+        return mteIsDynamicRender;
+    }
+    public boolean isFastRenderer() {
+        return mteIsFastRender;
+    }
+
+
     @Override
     public void readFromNBT(NBTTagCompound compound) {
         super.readFromNBT(compound);
@@ -106,6 +126,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
                 this.metaTileEntity = sampleMetaTileEntity.createMetaTileEntity(this);
                 this.metaTileEntity.holder = this;
                 this.metaTileEntity.readFromNBT(metaTileEntityData);
+                this.updateRenderSideCache();
             } else {
                 GTLog.logger.error("Failed to load MetaTileEntity with invalid ID " + metaTileEntityIdRaw);
             }
@@ -197,6 +218,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
             int metaTileEntityId = buf.readVarInt();
             setMetaTileEntity(GregTechAPI.META_TILE_ENTITY_REGISTRY.getObjectById(metaTileEntityId));
             this.metaTileEntity.receiveInitialSyncData(buf);
+            this.updateRenderSideCache();
             scheduleChunkForRenderUpdate();
             this.needToUpdateLightning = true;
         }
@@ -208,6 +230,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
             int metaTileEntityId = buffer.readVarInt();
             setMetaTileEntity(GregTechAPI.META_TILE_ENTITY_REGISTRY.getObjectById(metaTileEntityId));
             this.metaTileEntity.receiveInitialSyncData(buffer);
+            this.updateRenderSideCache();
             scheduleChunkForRenderUpdate();
             this.needToUpdateLightning = true;
         } else if (metaTileEntity != null) {
@@ -270,22 +293,58 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
 
     @Override
     public boolean shouldRenderInPass(int pass) {
-        if (metaTileEntity == null) return false;
-        for (EnumFacing side: EnumFacing.VALUES){
-            CoverBehavior cover = metaTileEntity.getCoverAtSide(side);
-            if (cover instanceof IFastRenderMetaTileEntity && ((IFastRenderMetaTileEntity) cover).shouldRenderInPass(pass)) {
-                return true;
-            } else if(cover instanceof IRenderMetaTileEntity && ((IRenderMetaTileEntity) cover).shouldRenderInPass(pass)) {
-                return true;
+        if (metaTileEntity == null) {
+            return false;
+        }
+
+
+        if (metaTileEntity.sideRendererCache.hasAnyRenderer()) {
+            for (EnumFacing side : EnumFacing.VALUES) {
+                SideRendererCache.RendererType type = metaTileEntity.sideRendererCache.get(side);
+
+                if (type == SideRendererCache.RendererType.FAST) {
+                    if (((IFastRenderMetaTileEntity) metaTileEntity.getCoverAtSide(side)).shouldRenderInPass(pass)) {
+                        return true;
+                    }
+                } else if (type == SideRendererCache.RendererType.DYNAMIC) {
+                    if (((IRenderMetaTileEntity) metaTileEntity.getCoverAtSide(side)).shouldRenderInPass(pass)) {
+                        return true;
+                    }
+                }
             }
         }
-        if (metaTileEntity instanceof IRenderMetaTileEntity) {
+
+
+        if (mteIsDynamicRender) {
             return ((IRenderMetaTileEntity) metaTileEntity).shouldRenderInPass(pass);
-        } else if (metaTileEntity instanceof IFastRenderMetaTileEntity) {
+        } else if (mteIsFastRender) {
             return ((IFastRenderMetaTileEntity) metaTileEntity).shouldRenderInPass(pass);
         }
+
         return false;
     }
+
+    private void updateRenderSideCache() {
+        if (metaTileEntity == null) {
+            return;
+        }
+
+        mteIsFastRender = metaTileEntity instanceof IFastRenderMetaTileEntity;
+        mteIsDynamicRender = metaTileEntity instanceof IRenderMetaTileEntity;
+
+        metaTileEntity.sideRendererCache.clear();
+
+        for (EnumFacing side : EnumFacing.VALUES) {
+            CoverBehavior cover = metaTileEntity.getCoverAtSide(side);
+
+            if (cover instanceof IFastRenderMetaTileEntity) {
+                metaTileEntity.sideRendererCache.set(side, SideRendererCache.RendererType.FAST);
+            } else if (cover instanceof IRenderMetaTileEntity) {
+                metaTileEntity.sideRendererCache.set(side, SideRendererCache.RendererType.DYNAMIC);
+            }
+        }
+    }
+
 
     @Override
     public AxisAlignedBB getRenderBoundingBox() {
@@ -296,6 +355,28 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
         }
         return new AxisAlignedBB(getPos());
     }
+
+
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public boolean hasFastRenderer() {
+        return true;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public boolean hasTESR() {
+        if (metaTileEntity == null) {
+            return false;
+        }
+
+        return mteIsDynamicRender
+                || mteIsFastRender
+                || metaTileEntity.sideRendererCache.hasAnyRenderer();
+
+
+    }
+
 
     @Override
     public boolean canRenderBreaking() {

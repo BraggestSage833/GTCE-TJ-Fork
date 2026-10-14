@@ -20,6 +20,7 @@ public final class Node<NodeDataType> {
      * Nodes can connect only if their marks are equal, or if
      * one of marks is default one
      */
+
     public int mark;
     public boolean isActive;
 

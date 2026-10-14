@@ -10,6 +10,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.multiblock.IMultiblockPart;
 import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.ICubeRenderer;
+import gregtech.api.render.MetaTileEntityRenderer;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -41,7 +42,7 @@ public abstract class MetaTileEntityMultiblockPart extends MetaTileEntity implem
     @Override
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
         getBaseTexture().render(renderState, translation, ArrayUtils.add(pipeline,
-                new ColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering()))));
+                MetaTileEntityRenderer.getColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColor()))));
     }
 
     @Override

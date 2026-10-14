@@ -11,6 +11,7 @@ import gregtech.common.blocks.BlockCrusherBlade;
 import gregtech.common.blocks.tileentity.TileEntityCrusherBlade;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 
 public class TileEntityCrusherBladeRenderer extends TileEntityRendererBase<TileEntityCrusherBlade> {
@@ -43,7 +44,7 @@ public class TileEntityCrusherBladeRenderer extends TileEntityRendererBase<TileE
 
         for (Cuboid6 cuboid6 : BlockCrusherBlade.basicModel) {
             for (EnumFacing renderSide : EnumFacing.VALUES) {
-                Textures.renderFace(renderState, translation, operations, renderSide, cuboid6, ironBlockTexture);
+                Textures.renderFace(renderState, translation, operations, renderSide, cuboid6, ironBlockTexture, BlockRenderLayer.CUTOUT);
             }
         }
     }

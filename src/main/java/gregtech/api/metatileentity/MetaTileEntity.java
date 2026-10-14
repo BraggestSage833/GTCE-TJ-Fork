@@ -23,6 +23,8 @@ import gregtech.api.cover.CoverBehavior;
 import gregtech.api.cover.CoverDefinition;
 import gregtech.api.cover.ICoverable;
 import gregtech.api.gui.ModularUI;
+import gregtech.api.render.MetaTileEntityRenderer;
+import gregtech.api.render.SideRendererCache;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTFluidUtils;
 import gregtech.api.util.GTUtility;
@@ -103,6 +105,8 @@ public abstract class MetaTileEntity implements ICoverable {
     protected boolean muffled = false;
     private final CoverBehavior[] coverBehaviors = new CoverBehavior[6];
 
+    protected SideRendererCache sideRendererCache = new SideRendererCache();
+
     public MetaTileEntity(ResourceLocation metaTileEntityId) {
         this.metaTileEntityId = metaTileEntityId;
         initializeInventory();
@@ -130,6 +134,10 @@ public abstract class MetaTileEntity implements ICoverable {
 
     public BlockPos getPos() {
         return holder == null ? null : holder.getPos();
+    }
+
+    public SideRendererCache getSideRendererCache() {
+        return sideRendererCache;
     }
 
     public void markDirty() {
@@ -239,7 +247,8 @@ public abstract class MetaTileEntity implements ICoverable {
     @SideOnly(Side.CLIENT)
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
         TextureAtlasSprite atlasSprite = TextureUtils.getMissingSprite();
-        IVertexOperation[] renderPipeline = ArrayUtils.add(pipeline, new ColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering())));
+        IVertexOperation[] renderPipeline = ArrayUtils.add(pipeline, MetaTileEntityRenderer.getColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering())));
+
         for (EnumFacing face : EnumFacing.VALUES) {
             Textures.renderFace(renderState, translation, renderPipeline, face, Cuboid6.full, atlasSprite);
         }
@@ -463,12 +472,20 @@ public abstract class MetaTileEntity implements ICoverable {
         Preconditions.checkNotNull(side, "side");
         Preconditions.checkNotNull(coverDefinition, "coverDefinition");
         CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, side);
+
         if (!canPlaceCoverOnSide(side) || !coverBehavior.canAttach()) {
             return false;
         }
         if (coverBehaviors[side.getIndex()] != null) {
             removeCover(side);
         }
+
+        if (coverBehavior instanceof IFastRenderMetaTileEntity) {
+            sideRendererCache.set(side, SideRendererCache.RendererType.FAST);
+        } else if (coverBehavior instanceof IRenderMetaTileEntity) {
+            sideRendererCache.set(side, SideRendererCache.RendererType.DYNAMIC);
+        }
+
         this.coverBehaviors[side.getIndex()] = coverBehavior;
         coverBehavior.onAttached(itemStack);
         writeCustomData(-5, buffer -> {
@@ -492,6 +509,8 @@ public abstract class MetaTileEntity implements ICoverable {
         if (coverBehavior == null) {
             return false;
         }
+
+        sideRendererCache.set(side, SideRendererCache.RendererType.NONE);
         List<ItemStack> drops = coverBehavior.getDrops();
         coverBehavior.onRemoved();
         this.coverBehaviors[side.getIndex()] = null;
@@ -846,6 +865,15 @@ public abstract class MetaTileEntity implements ICoverable {
             CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, placementSide);
             this.coverBehaviors[placementSide.getIndex()] = coverBehavior;
             coverBehavior.readInitialSyncData(buf);
+
+            if (coverBehavior instanceof IFastRenderMetaTileEntity) {          // <-- add
+                sideRendererCache.set(placementSide, SideRendererCache.RendererType.FAST);
+            } else if (coverBehavior instanceof IRenderMetaTileEntity) {
+                sideRendererCache.set(placementSide, SideRendererCache.RendererType.DYNAMIC);
+            } else {
+                sideRendererCache.set(placementSide, SideRendererCache.RendererType.NONE);
+            }
+
             onCoverPlacementUpdate();
             getHolder().scheduleChunkForRenderUpdate();
         } else if (dataId == -6) {

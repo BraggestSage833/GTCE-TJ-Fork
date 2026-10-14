@@ -6,6 +6,7 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.block.BlockRenderingRegistry;
 import codechicken.lib.render.block.ICCBlockRenderer;
 import codechicken.lib.render.item.IItemRenderer;
+import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.util.TransformUtils;
@@ -21,6 +22,8 @@ import gregtech.api.metatileentity.IRenderMetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.util.GTLog;
 import gregtech.api.util.ModCompatibility;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -58,6 +61,11 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
     public static ModelResourceLocation MODEL_LOCATION = new ModelResourceLocation(new ResourceLocation(GTValues.MODID, "machine"), "normal");
     public static MetaTileEntityRenderer INSTANCE = new MetaTileEntityRenderer();
     public static EnumBlockRenderType BLOCK_RENDER_TYPE;
+
+
+    // NEW THINGS
+
+    private static final ThreadLocal<Int2ObjectMap<ColourMultiplier>> colourCache = ThreadLocal.withInitial(Int2ObjectOpenHashMap::new);
 
     public static void preInit() {
         BLOCK_RENDER_TYPE = BlockRenderingRegistry.createRenderType("meta_tile_entity");
@@ -115,7 +123,8 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
             IVertexOperation[] pipeline = new IVertexOperation[]{renderState.lightMatrix};
             metaTileEntity.renderMetaTileEntity(renderState, translation.copy(), pipeline);
         }
-        Matrix4 coverTranslation = new Matrix4().translate(pos.getX(), pos.getY(), pos.getZ());
+
+        Matrix4 coverTranslation = translation.copy();
         metaTileEntity.renderCovers(renderState, coverTranslation, renderLayer);
 
         if (metaTileEntity.isFragile() && renderLayer == BlockRenderLayer.CUTOUT) {
@@ -128,6 +137,11 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
             }
         }
         return true;
+    }
+
+
+    public static ColourMultiplier getColourMultiplier(int rgba) {
+        return colourCache.get().computeIfAbsent(rgba, ColourMultiplier::new);
     }
 
     @Override

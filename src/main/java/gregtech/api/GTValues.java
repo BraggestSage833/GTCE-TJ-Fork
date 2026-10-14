@@ -1,5 +1,6 @@
 package gregtech.api;
 
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -96,5 +97,14 @@ public class GTValues {
     public static final DecimalFormat thousandFormat = new DecimalFormat(",###");
 
     public static final DecimalFormat thousandTwoPlaceFormat = new DecimalFormat(",##0.00");
+
+
+    private static Boolean isClient;
+
+    public static boolean isClientSide() {
+        if (isClient == null) isClient = FMLCommonHandler.instance().getSide().isClient();
+        return isClient;
+    }
+
 
 }

@@ -3,6 +3,7 @@ package gregtech.api.util;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
+import gregtech.api.GTValues;
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.IElectricItem;
 import gregtech.api.capability.IMultipleTankHandler;
@@ -959,5 +960,10 @@ public class GTUtility {
             eut = 134000000;
         }
         return eut;
+    }
+
+    @NotNull
+    public static ResourceLocation gregtechID(@NotNull String path) {
+        return new ResourceLocation(GTValues.MODID, path);
     }
 }
