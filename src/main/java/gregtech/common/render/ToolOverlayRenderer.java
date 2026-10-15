@@ -60,38 +60,42 @@ public class ToolOverlayRenderer {
         }
 
         BlockPos pos = target.getBlockPos();
-        IBlockState blockState = world.getBlockState(pos);
         TileEntity tileEntity = world.getTileEntity(pos);
         ItemStack heldItem = player.getHeldItem(EnumHand.MAIN_HAND);
 
-        if (tileEntity != null && shouldDrawOverlayForItem(heldItem, tileEntity)
-                && (tileEntity instanceof IPipeTile || useGridForRayTraceResult(target))) {
-            EnumFacing facing = target.sideHit;
-            GlStateManager.enableBlend();
-            GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-            GlStateManager.glLineWidth(3.0F);
-            GlStateManager.disableTexture2D();
-            GlStateManager.depthMask(false);
-
-            if (world.getWorldBorder().contains(pos)) {
-                double d3 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) event.getPartialTicks();
-                double d4 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) event.getPartialTicks();
-                double d5 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) event.getPartialTicks();
-                AxisAlignedBB box = blockState.getSelectedBoundingBox(world, pos).grow(0.002D).offset(-d3, -d4, -d5);
-                RenderGlobal.drawSelectionBoundingBox(box, 0.0F, 0.0F, 0.0F, 0.4F);
-                drawOverlayLines(facing, box);
-                drawHoverHighlight(facing, box, target.hitVec.subtract(d3, d4, d5));
-                if (tileEntity instanceof IPipeTile<?, ?> pipeTile) {
-                    drawConnections(pipeTile, facing, box);
-                }
-            }
-
-            GlStateManager.depthMask(true);
-            GlStateManager.enableTexture2D();
-            GlStateManager.disableBlend();
-
-            event.setCanceled(true);
+        if (tileEntity == null || !shouldDrawOverlayForItem(heldItem, tileEntity) || (!(tileEntity instanceof IPipeTile) && !useGridForRayTraceResult(target))) {
+            return;
         }
+
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        GlStateManager.glLineWidth(3.0F);
+        GlStateManager.disableTexture2D();
+        GlStateManager.depthMask(false);
+
+        if (world.getWorldBorder().contains(pos)) {
+            double d3 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) event.getPartialTicks();
+            double d4 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) event.getPartialTicks();
+            double d5 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) event.getPartialTicks();
+
+            IBlockState blockState = world.getBlockState(pos);
+            AxisAlignedBB box = blockState.getSelectedBoundingBox(world, pos).grow(0.002D).offset(-d3, -d4, -d5);
+            RenderGlobal.drawSelectionBoundingBox(box, 0.0F, 0.0F, 0.0F, 0.4F);
+
+            EnumFacing facing = target.sideHit;
+            drawOverlayLines(facing, box);
+            drawHoverHighlight(facing, box, target.hitVec.subtract(d3, d4, d5));
+
+            if (tileEntity instanceof IPipeTile<?, ?> pipeTile && isConnectionTool(heldItem, pipeTile)) {
+                drawConnections(pipeTile, facing, box);
+            }
+        }
+
+        GlStateManager.depthMask(true);
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
+
+        event.setCanceled(true);
     }
 
     public static boolean useGridForRayTraceResult(RayTraceResult result) {
@@ -106,30 +110,52 @@ public class ToolOverlayRenderer {
         return true;
     }
 
+
+    private static boolean isConnectionTool(ItemStack stack, IPipeTile<?,?> tile) {
+        BlockPipe<?,?,?> blockPipe = tile.getPipeBlock();
+        return blockPipe != null && stack.hasCapability(blockPipe.getConnectionToggleCapability(), null);
+    }
+
+    private static boolean hasAnyCover(IPipeTile<?,?> tile) {
+        for (EnumFacing side : EnumFacing.VALUES) {
+            if (tile.getCoverableImplementation().getCoverAtSide(side) != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static boolean shouldDrawOverlayForItem(ItemStack itemStack, TileEntity tileEntity) {
         if(tileEntity instanceof MetaTileEntityHolder &&
-            itemStack.hasCapability(GregtechCapabilities.CAPABILITY_WRENCH, null)) {
+                itemStack.hasCapability(GregtechCapabilities.CAPABILITY_WRENCH, null)) {
             return true;
         }
-        if (tileEntity instanceof IPipeTile) {
-            BlockPipe<?, ?, ?> pipeBlock = ((IPipeTile<?, ?>) tileEntity).getPipeBlock();
-            if (pipeBlock != null && itemStack.hasCapability(pipeBlock.getConnectionToggleCapability(), null)) {
+        if (tileEntity instanceof IPipeTile<?,?> pipeTile) {
+            if (isConnectionTool(itemStack, pipeTile)) {
                 return true;
+            }
+
+            if (itemStack.hasCapability(GregtechCapabilities.CAPABILITY_SCREWDRIVER, null)) {
+                return hasAnyCover(pipeTile);
             }
         }
-        if(tileEntity.hasCapability(GregtechTileCapabilities.CAPABILITY_COVERABLE, null)) {
-            if(itemStack.hasCapability(GregtechCapabilities.CAPABILITY_SCREWDRIVER, null)) {
+
+        if (tileEntity.hasCapability(GregtechTileCapabilities.CAPABILITY_COVERABLE, null)) {
+            if (!(tileEntity instanceof IPipeTile) && itemStack.hasCapability(GregtechCapabilities.CAPABILITY_SCREWDRIVER, null)) {
                 return true;
             }
-            if (itemStack.getItem() instanceof MetaItem<?> metaItem) {
-                MetaItem<?>.MetaValueItem valueItem = metaItem.getItem(itemStack);
-                if (valueItem != null) {
-                    List<IItemBehaviour> behaviourList = valueItem.getBehaviours();
+
+            if (itemStack.getItem() instanceof MetaItem<?> item) {
+                MetaItem<?>.MetaValueItem value = item.getItem(itemStack);
+                if (value != null) {
+                    List<IItemBehaviour> behaviourList = value.getBehaviours();
                     return behaviourList.stream().anyMatch(it ->
-                        it instanceof CoverPlaceBehavior || it instanceof CrowbarBehaviour);
+                            it instanceof CoverPlaceBehavior || it instanceof CrowbarBehaviour);
                 }
             }
         }
+
         return false;
     }
 

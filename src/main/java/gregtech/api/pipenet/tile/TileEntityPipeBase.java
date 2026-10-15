@@ -140,10 +140,6 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         writeCustomData(-2, buffer -> buffer.writeVarInt(connections));
         markDirty();
 
-        if (connected) {
-            new Throwable("[connect] " + getPos() + " side=" + side + " fromNeighbor=" + fromNeighbor).printStackTrace();
-        }
-
         if (!detachedConversionMode) {
             getPipeBlock().getWorldPipeNet(world).updateBlockedConnections(getPos(),side,!connected);
             notifyBlockUpdate();
@@ -178,8 +174,6 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
         for (EnumFacing side : EnumFacing.VALUES) {
             if (block.canAutoConnect(this, side)) {
-                System.out.println("[autoconnect] side=" + side + " neighbor="
-                        + world.getBlockState(getPos().offset(side)).getBlock().getRegistryName());
                 setConnection(side, true, false);
             }
         }
