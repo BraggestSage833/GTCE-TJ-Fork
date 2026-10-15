@@ -6,7 +6,6 @@ import appeng.me.helpers.AENetworkProxy;
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.render.CCRenderState;
-import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.vec.Cuboid6;
@@ -23,6 +22,8 @@ import gregtech.api.cover.CoverBehavior;
 import gregtech.api.cover.CoverDefinition;
 import gregtech.api.cover.ICoverable;
 import gregtech.api.gui.ModularUI;
+import gregtech.api.render.MetaTileEntityRenderer;
+import gregtech.api.render.SideRendererCache;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTFluidUtils;
 import gregtech.api.util.GTUtility;
@@ -103,6 +104,8 @@ public abstract class MetaTileEntity implements ICoverable {
     protected boolean muffled = false;
     private final CoverBehavior[] coverBehaviors = new CoverBehavior[6];
 
+    protected SideRendererCache sideRendererCache = new SideRendererCache();
+
     public MetaTileEntity(ResourceLocation metaTileEntityId) {
         this.metaTileEntityId = metaTileEntityId;
         initializeInventory();
@@ -130,6 +133,10 @@ public abstract class MetaTileEntity implements ICoverable {
 
     public BlockPos getPos() {
         return holder == null ? null : holder.getPos();
+    }
+
+    public SideRendererCache getSideRendererCache() {
+        return sideRendererCache;
     }
 
     public void markDirty() {
@@ -239,7 +246,8 @@ public abstract class MetaTileEntity implements ICoverable {
     @SideOnly(Side.CLIENT)
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
         TextureAtlasSprite atlasSprite = TextureUtils.getMissingSprite();
-        IVertexOperation[] renderPipeline = ArrayUtils.add(pipeline, new ColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering())));
+        IVertexOperation[] renderPipeline = ArrayUtils.add(pipeline, MetaTileEntityRenderer.getColourMultiplier(GTUtility.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering())));
+
         for (EnumFacing face : EnumFacing.VALUES) {
             Textures.renderFace(renderState, translation, renderPipeline, face, Cuboid6.full, atlasSprite);
         }
@@ -463,13 +471,16 @@ public abstract class MetaTileEntity implements ICoverable {
         Preconditions.checkNotNull(side, "side");
         Preconditions.checkNotNull(coverDefinition, "coverDefinition");
         CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, side);
+
         if (!canPlaceCoverOnSide(side) || !coverBehavior.canAttach()) {
             return false;
         }
         if (coverBehaviors[side.getIndex()] != null) {
             removeCover(side);
         }
+
         this.coverBehaviors[side.getIndex()] = coverBehavior;
+        refreshSideRenderer(side);
         coverBehavior.onAttached(itemStack);
         writeCustomData(-5, buffer -> {
             buffer.writeByte(side.getIndex());
@@ -492,6 +503,10 @@ public abstract class MetaTileEntity implements ICoverable {
         if (coverBehavior == null) {
             return false;
         }
+
+        this.coverBehaviors[side.getIndex()] = null;
+        refreshSideRenderer(side);
+
         List<ItemStack> drops = coverBehavior.getDrops();
         coverBehavior.onRemoved();
         this.coverBehaviors[side.getIndex()] = null;
@@ -806,6 +821,8 @@ public abstract class MetaTileEntity implements ICoverable {
                 this.coverBehaviors[coverSide.getIndex()] = coverBehavior;
             }
         }
+
+        refreshAllSideRenderers();
         this.isFragile = buf.readBoolean();
         this.muffled = buf.readBoolean();
     }
@@ -846,12 +863,14 @@ public abstract class MetaTileEntity implements ICoverable {
             CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, placementSide);
             this.coverBehaviors[placementSide.getIndex()] = coverBehavior;
             coverBehavior.readInitialSyncData(buf);
+            refreshSideRenderer(placementSide);
             onCoverPlacementUpdate();
             getHolder().scheduleChunkForRenderUpdate();
         } else if (dataId == -6) {
             //cover removed event
             EnumFacing placementSide = EnumFacing.VALUES[buf.readByte()];
             this.coverBehaviors[placementSide.getIndex()] = null;
+            refreshSideRenderer(placementSide);
             onCoverPlacementUpdate();
             getHolder().scheduleChunkForRenderUpdate();
         } else if (dataId == -7) {
@@ -1233,6 +1252,7 @@ public abstract class MetaTileEntity implements ICoverable {
             }
         }
 
+        refreshAllSideRenderers();
         this.isFragile = data.getBoolean(TAG_KEY_FRAGILE);
         this.muffled = data.getBoolean(TAG_KEY_MUFFLED);
     }
@@ -1323,6 +1343,23 @@ public abstract class MetaTileEntity implements ICoverable {
     public float getBlockResistance() {
         return 6.0f;
     }
+
+
+
+    public void refreshSideRenderer(EnumFacing side) {
+        CoverBehavior cover = coverBehaviors[side.getIndex()];
+        sideRendererCache.set(side, cover instanceof IFastRenderMetaTileEntity ? SideRendererCache.RendererType.FAST :
+                        cover instanceof IRenderMetaTileEntity     ? SideRendererCache.RendererType.DYNAMIC :
+                                SideRendererCache.RendererType.NONE
+        );
+    }
+
+    public void refreshAllSideRenderers() {
+        for (EnumFacing side : EnumFacing.VALUES) {
+            refreshSideRenderer(side);
+        }
+    }
+
 
     /**
      * Override this if the MTE will keep its Item inventory on-break.

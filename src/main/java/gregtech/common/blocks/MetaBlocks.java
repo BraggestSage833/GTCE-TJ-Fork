@@ -1,7 +1,6 @@
 package gregtech.common.blocks;
 
 import com.google.common.collect.ImmutableMap;
-import gnu.trove.map.TIntObjectMap;
 import gregtech.api.GTValues;
 import gregtech.api.GregTechAPI;
 import gregtech.api.block.machines.BlockMachine;
@@ -299,8 +298,8 @@ public class MetaBlocks {
     @SideOnly(Side.CLIENT)
     public static void registerItemModels() {
         ModelLoader.setCustomMeshDefinition(Item.getItemFromBlock(MACHINE), stack -> MetaTileEntityRenderer.MODEL_LOCATION);
-        ModelLoader.setCustomMeshDefinition(Item.getItemFromBlock(CABLE), stack -> CableRenderer.MODEL_LOCATION);
-        ModelLoader.setCustomMeshDefinition(Item.getItemFromBlock(FLUID_PIPE), stack -> FluidPipeRenderer.MODEL_LOCATION);
+        ModelLoader.setCustomMeshDefinition(Item.getItemFromBlock(CABLE), stack -> CableRenderer.INSTANCE.getModelResourceLocation());
+        ModelLoader.setCustomMeshDefinition(Item.getItemFromBlock(FLUID_PIPE), stack -> FluidPipeRenderer.INSTANCE.getModelResourceLocation());
         registerItemModel(BOILER_CASING);
         registerItemModel(BOILER_FIREBOX_CASING);
         registerItemModel(METAL_CASING);
@@ -372,13 +371,13 @@ public class MetaBlocks {
         ModelLoader.setCustomStateMapper(CABLE, new DefaultStateMapper() {
             @Override
             protected ModelResourceLocation getModelResourceLocation(IBlockState state) {
-                return CableRenderer.MODEL_LOCATION;
+                return CableRenderer.INSTANCE.getModelResourceLocation();
             }
         });
         ModelLoader.setCustomStateMapper(FLUID_PIPE, new DefaultStateMapper() {
             @Override
             protected ModelResourceLocation getModelResourceLocation(IBlockState state) {
-                return FluidPipeRenderer.MODEL_LOCATION;
+                return FluidPipeRenderer.INSTANCE.getModelResourceLocation();
             }
         });
         IStateMapper normalStateMapper = new StateMapperBase() {

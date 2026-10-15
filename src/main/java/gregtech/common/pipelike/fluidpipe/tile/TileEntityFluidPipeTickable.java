@@ -53,25 +53,38 @@ public class TileEntityFluidPipeTickable extends TileEntityFluidPipe implements 
 
     public static void pushFluidsFromTank(IPipeTile<FluidPipeType, FluidPipeProperties> pipeTile) {
         PooledMutableBlockPos blockPos = PooledMutableBlockPos.retain();
-        int blockedConnections = pipeTile.getBlockedConnections();
         BlockFluidPipe blockFluidPipe = (BlockFluidPipe) pipeTile.getPipeBlock();
         for (EnumFacing side : EnumFacing.VALUES) {
-            if ((blockedConnections & 1 << side.getIndex()) > 0) {
-                continue; //do not dispatch energy to blocked sides
+            if (!pipeTile.isConnectionEnabled(side)) {
+                continue; // not connected on this side
             }
+
             blockPos.setPos(pipeTile.getPipePos()).move(side);
             if (!pipeTile.getPipeWorld().isBlockLoaded(blockPos)) {
-                continue; //do not allow cables to load chunks
+                continue; // do not allow pipes to load chunks
             }
             TileEntity tileEntity = pipeTile.getPipeWorld().getTileEntity(blockPos);
             if (tileEntity == null) {
-                continue; //do not emit into multiparts or other fluid pipes
+                continue;
+            }
+            boolean otherIsPipe = blockFluidPipe.getPipeTileEntity(tileEntity) != null;
+            if (otherIsPipe && !blockFluidPipe.isDifferentPipeNet(pipeTile, tileEntity)) {
+                continue; // same net: segments already share the tank
             }
             IFluidHandler sourceHandler = pipeTile.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
             IFluidHandler receiverHandler = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side.getOpposite());
-            if (sourceHandler != null && receiverHandler != null && blockFluidPipe.canPushIntoFluidHandler(pipeTile, tileEntity, sourceHandler, receiverHandler)) {
+            if (sourceHandler == null || receiverHandler == null) {
+                continue;
+            }
+            if (otherIsPipe) {
+                int amount = blockFluidPipe.getAmountToMove(pipeTile, tileEntity);
+                if (amount > 0) {
+                    GTFluidUtils.transferFluids(sourceHandler, receiverHandler, amount);
+                }
+            } else if (blockFluidPipe.canPushIntoFluidHandler(pipeTile, tileEntity, sourceHandler, receiverHandler)) {
                 GTFluidUtils.transferFluids(sourceHandler, receiverHandler, Integer.MAX_VALUE);
             }
+
         }
         blockPos.release();
     }

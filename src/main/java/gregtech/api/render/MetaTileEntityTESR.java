@@ -30,117 +30,137 @@ public class MetaTileEntityTESR extends TileEntitySpecialRenderer<MetaTileEntity
     @Override
     public void render(MetaTileEntityHolder te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
         MetaTileEntity metaTileEntity = te.getMetaTileEntity();
-        if(metaTileEntity instanceof IFastRenderMetaTileEntity) {
-            renderTileEntityFastPart(te, x, y, z, partialTicks, destroyStage);
+
+        if (metaTileEntity == null) {
+            return;
         }
-        if(metaTileEntity instanceof IRenderMetaTileEntity) {
-            ((IRenderMetaTileEntity) metaTileEntity).renderMetaTileEntityDynamic(x, y, z, partialTicks);
+
+        if (te.isDynamicRender()) {
+            ((IRenderMetaTileEntity) metaTileEntity).renderMetaTileEntityDynamic(x,y,z,partialTicks);
         }
-        if(metaTileEntity != null) {
-            List<Tuple<IFastRenderMetaTileEntity, EnumFacing>> coverFast = new ArrayList<>();
-            for (EnumFacing side: EnumFacing.VALUES){
+
+        SideRendererCache cache = metaTileEntity.getSideRendererCache();
+
+        if (cache.hasAnyDynamic()) {
+            for (EnumFacing side : EnumFacing.VALUES) {
+                if (!cache.isDynamic(side)) {
+                    continue;
+                }
                 CoverBehavior cover = metaTileEntity.getCoverAtSide(side);
-                if (cover instanceof IFastRenderMetaTileEntity) {
-                    coverFast.add(new Tuple<>((IFastRenderMetaTileEntity) cover, side));
-                } else if (cover instanceof IRenderMetaTileEntity){
+                if (cover != null) {
                     ((IRenderMetaTileEntity) cover).renderMetaTileEntityDynamic(x, y, z, partialTicks);
                 }
             }
-            if (!coverFast.isEmpty()) {
-                renderCoverFast(te, x, y, x, partialTicks, destroyStage, alpha, coverFast);
-            }
+        }
+
+        if (te.isFastRenderer() || cache.hasAnyFast()) {
+            renderFastImmediate(te, x, y, z, partialTicks);
         }
     }
 
-    /** Used Specifically to render covers that are IFastRenderMetaTileEntity
-     * Adapted from renderTileEntityFastPart
-     * **/
-    private void renderCoverFast(MetaTileEntityHolder te, double x, double y, double z, float partialTicks, int destroyStage, float alpha, List<Tuple<IFastRenderMetaTileEntity, EnumFacing>> coverList) {
 
-        Matrix4 translation = (new Matrix4()).translate(x, y, z);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        RenderHelper.disableStandardItemLighting();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GlStateManager.enableBlend();
+    @Override
+    public void renderTileEntityFast(MetaTileEntityHolder te, double x, double y, double z, float partialTicks, int destroyStage, float partial, BufferBuilder buffer) {
+        renderFastParts(te, x, y, z, partialTicks, buffer);
+    }
 
-        if (Minecraft.isAmbientOcclusionEnabled()) {
-            GlStateManager.shadeModel(GL11.GL_SMOOTH);
+    private void renderFastParts(MetaTileEntityHolder te, double x, double y, double z, float partialTicks, BufferBuilder buffer) {
+        MetaTileEntity mte = te.getMetaTileEntity();
+        if (mte == null) {
+            return;
         }
-        else {
-            GlStateManager.shadeModel(GL11.GL_FLAT);
-        }
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 
-        for (Tuple<IFastRenderMetaTileEntity, EnumFacing> tuple : coverList) {
-            CCRenderState renderState = CCRenderState.instance();
+        boolean machineFast = te.isFastRenderer();
+        SideRendererCache cache = mte.getSideRendererCache();
+        if (!machineFast && !cache.hasAnyFast())  {
+            return;
+        }
+
+        CCRenderState renderState = CCRenderState.instance();
+        Matrix4 translation = new Matrix4().translate(x, y, z);
+
+        if (machineFast) {
             renderState.reset();
             renderState.bind(buffer);
-            renderState.setBrightness(te.getWorld(), te.getPos().offset(tuple.getSecond()));
-            tuple.getFirst().renderMetaTileEntityFast(renderState, translation, partialTicks);
+            renderState.setBrightness(te.getWorld(), te.getPos());
+            ((IFastRenderMetaTileEntity) mte).renderMetaTileEntityFast(renderState, translation, partialTicks);
+        }
+        if (!cache.hasAnyFast()) {
+            return;
         }
 
-        buffer.setTranslation(0, 0, 0);
-        tessellator.draw();
-        RenderHelper.enableStandardItemLighting();
+        for (EnumFacing side : EnumFacing.VALUES) {
+            if (!cache.isFast(side)) {
+                continue;
+            }
+
+            CoverBehavior cover = mte.getCoverAtSide(side);
+            if (cover == null) {
+                continue;
+            }
+
+            renderState.reset();
+            renderState.bind(buffer);
+            renderState.setBrightness(te.getWorld(), te.getPos().offset(side));
+            ((IFastRenderMetaTileEntity) cover).renderMetaTileEntityFast(renderState, translation, partialTicks);
+        }
     }
 
-    private void renderTileEntityFastPart(MetaTileEntityHolder te, double x, double y, double z, float partialTicks, int destroyStage) {
+    private void renderFastImmediate(MetaTileEntityHolder te, double x, double y, double z, float partialTicks) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+        bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         RenderHelper.disableStandardItemLighting();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GlStateManager.enableBlend();
         GlStateManager.disableCull();
-
-        if (Minecraft.isAmbientOcclusionEnabled()) {
-            GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        }
-        else {
-            GlStateManager.shadeModel(GL11.GL_FLAT);
-        }
+        GlStateManager.shadeModel(Minecraft.isAmbientOcclusionEnabled() ? GL11.GL_SMOOTH : GL11.GL_FLAT);
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-
-        renderTileEntityFast(te, x, y, z, partialTicks, destroyStage, partialTicks, buffer);
+        renderFastParts(te, x, y, z, partialTicks, buffer);
         buffer.setTranslation(0, 0, 0);
         tessellator.draw();
         GlStateManager.enableCull();
         RenderHelper.enableStandardItemLighting();
     }
 
-    @Override
-    public void renderTileEntityFast(MetaTileEntityHolder te, double x, double y, double z, float partialTicks, int destroyStage, float partial, BufferBuilder buffer) {
-        MetaTileEntity metaTileEntity = te.getMetaTileEntity();
-        if (metaTileEntity instanceof IFastRenderMetaTileEntity) {
-            CCRenderState renderState = CCRenderState.instance();
-            renderState.reset();
-            renderState.bind(buffer);
-            renderState.setBrightness(te.getWorld(), te.getPos());
-            Matrix4 translation = new Matrix4().translate(x, y, z);
-            ((IFastRenderMetaTileEntity) metaTileEntity).renderMetaTileEntityFast(renderState, translation, partialTicks);
-        }
-    }
+
 
     @Override
     public boolean isGlobalRenderer(MetaTileEntityHolder te) {
-        if (te instanceof IRenderMetaTileEntity) {
-            if (((IRenderMetaTileEntity) te).isGlobalRenderer()) {
-                return true;
-            }
-        } else if (te instanceof IFastRenderMetaTileEntity) {
-            if (((IFastRenderMetaTileEntity) te).isGlobalRenderer()) {
-                return true;
+        MetaTileEntity metaTileEntity = te.getMetaTileEntity();
+
+        if (metaTileEntity == null) {
+            return false;
+        }
+
+        if (te.isDynamicRender() && ((IRenderMetaTileEntity) metaTileEntity).isGlobalRenderer()) {
+            return true;
+        }
+
+        if (te.isFastRenderer() && ((IFastRenderMetaTileEntity) metaTileEntity).isGlobalRenderer()) {
+            return true;
+        }
+
+        SideRendererCache cache = metaTileEntity.getSideRendererCache();
+
+        if (!cache.hasAnyRenderer()) {
+            return false;
+        }
+
+        for (EnumFacing side : EnumFacing.VALUES) {
+            SideRendererCache.RendererType type = cache.get(side);
+
+            if (type == SideRendererCache.RendererType.DYNAMIC) {
+                if (((IRenderMetaTileEntity) metaTileEntity.getCoverAtSide(side)).isGlobalRenderer()) {
+                    return true;
+                }
+            } else if (type == SideRendererCache.RendererType.FAST) {
+                if (((IFastRenderMetaTileEntity) metaTileEntity.getCoverAtSide(side)).isGlobalRenderer()) {
+                    return true;
+                }
             }
         }
-        if (te.getMetaTileEntity() instanceof IRenderMetaTileEntity) {
-            if (((IRenderMetaTileEntity) te.getMetaTileEntity()).isGlobalRenderer()) {
-                return true;
-            }
-        } else if (te.getMetaTileEntity() instanceof IFastRenderMetaTileEntity){
-            return ((IFastRenderMetaTileEntity) te.getMetaTileEntity()).isGlobalRenderer();
-        }
+
         return false;
     }
 }

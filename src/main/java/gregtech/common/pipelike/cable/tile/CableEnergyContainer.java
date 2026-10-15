@@ -2,6 +2,7 @@ package gregtech.common.pipelike.cable.tile;
 
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.IEnergyContainer;
+import gregtech.api.pipenet.Node;
 import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.common.pipelike.cable.Insulation;
 import gregtech.common.pipelike.cable.WireProperties;
@@ -39,21 +40,23 @@ public class CableEnergyContainer implements IEnergyContainer {
         long amperesUsed = 0;
         for (RoutePath routePath : paths) {
             if (routePath.totalLoss >= voltage) {
-                continue; //do not emit if loss is too high
+                continue;
             }
+
             BlockPos destinationPos = routePath.destination;
-            int blockedConnections = energyNet.getAllNodes().get(destinationPos).blockedConnections;
-            amperesUsed += dispatchEnergyToNode(destinationPos, blockedConnections,
-                voltage - routePath.totalLoss, amperage - amperesUsed);
-
-            if (voltage > routePath.minVoltage ||
-                amperesUsed > routePath.maxAmperage) {
-                burnAllPaths(paths, voltage, amperage, amperesUsed);
-                break; //break after burning all paths
+            Node<WireProperties> destinationNode = energyNet.getAllNodes().get(destinationPos);
+            if (destinationNode == null) {
+                continue;
             }
 
+            amperesUsed += dispatchEnergyToNode(destinationPos, destinationNode.blockedConnections, voltage - routePath.totalLoss, amperage - amperesUsed);
+
+            if (voltage > routePath.minVoltage || amperesUsed > routePath.maxAmperage) {
+                burnAllPaths(paths, voltage, amperage, amperesUsed);
+                break;
+            }
             if (amperesUsed == amperage) {
-                break; //do not continue if all amperes are exhausted
+                break;
             }
         }
         energyNet.incrementCurrentAmperage(amperage, voltage);
@@ -68,28 +71,27 @@ public class CableEnergyContainer implements IEnergyContainer {
         }
     }
 
-    private long dispatchEnergyToNode(BlockPos nodePos, int nodeBlockedConnections, long voltage, long amperage) {
+    private long dispatchEnergyToNode(BlockPos nodePos, int nodeBlockedConnections,  long voltage, long amperage) {
         long amperesUsed = 0L;
-        //use pooled mutable to avoid creating new objects every tick
         World world = tileEntityCable.getPipeWorld();
         PooledMutableBlockPos blockPos = PooledMutableBlockPos.retain();
         for (EnumFacing facing : EnumFacing.VALUES) {
             if ((nodeBlockedConnections & 1 << facing.getIndex()) > 0) {
-                continue; //do not dispatch energy to blocked sides
+                continue;
             }
             blockPos.setPos(nodePos).move(facing);
             if (!world.isBlockLoaded(nodePos)) {
-                continue; //do not allow cables to load chunks
+                continue;
             }
             TileEntity tileEntity = world.getTileEntity(blockPos);
             if (tileEntity == null || tileEntityCable.getPipeBlock().getPipeTileEntity(tileEntity) != null) {
-                continue; //do not emit into other cable tile entities
+                continue;
             }
+
             IEnergyContainer energyContainer = tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, facing.getOpposite());
             if (energyContainer == null) continue;
             amperesUsed += energyContainer.acceptEnergyFromNetwork(facing.getOpposite(), voltage, amperage - amperesUsed);
-            if (amperesUsed == amperage)
-                break;
+            if (amperesUsed == amperage) break;
         }
         blockPos.release();
         return amperesUsed;

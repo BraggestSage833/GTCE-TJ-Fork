@@ -38,15 +38,23 @@ public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
         this.pipeNets.forEach(PipeNet::onConnectionsUpdate);
     }
 
-    public void addNode(BlockPos nodePos, NodeDataType nodeData, int mark, int blockedConnections, boolean isActive) {
+    public void addNode(BlockPos nodePos, NodeDataType nodeData, int mark, int enabledConnections, boolean isActive) {
+        T existingNet = getNetFromPos(nodePos);
+        if (existingNet != null) {
+            Node<NodeDataType> existing = existingNet.getNodeAt(nodePos);
+            existing.blockedConnections = enabledConnections;
+            existing.mark = mark;
+            existing.isActive = isActive;
+            return;
+        }
         T myPipeNet = null;
-        Node<NodeDataType> node = new Node<>(nodeData, blockedConnections, mark, isActive);
+        Node<NodeDataType> node = new Node<>(nodeData, enabledConnections, mark, isActive);
         for (EnumFacing facing : EnumFacing.VALUES) {
             BlockPos offsetPos = nodePos.offset(facing);
             T pipeNet = getNetFromPos(offsetPos);
             Node<NodeDataType> secondNode = pipeNet == null ? null : pipeNet.getAllNodes().get(offsetPos);
             if (pipeNet != null && pipeNet.canAttachNode(nodeData) &&
-                pipeNet.canNodesConnect(secondNode, facing.getOpposite(), node, null)) {
+                    pipeNet.canNodesConnect(secondNode, facing.getOpposite(), node, null)) {
                 if (myPipeNet == null) {
                     myPipeNet = pipeNet;
                     myPipeNet.addNode(nodePos, node);
@@ -54,7 +62,6 @@ public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
                     myPipeNet.uniteNetworks(pipeNet);
                 }
             }
-
         }
         if (myPipeNet == null) {
             myPipeNet = createNetInstance();
@@ -64,13 +71,18 @@ public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
         }
     }
 
+
     protected void addPipeNetToChunk(ChunkPos chunkPos, T pipeNet) {
         this.pipeNetsByChunk.computeIfAbsent(chunkPos, any -> new ArrayList<>()).add(pipeNet);
     }
 
     protected void removePipeNetFromChunk(ChunkPos chunkPos, T pipeNet) {
         List<T> list = this.pipeNetsByChunk.get(chunkPos);
-        if (list != null) list.remove(pipeNet);
+        if (list == null) {
+           return;
+        }
+
+        list.remove(pipeNet);
         if (list.isEmpty()) this.pipeNetsByChunk.remove(chunkPos);
     }
 

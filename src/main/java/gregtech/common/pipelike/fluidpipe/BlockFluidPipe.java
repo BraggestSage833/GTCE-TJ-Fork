@@ -6,6 +6,7 @@ import gregtech.api.pipenet.block.material.BlockMaterialPipe;
 import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.api.pipenet.tile.TileEntityPipeBase;
 import gregtech.api.unification.material.type.Material;
+import gregtech.api.util.GTFluidUtils;
 import gregtech.common.pipelike.fluidpipe.net.FluidPipeNet;
 import gregtech.common.pipelike.fluidpipe.net.WorldFluidPipeNet;
 import gregtech.common.pipelike.fluidpipe.tile.FluidPipeFluidHandler;
@@ -26,6 +27,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -85,24 +87,19 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
         }
     }
 
-    @Override
-    protected boolean canPipesConnect(IPipeTile<FluidPipeType, FluidPipeProperties> selfTile, EnumFacing side, IPipeTile<FluidPipeType, FluidPipeProperties> sideTile) {
-        return selfTile.getNodeData().equals(sideTile.getNodeData());
-    }
 
     @Override
-    protected int getActiveVisualConnections(IPipeTile<FluidPipeType, FluidPipeProperties> selfTile) {
+    public int getActiveVisualConnections(IPipeTile<FluidPipeType, FluidPipeProperties> selfTile) {
         int activeNodeConnections = 0;
         for (EnumFacing side : EnumFacing.VALUES) {
             BlockPos offsetPos = selfTile.getPipePos().offset(side);
             TileEntity tileEntity = selfTile.getPipeWorld().getTileEntity(offsetPos);
-            if(tileEntity != null) {
-                EnumFacing opposite = side.getOpposite();
-                IFluidHandler sourceHandler = selfTile.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
-                IFluidHandler receivedHandler = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, opposite);
-                if (sourceHandler != null && receivedHandler != null) {
-                    activeNodeConnections |= 1 << side.getIndex();
-                }
+            if (tileEntity == null || getPipeTileEntity(tileEntity) != null) continue;
+            EnumFacing opposite = side.getOpposite();
+            IFluidHandler sourceHandler = getRawFluidHandler(selfTile, side);
+            IFluidHandler receivedHandler = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, opposite);
+            if (sourceHandler != null && receivedHandler != null) {
+                activeNodeConnections |= 1 << side.getIndex();
             }
         }
         return activeNodeConnections;
@@ -112,18 +109,27 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
     public int getActiveNodeConnections(IBlockAccess world, BlockPos nodePos, IPipeTile<FluidPipeType, FluidPipeProperties> selfTileEntity) {
         int activeNodeConnections = 0;
         for (EnumFacing side : EnumFacing.VALUES) {
-            BlockPos offsetPos = nodePos.offset(side);
-            TileEntity tileEntity = world.getTileEntity(offsetPos);
-            if(tileEntity != null) {
-                EnumFacing opposite = side.getOpposite();
-                IFluidHandler sourceHandler = selfTileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
-                IFluidHandler receivedHandler = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, opposite);
-                if (sourceHandler != null && receivedHandler != null && canPushIntoFluidHandler(selfTileEntity, tileEntity, sourceHandler, receivedHandler)) {
-                    activeNodeConnections |= 1 << side.getIndex();
-                }
+            BlockPos offsetPos = selfTileEntity.getPipePos().offset(side);
+            TileEntity tileEntity = selfTileEntity.getPipeWorld().getTileEntity(offsetPos);
+            if (tileEntity == null) {
+                continue;
+            }
+            if (getPipeTileEntity(tileEntity) != null && !isDifferentPipeNet(selfTileEntity, tileEntity)) continue;
+            EnumFacing opposite = side.getOpposite();
+            IFluidHandler sourceHandler = getRawFluidHandler(selfTileEntity, side);
+            IFluidHandler receivedHandler = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, opposite);
+            if (sourceHandler != null && receivedHandler != null) {
+                activeNodeConnections |= 1 << side.getIndex();
             }
         }
         return activeNodeConnections;
+    }
+
+    private IFluidHandler getRawFluidHandler(IPipeTile<FluidPipeType, FluidPipeProperties> pipeTile, EnumFacing side) {
+        if (pipeTile instanceof TileEntityPipeBase) {
+            return ((TileEntityPipeBase<FluidPipeType, FluidPipeProperties>) pipeTile).getCapabilityInternal(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
+        }
+        return pipeTile.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
     }
 
     public boolean canPushIntoFluidHandler(IPipeTile<FluidPipeType, FluidPipeProperties> selfTileEntity, TileEntity otherTileEntity, IFluidHandler sourceHandler, IFluidHandler destinationHandler) {
@@ -139,6 +145,39 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
             return sourceThickness > destThickness;
         }
         return true;
+    }
+
+
+    public boolean isDifferentPipeNet(IPipeTile<FluidPipeType, FluidPipeProperties> self, TileEntity other) {
+        IPipeTile<FluidPipeType, FluidPipeProperties> otherPipe = getPipeTileEntity(other);
+        return otherPipe != null && !otherPipe.getNodeData().equals(self.getNodeData());
+    }
+    // how much fluid to move from pipe net a to b.
+    public int getAmountToMove(IPipeTile<FluidPipeType, FluidPipeProperties> self, TileEntity other) {
+        IPipeTile<FluidPipeType, FluidPipeProperties> otherPipe = getPipeTileEntity(other);
+        if (otherPipe == null) {
+            return 0;
+        }
+
+        WorldFluidPipeNet worldFluidPipeNet = getWorldPipeNet(self.getPipeWorld());
+
+        FluidPipeNet from = worldFluidPipeNet.getNetFromPos(self.getPipePos());
+        FluidPipeNet to = worldFluidPipeNet.getNetFromPos(otherPipe.getPipePos());
+
+        if (from == null || to == null || from == to) {
+            return 0;
+        }
+
+        FluidTank fromTank = from.getFluidNetTank();
+        FluidTank toTank = to.getFluidNetTank();
+        long fromCap = fromTank.getCapacity();
+        long toCap = toTank.getCapacity();
+        if (fromCap <= 0 || toCap <= 0) {
+            return 0;
+        }
+
+        long diff = (long) fromTank.getFluidAmount() * toCap - (long) toTank.getFluidAmount() * fromCap;
+        return (int) Math.max(0, diff / (fromCap + toCap));
     }
 
     @Override
@@ -188,7 +227,7 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
     @Override
     @SideOnly(Side.CLIENT)
     public EnumBlockRenderType getRenderType(IBlockState state) {
-        return FluidPipeRenderer.BLOCK_RENDER_TYPE;
+        return FluidPipeRenderer.INSTANCE.getBlockRenderType();
     }
 
     @Override

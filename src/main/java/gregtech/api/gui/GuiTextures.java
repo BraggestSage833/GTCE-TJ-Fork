@@ -144,4 +144,7 @@ public class GuiTextures {
     public static final TextureArea BUTTON_AUTO_PULL = TextureArea.fullImage("textures/gui/widget/button_me_auto_pull.png");
 
     public static final TextureArea BUTTON_GT_LOGO = TextureArea.fullImage("textures/gui/widget/gt_logo_on_off.png");
+
+    public static final TextureArea TOOL_PIPE_CONNECTIONS = TextureArea.fullImage("textures/gui/overlay/tool_pipe_connections.png");
+    public static final TextureArea TOOL_WIRE_CONNECTIONS = TextureArea.fullImage("textures/gui/overlay/tool_wire_connections.png");
 }

@@ -47,4 +47,5 @@ dependencies {
     api rfg.deobf("curse.maven:ctm-267602:2915363") // CTM 1.0.2.31
     compileOnly rfg.deobf("curse.maven:forestry-59751:2684780") // Forestry 5.8.2.387
     implementation 'zone.rong:mixinbooter:8.4'
+    implementation rfg.deobf('curse.maven:renderlib-624967:6461209')
 }
