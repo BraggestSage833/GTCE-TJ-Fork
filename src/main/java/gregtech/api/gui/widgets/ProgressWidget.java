@@ -25,6 +25,7 @@ public class ProgressWidget extends Widget {
 
     private double lastProgressValue;
     private boolean updateOnClient;
+    private int maxProgress;
 
     public ProgressWidget(DoubleSupplier progressSupplier, int x, int y, int width, int height) {
         super(new Position(x, y), new Size(width, height));
@@ -49,9 +50,8 @@ public class ProgressWidget extends Widget {
     @Override
     public void updateScreen() {
         if (this.updateOnClient) {
-            double maxProgress = 200;
-            double progress = Minecraft.getMinecraft().world.getTotalWorldTime() % maxProgress;
-            this.lastProgressValue = maxProgress == 0 ? 0 : progress / maxProgress;
+            double progress = Minecraft.getMinecraft().world.getTotalWorldTime() % this.maxProgress;
+            this.lastProgressValue = this.maxProgress == 0 ? 0 : progress / this.maxProgress;
         }
     }
 
@@ -99,5 +99,9 @@ public class ProgressWidget extends Widget {
 
     public void setUpdateOnClient(boolean updateOnClient) {
         this.updateOnClient = updateOnClient;
+    }
+
+    public void setMaxProgress(int maxProgress) {
+        this.maxProgress = maxProgress;
     }
 }

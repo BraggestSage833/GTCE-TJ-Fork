@@ -159,4 +159,8 @@ public class GTRecipeWrapper implements IRecipeWrapper {
     public Int2ObjectMap<int[]> getChanceEntries() {
         return this.chanceEntries;
     }
+
+    public Recipe getRecipe() {
+        return this.recipe;
+    }
 }
