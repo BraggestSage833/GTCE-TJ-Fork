@@ -6,6 +6,7 @@ import gregtech.api.gui.BlankUIHolder;
 import gregtech.api.gui.IRenderContext;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.Widget;
+import gregtech.api.gui.widgets.ProgressWidget;
 import gregtech.api.gui.widgets.SlotWidget;
 import gregtech.api.gui.widgets.TankWidget;
 import gregtech.api.recipes.RecipeMap;
@@ -78,6 +79,9 @@ public class RecipeMapCategory implements IRecipeCategory<GTRecipeWrapper> {
         IGuiFluidStackGroup fluidStackGroup = recipeLayout.getFluidStacks();
         for (Widget uiWidget : modularUI.guiWidgets.values()) {
 
+            if (uiWidget instanceof ProgressWidget) {
+                ((ProgressWidget) uiWidget).setUpdateOnClient(true);
+            }
             if (uiWidget instanceof SlotWidget) {
                 SlotWidget slotWidget = (SlotWidget) uiWidget;
                 if (!(slotWidget.getHandle() instanceof SlotItemHandler)) {
@@ -141,6 +145,7 @@ public class RecipeMapCategory implements IRecipeCategory<GTRecipeWrapper> {
     @Override
     public void drawExtras(Minecraft minecraft) {
         for (Widget widget : modularUI.guiWidgets.values()) {
+            widget.updateScreen();
             widget.drawInBackground(0, 0, new IRenderContext() {
             });
             widget.drawInForeground(0, 0);
