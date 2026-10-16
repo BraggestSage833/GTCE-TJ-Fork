@@ -362,6 +362,11 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
                 workable.getAvailableOverclockingTiers(), workable::getOverclockTier, workable::setOverclockTier)
                 .setTooltipHoverString("gregtech.gui.overclock.description")
                 .setButtonTexture(GuiTextures.BUTTON_OVERCLOCK));
+        leftButtonStartX += 18;
+        builder.widget(new ToggleButtonWidget(leftButtonStartX, 62, 18, 18, GuiTextures.TOGGLE_BUTTON_BACK,
+                this.workable::isCheckOutputsFitBeforeStarting,
+                this.workable::setCheckOutputsFitBeforeStarting)
+                .setTooltipText("gregtech.multiblock.check_output_fit_before"));
 
         return builder;
     }
