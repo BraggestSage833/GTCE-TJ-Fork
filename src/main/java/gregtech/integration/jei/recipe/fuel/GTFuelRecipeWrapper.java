@@ -28,4 +28,8 @@ public class GTFuelRecipeWrapper implements IRecipeWrapper {
         minecraft.fontRenderer.drawString(I18n.format("gregtech.recipe.eu_inverted", voltage), 0, 80, 0x111111);
         minecraft.fontRenderer.drawString(I18n.format("gregtech.recipe.duration", duration / 20.0), 0, 90, 0x111111);
     }
+
+    public FuelRecipe getRecipe() {
+        return this.recipe;
+    }
 }

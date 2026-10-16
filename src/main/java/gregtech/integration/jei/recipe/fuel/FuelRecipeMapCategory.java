@@ -1,7 +1,8 @@
 package gregtech.integration.jei.recipe.fuel;
 
 import gregtech.api.GTValues;
-import gregtech.api.gui.GuiTextures;
+import gregtech.api.gui.*;
+import gregtech.api.gui.widgets.ProgressWidget;
 import gregtech.api.recipes.machines.FuelRecipeMap;
 import gregtech.integration.jei.utils.render.FluidStackTextRenderer;
 import mezz.jei.api.IGuiHelper;
@@ -15,10 +16,16 @@ public class FuelRecipeMapCategory implements IRecipeCategory<GTFuelRecipeWrappe
 
     private final FuelRecipeMap recipeMap;
     private final IDrawable background;
+    private final ModularUI modularUI;
 
     public FuelRecipeMapCategory(FuelRecipeMap recipeMap, IGuiHelper helper) {
         this.recipeMap = recipeMap;
         this.background = helper.createBlankDrawable(176, 110);
+        this.modularUI = ModularUI.builder(GuiTextures.BLANK_BACKGROUND, this.background.getWidth(), this.background.getHeight())
+                .widget(new ProgressWidget(() -> 0, 77, 22, 20, 20, GuiTextures.PROGRESS_BAR_ARROW, ProgressWidget.MoveType.HORIZONTAL)
+                        .setUpdateOnClient(true))
+                .build(new BlankUIHolder(), Minecraft.getMinecraft().player);
+        this.modularUI.initWidgets();
     }
 
     @Override
@@ -47,11 +54,19 @@ public class FuelRecipeMapCategory implements IRecipeCategory<GTFuelRecipeWrappe
             new FluidStackTextRenderer(recipeWrapper.recipe.getRecipeFluid().amount, false, 16, 16, null),
             52, 24, 16, 16, 0, 0);
         recipeLayout.getFluidStacks().set(ingredients);
+        this.modularUI.guiWidgets.values().stream()
+                .filter(widget -> widget instanceof ProgressWidget)
+                .forEach(widget -> ((ProgressWidget) widget).setMaxProgress(recipeWrapper.getRecipe().getDuration()));
     }
 
     @Override
     public void drawExtras(Minecraft minecraft) {
-        GuiTextures.PROGRESS_BAR_ARROW.drawSubArea(77, 22, 20, 20, 0.0, 0.0, 1.0, 0.5);
+        for (Widget widget : this.modularUI.guiWidgets.values()) {
+            widget.updateScreen();
+            widget.drawInForeground(0, 0);
+            widget.drawInBackground(0, 0, new IRenderContext() {
+            });
+        }
         GuiTextures.FLUID_SLOT.draw(51, 23, 18, 18);
     }
 }

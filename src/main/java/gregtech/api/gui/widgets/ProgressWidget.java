@@ -47,6 +47,11 @@ public class ProgressWidget extends Widget {
         return this;
     }
 
+    public ProgressWidget setUpdateOnClient(boolean updateOnClient) {
+        this.updateOnClient = updateOnClient;
+        return this;
+    }
+
     @Override
     public void updateScreen() {
         if (this.updateOnClient) {
@@ -95,10 +100,6 @@ public class ProgressWidget extends Widget {
         if (id == 0) {
             this.lastProgressValue = buffer.readDouble();
         }
-    }
-
-    public void setUpdateOnClient(boolean updateOnClient) {
-        this.updateOnClient = updateOnClient;
     }
 
     public void setMaxProgress(int maxProgress) {
