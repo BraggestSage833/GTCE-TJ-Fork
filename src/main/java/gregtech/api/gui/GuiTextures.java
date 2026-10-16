@@ -47,6 +47,7 @@ public class GuiTextures {
     //INDICATORS & ICONS
     public static final TextureArea INDICATOR_NO_ENERGY = TextureArea.fullImage("textures/gui/base/indicator_no_energy.png");
     public static final TextureArea TANK_ICON = TextureArea.fullImage("textures/gui/base/tank_icon.png");
+    public static final TextureArea CAUTION_ICON = TextureArea.fullImage("textures/gui/icon/caution.png");
 
     //WIDGET UI RELATED
     public static final TextureArea SLIDER_BACKGROUND = TextureArea.fullImage("textures/gui/widget/slider_background.png");

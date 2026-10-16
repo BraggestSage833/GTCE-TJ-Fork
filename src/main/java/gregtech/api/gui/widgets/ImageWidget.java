@@ -5,16 +5,20 @@ import gregtech.api.gui.Widget;
 import gregtech.api.gui.resources.TextureArea;
 import gregtech.api.util.Position;
 import gregtech.api.util.Size;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import java.util.Collections;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public class ImageWidget extends Widget {
 
     protected TextureArea area;
-
+    private Supplier<String> hoverTooltip = () -> "";
     private BooleanSupplier predicate;
     private boolean isVisible = true;
 
@@ -29,6 +33,11 @@ public class ImageWidget extends Widget {
 
     public ImageWidget setImage(TextureArea area) {
         this.area = area;
+        return this;
+    }
+
+    public ImageWidget setHoverTooltip(Supplier<String> hoverTooltip) {
+        this.hoverTooltip = hoverTooltip;
         return this;
     }
 
@@ -52,6 +61,16 @@ public class ImageWidget extends Widget {
         super.readUpdateInfo(id, buffer);
         if (id == 1) {
             this.isVisible = buffer.readBoolean();
+        }
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void drawInForeground(int mouseX, int mouseY) {
+        if (this.isVisible && this.hoverTooltip != null && this.isMouseOverElement(mouseX, mouseY)) {
+            String hoverTooltip = this.hoverTooltip.get();
+            if (hoverTooltip != null && !hoverTooltip.isEmpty())
+                drawHoveringText(ItemStack.EMPTY, Collections.singletonList(I18n.format(hoverTooltip)), 300, mouseX, mouseY);
         }
     }
 

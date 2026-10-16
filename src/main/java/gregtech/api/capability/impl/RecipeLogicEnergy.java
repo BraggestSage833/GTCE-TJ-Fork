@@ -16,6 +16,7 @@ public class RecipeLogicEnergy extends AbstractRecipeLogic {
     public RecipeLogicEnergy(MetaTileEntity tileEntity, RecipeMap<?> recipeMap, Supplier<IEnergyContainer> energyContainer, int recipeCacheSize) {
         super(tileEntity, recipeMap, recipeCacheSize);
         this.energyContainer = energyContainer;
+        this.checkOutputsFitBeforeStarting = true;
     }
 
     @Override

@@ -35,6 +35,14 @@ public class WorkableInfoProvider extends CapabilityInfoProvider<IWorkable> {
                 .backgroundColor(0x00000000)
                 .filledColor(0xFF000099)
                 .alternateFilledColor(0xFF000077));
+            if (!capability.isWorkingEnabled()) {
+                IProbeInfo verticalPane = probeInfo.vertical(probeInfo.defaultLayoutStyle().alignment(ElementAlignment.ALIGN_TOPLEFT));
+                if (capability.isHasProblems()) {
+                    verticalPane.text(TextStyleClass.INFO + "{*gregtech.top.has_problems*}");
+                } else if (capability.isActive()) {
+                    verticalPane.text(TextStyleClass.INFO + "{*gregtech.multiblock.running*}");
+                }
+            }
         }
     }
 }

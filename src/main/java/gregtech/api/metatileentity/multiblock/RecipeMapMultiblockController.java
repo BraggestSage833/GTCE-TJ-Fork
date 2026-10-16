@@ -12,6 +12,7 @@ import gregtech.api.capability.impl.EnergyContainerList;
 import gregtech.api.capability.impl.FluidTankList;
 import gregtech.api.capability.impl.ItemHandlerList;
 import gregtech.api.capability.impl.MultiblockRecipeLogic;
+import gregtech.api.gui.Widget;
 import gregtech.api.multiblock.PatternMatchContext;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeMap;
@@ -32,6 +33,8 @@ import net.minecraftforge.items.ItemStackHandler;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static gregtech.api.gui.widgets.AdvancedTextWidget.withButton;
 
 public abstract class RecipeMapMultiblockController extends MultiblockWithDisplayBase {
 
@@ -182,7 +185,20 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
                 textList.add(new TextComponentString(String.format("Cache size (%s) hit (%s) miss (%s)", this.recipeMapWorkable.previousRecipe.getCachedRecipeCount(), this.recipeMapWorkable.previousRecipe.getCacheHit(), this.recipeMapWorkable.previousRecipe.getCacheMiss()))
                         .setStyle(new Style().setColor(TextFormatting.WHITE)));
             }
+            String recipeCheck = this.recipeMapWorkable.isCheckOutputsFitBeforeStarting() ? "recipe_output_check.enabled" : "recipe_output_check.disabled";
+            textList.add(withButton(new TextComponentTranslation("gregtech.multiblock.check_output_fit_before"), recipeCheck)
+                    .appendSibling(new TextComponentTranslation(this.recipeMapWorkable.isCheckOutputsFitBeforeStarting() ?"gregtech.multiblock.check_output_fit_before.enabled" :
+                            "gregtech.multiblock.check_output_fit_before.disabled")));
+            if (this.recipeMapWorkable.isHasProblems())
+                textList.add(new TextComponentTranslation(this.recipeMapWorkable.getHasProblemsReason()));
         }
+    }
+
+    @Override
+    protected void handleDisplayClick(String componentData, Widget.ClickData clickData) {
+        super.handleDisplayClick(componentData, clickData);
+        if (componentData.contains("recipe_output_check"))
+            this.recipeMapWorkable.setUseOptimizedRecipeLookUp(!componentData.endsWith("enabled"));
     }
 
     @Override

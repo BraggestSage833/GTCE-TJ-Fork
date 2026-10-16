@@ -12,7 +12,8 @@ enchantment.disjunction=Disjunction
 
 gregtech.top.energy_stored=Energy:
 gregtech.top.progress=Progress:
-gregtech.top.working_disabled=Working Disabled
+gregtech.top.working_disabled=§eWorking Disabled
+gregtech.top.has_problems=§6Has Problems
 
 gregtech.top.transform_up=§cStep Up§r
 gregtech.top.transform_down=§aStep Down§r
@@ -2999,6 +3000,7 @@ gregtech.universal.tooltip.amperage_out_till=Amperage OUT up to: §e%,d
 gregtech.universal.tooltip.item_storage_capacity=Item Slots: %,d
 gregtech.universal.tooltip.fluid_storage_capacity=Fluid Capacity: %,d mb
 gregtech.universal.tooltip.max_voltage_in=Max Voltage IN: §a%,d §7(§a%s§7)
+gregtech.universal.not_enough_output_space=Not enough output space
 
 gregtech.recipe.total=Total: %,d EU
 gregtech.recipe.eu=Usage: %,d EU/t (%s)
@@ -3066,9 +3068,9 @@ gregtech.fluid_pipe.throughput=Transfer: §e%,d mb/t
 gregtech.fluid_pipe.max_temperature=Max Temperature: §c%,dK
 gregtech.fluid_pipe.non_gas_proof=Can't transfer gases.
 
-gregtech.multiblock.work_paused=Work Paused.
-gregtech.multiblock.running=Running perfectly.
-gregtech.multiblock.idling=Idling.
+gregtech.multiblock.work_paused=§eWork Paused.
+gregtech.multiblock.running=§aRunning perfectly.
+gregtech.multiblock.idling=§7Idling.
 gregtech.multiblock.not_enough_energy=WARNING: Machine needs more energy.
 gregtech.multiblock.progress=Progress: %s%%
 gregtech.multiblock.invalid_structure=Invalid structure.
@@ -3116,6 +3118,9 @@ gregtech.multiblock.large_boiler.heat_efficiency=Heat Efficiency: %d%%
 gregtech.multiblock.large_boiler.heat_efficiency.tooltip=The higher boiler temperature is, the higher it's fuel efficiency
 gregtech.multiblock.large_boiler.throttle.tooltip=Boiler can output less steam and consume less fuel, but it comes with price: the fuel efficiency is lower at higher throttle rates.
 gregtech.multiblock.large_boiler.throttle_modify=Modify Throttle:
+gregtech.multiblock.check_output_fit_before=Recipe Output Check Mode:
+gregtech.multiblock.check_output_fit_before.enabled=[Check if outputs fit before starting recipe]
+gregtech.multiblock.check_output_fit_before.disabled=[Check if outputs fit before finishing recipe]
 
 gregtech.command.usage=Usage: /gregtech <worldgen/util>
 gregtech.command.worldgen.usage=Usage: /gregtech worldgen <reload>
