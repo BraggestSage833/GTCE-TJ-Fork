@@ -174,8 +174,10 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
             }
             String recipeCheck = this.recipeMapWorkable.isCheckOutputsFitBeforeStarting() ? "recipe_output_check.enabled" : "recipe_output_check.disabled";
             textList.add(withButton(new TextComponentTranslation("gregtech.multiblock.check_output_fit_before"), recipeCheck)
-                    .appendSibling(new TextComponentTranslation(this.recipeMapWorkable.isCheckOutputsFitBeforeStarting() ? "gregtech.multiblock.check_output_fit_before.enabled" :
+                    .appendSibling(new TextComponentTranslation(this.recipeMapWorkable.isCheckOutputsFitBeforeStarting() ?"gregtech.multiblock.check_output_fit_before.enabled" :
                             "gregtech.multiblock.check_output_fit_before.disabled")));
+            if (this.recipeMapWorkable.isHasProblems())
+                textList.add(new TextComponentTranslation(this.recipeMapWorkable.getHasProblemsReason()));
         }
     }
 
