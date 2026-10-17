@@ -132,29 +132,10 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             return;
         }
 
-        /*
-        EnumFacing facing = getFacingToNeighbor(pos, fromPos);
-        if (facing != null && !(blockIn instanceof BlockPipe)
-        && !pipeTile.isConnected(facing) && canAutoConnect(pipeTile, facing)) {
-            pipeTile.setConnection(facing, true, false);
-        }
-         */
-
         updateActiveNodeStatus(worldIn, pos, pipeTile);
         pipeTile.getCoverableImplementation().updateInputRedstoneSignals();
     }
-    /*
-    @Nullable
-    private static EnumFacing getFacingToNeighbor(BlockPos pos, BlockPos neighbor) {
-        for (EnumFacing facing : EnumFacing.VALUES) {
-            if (pos.offset(facing).equals(neighbor)) {
-                return facing;
-            }
-        }
 
-        return null;
-    }
-    */
     @Override
     public boolean canConnectRedstone(IBlockState state, IBlockAccess world, BlockPos pos, @Nullable EnumFacing side) {
         IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(world, pos);

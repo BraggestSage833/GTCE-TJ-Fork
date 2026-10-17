@@ -35,7 +35,7 @@ public class ItemBlockPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
             IPipeTile<PipeType, NodeDataType> placedPipe = blockPipe.getPipeTileEntity(world, pos);
             if (placedPipe != null) {
                 EnumFacing towardClicked = side.getOpposite();
-                if (blockPipe.canAutoConnect(placedPipe, towardClicked)) {
+                if (player.isSneaking() && blockPipe.canAutoConnect(placedPipe, towardClicked)) {
                     placedPipe.setConnection(towardClicked, true, false);
                 }
 
