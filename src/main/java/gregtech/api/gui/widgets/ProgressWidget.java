@@ -5,6 +5,7 @@ import gregtech.api.gui.Widget;
 import gregtech.api.gui.resources.TextureArea;
 import gregtech.api.util.Position;
 import gregtech.api.util.Size;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 
 import java.util.function.DoubleSupplier;
@@ -23,6 +24,8 @@ public class ProgressWidget extends Widget {
     private TextureArea filledBarArea;
 
     private double lastProgressValue;
+    private boolean updateOnClient;
+    private int maxProgress;
 
     public ProgressWidget(DoubleSupplier progressSupplier, int x, int y, int width, int height) {
         super(new Position(x, y), new Size(width, height));
@@ -42,6 +45,20 @@ public class ProgressWidget extends Widget {
         this.filledBarArea = filledBarArea;
         this.moveType = moveType;
         return this;
+    }
+
+    public ProgressWidget setUpdateOnClient(boolean updateOnClient) {
+        this.updateOnClient = updateOnClient;
+        return this;
+    }
+
+    @Override
+    public void updateScreen() {
+        if (this.updateOnClient) {
+            double progress = Minecraft.getMinecraft().world.getTotalWorldTime() % this.maxProgress;
+            progress += this.maxProgress == 1 ? 1 : 0; // show full bar if 1 ticking
+            this.lastProgressValue = this.maxProgress == 0 ? 0 : progress / this.maxProgress;
+        }
     }
 
     @Override
@@ -84,5 +101,9 @@ public class ProgressWidget extends Widget {
         if (id == 0) {
             this.lastProgressValue = buffer.readDouble();
         }
+    }
+
+    public void setMaxProgress(int maxProgress) {
+        this.maxProgress = maxProgress;
     }
 }

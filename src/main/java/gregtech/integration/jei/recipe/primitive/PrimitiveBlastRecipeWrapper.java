@@ -53,4 +53,7 @@ public class PrimitiveBlastRecipeWrapper implements IRecipeWrapper {
 		minecraft.fontRenderer.drawString(I18n.format("gregtech.recipe.duration", this.recipe.getDuration() / 20f), 0, 55, 0x111111);
 	}
 
+    public PrimitiveBlastFurnaceRecipe getRecipe() {
+        return this.recipe;
+    }
 }
