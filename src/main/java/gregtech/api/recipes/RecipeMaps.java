@@ -576,7 +576,7 @@ public class RecipeMaps {
      */
 
     @ZenProperty
-    public static final RecipeMap<SimpleRecipeBuilder> WIREMILL_RECIPES = new RecipeMap<>("wiremill", 1, 1, 1, 1, 0, 0, 0, 0, new SimpleRecipeBuilder())
+    public static final RecipeMap<SimpleRecipeBuilder> WIREMILL_RECIPES = new RecipeMap<>("wiremill", 1, 2, 1, 1, 0, 0, 0, 0, new SimpleRecipeBuilder())
         .setSlotOverlay(false, false, GuiTextures.WIREMILL_OVERLAY)
         .setProgressBar(GuiTextures.PROGRESS_BAR_WIREMILL, MoveType.HORIZONTAL)
             .setSound(GTSoundEvents.MOTOR);

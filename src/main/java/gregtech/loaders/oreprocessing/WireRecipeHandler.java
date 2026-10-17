@@ -1,11 +1,10 @@
 package gregtech.loaders.oreprocessing;
 
-import forestry.farming.logic.crops.CropRubber;
 import gregtech.api.GTValues;
 import gregtech.api.items.OreDictNames;
-import gregtech.api.items.metaitem.MetaItem;
 import gregtech.api.recipes.ModHandler;
 import gregtech.api.recipes.RecipeMaps;
+import gregtech.api.recipes.ingredients.IntCircuitIngredient;
 import gregtech.api.unification.OreDictUnifier;
 import gregtech.api.unification.material.Materials;
 import gregtech.api.unification.material.type.DustMaterial.MatFlags;
@@ -16,16 +15,16 @@ import gregtech.api.unification.ore.OrePrefix;
 import gregtech.api.unification.stack.UnificationEntry;
 import gregtech.api.util.GTUtility;
 import gregtech.common.items.MetaItems;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import org.apache.commons.lang3.ArrayUtils;
-import scala.tools.cmd.Meta;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static gregtech.api.GTValues.M;
+import static gregtech.api.recipes.RecipeMaps.WIREMILL_RECIPES;
+import static gregtech.api.unification.ore.OrePrefix.*;
+import static gregtech.api.unification.ore.OrePrefix.wireGtHex;
 import static gregtech.api.util.GTUtility.getTieredVoltageMultiplier;
 
 public class WireRecipeHandler {
@@ -58,6 +57,8 @@ public class WireRecipeHandler {
             OrePrefix.cableGtSingle, OrePrefix.cableGtDouble, OrePrefix.cableGtQuadruple, OrePrefix.cableGtOctal, OrePrefix.cableGtHex
     };
 
+    private static final OrePrefix[] wireSizes = { wireGtDouble, wireGtQuadruple, wireGtOctal, wireGtHex };
+
     public static void processWireSingle(OrePrefix wirePrefix, IngotMaterial material) {
         RecipeMaps.EXTRUDER_RECIPES.recipeBuilder()
                 .input(OrePrefix.ingot, material)
@@ -70,9 +71,21 @@ public class WireRecipeHandler {
         RecipeMaps.WIREMILL_RECIPES.recipeBuilder()
                 .input(OrePrefix.ingot, material)
                 .outputs(OreDictUnifier.get(OrePrefix.wireGtSingle, material, 2))
+                .notConsumable(IntCircuitIngredient.getIntegratedCircuit((1)))
                 .duration((int) material.getAverageMass())
                 .EUt(getTieredVoltageMultiplier(material))
                 .buildAndRegister();
+
+        for (OrePrefix wireSize : wireSizes) {
+            final int multiplier = (int) (wireSize.getMaterialAmount(material) / GTValues.M);
+            WIREMILL_RECIPES.recipeBuilder()
+                    .input(OrePrefix.ingot, material, multiplier)
+                    .notConsumable(IntCircuitIngredient.getIntegratedCircuit((multiplier * 2)))
+                    .output(wireSize, material)
+                    .duration((int) (material.getMass() * multiplier))
+                    .EUt(getTieredVoltageMultiplier(material))
+                    .buildAndRegister();
+        }
 
         if (!material.hasFlag(MatFlags.NO_WORKING)) {
             ModHandler.addShapedRecipe(String.format("%s_wire_single", material),
@@ -203,5 +216,4 @@ public class WireRecipeHandler {
         return material instanceof IngotMaterial && ((IngotMaterial) material)
                 .blastFurnaceTemperature >= 2800 ? 32 : 8;
     }
-
 }
