@@ -6,4 +6,7 @@ public interface IControllable {
 
     void setWorkingEnabled(boolean isActivationAllowed);
 
+    default boolean isHasProblems() {
+        return false;
+    }
 }

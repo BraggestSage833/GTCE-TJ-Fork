@@ -51,7 +51,6 @@ public class ItemHandlerList implements IItemHandlerModifiable {
     @Override
     public ItemStack getStackInSlot(int slot) {
         IItemHandler itemHandler = handlerBySlotIndex.get(slot);
-        int realSlot = slot - baseIndexOffset.get(itemHandler);
         return itemHandler.getStackInSlot(slot - baseIndexOffset.get(itemHandler));
     }
 
