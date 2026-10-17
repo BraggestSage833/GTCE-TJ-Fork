@@ -17,6 +17,8 @@ import gregtech.api.cover.ICoverable;
 import gregtech.api.cover.IFacadeCover;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.api.pipenet.block.BlockPipe;
+import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.api.render.MetaTileEntityRenderer;
 import gregtech.common.items.MetaItems;
 import gregtech.common.tools.DamageValues;
@@ -218,28 +220,78 @@ public class BlockMachine extends BlockCustomParticle implements ITileEntityProv
     public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
         MetaTileEntityHolder holder = (MetaTileEntityHolder) worldIn.getTileEntity(pos);
         MetaTileEntity sampleMetaTileEntity = GregTechAPI.META_TILE_ENTITY_REGISTRY.getObjectById(stack.getItemDamage());
-        if (holder != null && sampleMetaTileEntity != null) {
-            MetaTileEntity metaTileEntity = holder.setMetaTileEntity(sampleMetaTileEntity);
-            if (stack.hasTagCompound()) {
-                metaTileEntity.initFromItemStackData(stack.getTagCompound());
-            }
-            BlockPos playerPos = placer.getPosition();
-            int offsetX = Math.abs(pos.getX() - playerPos.getX());
-            int offsetZ = Math.abs(pos.getZ() - playerPos.getZ());
-            EnumFacing placeFacing = placer.getHorizontalFacing().getOpposite();
-            if (offsetX < 3 && offsetZ < 3 && playerPos.getY() > pos.getY() + (offsetX + offsetZ) / 2) {
-                placeFacing = EnumFacing.UP;
-            } else if (offsetX < 3 && offsetZ < 3 && playerPos.getY() + 1 < pos.getY() - (offsetX + offsetZ) / 2) {
-                placeFacing = EnumFacing.DOWN;
-            }
-            if (metaTileEntity.isValidFrontFacing(placeFacing)) {
-                metaTileEntity.setFrontFacing(placeFacing);
-                return;
-            }
+        if (holder == null && sampleMetaTileEntity == null) {
+            return;
+        }
+
+        MetaTileEntity metaTileEntity = holder.setMetaTileEntity(sampleMetaTileEntity);
+        if (stack.hasTagCompound()) {
+            metaTileEntity.initFromItemStackData(stack.getTagCompound());
+        }
+
+        BlockPos playerPos = placer.getPosition();
+        int offsetX = Math.abs(pos.getX() - playerPos.getX());
+        int offsetZ = Math.abs(pos.getZ() - playerPos.getZ());
+
+        EnumFacing placeFacing = placer.getHorizontalFacing().getOpposite();
+
+        if (offsetX < 3 && offsetZ < 3 && playerPos.getY() > pos.getY() + (offsetX + offsetZ) / 2) {
+            placeFacing = EnumFacing.UP;
+        } else if (offsetX < 3 && offsetZ < 3 && playerPos.getY() + 1 < pos.getY() - (offsetX + offsetZ) / 2) {
+            placeFacing = EnumFacing.DOWN;
+        }
+
+        if (metaTileEntity.isValidFrontFacing(placeFacing)) {
+            metaTileEntity.setFrontFacing(placeFacing);
+        } else {
             placeFacing = placer.getHorizontalFacing().getOpposite();
+
             if (metaTileEntity.isValidFrontFacing(placeFacing)) {
                 metaTileEntity.setFrontFacing(placeFacing);
             }
+        }
+
+        if (worldIn.isRemote || !placer.isSneaking())  {
+            return;
+        }
+
+        IPipeTile bestPipe = null;
+        EnumFacing bestSide = null;
+        double bestDist = Double.MAX_VALUE;
+        EntityPlayer player = (EntityPlayer) placer;
+
+        for (EnumFacing side : EnumFacing.VALUES) {
+            BlockPos pipePos = pos.offset(side);
+            TileEntity te = worldIn.getTileEntity(pipePos);
+            if (!(te instanceof IPipeTile)) {
+                continue;
+            }
+
+            RayTraceResult hit = RayTracer.retraceBlock(worldIn, player, pipePos);
+            if (hit == null) {
+                continue;
+            }
+
+            EnumFacing pipeSide = side.getOpposite();
+            if (hit.sideHit != pipeSide) {
+                continue;
+            }
+
+            double dist = hit.hitVec.squareDistanceTo(RayTracer.getStartVec(player));
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestPipe = (IPipeTile) te;
+                bestSide = pipeSide;
+            }
+        }
+
+        if (bestPipe == null || bestPipe.isConnected(bestSide)) {
+            return;
+        }
+
+        BlockPipe block = bestPipe.getPipeBlock();
+        if (block != null && block.canAutoConnect(bestPipe, bestSide)) {
+            bestPipe.setConnection(bestSide, true, false);
         }
     }
 

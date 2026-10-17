@@ -2,7 +2,6 @@ package gregtech.common.pipelike.cable.tile;
 
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.IEnergyContainer;
-import gregtech.api.pipenet.Node;
 import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.common.pipelike.cable.Insulation;
 import gregtech.common.pipelike.cable.WireProperties;
@@ -14,9 +13,9 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.List;
 
 public class CableEnergyContainer implements IEnergyContainer {
@@ -34,67 +33,78 @@ public class CableEnergyContainer implements IEnergyContainer {
     public long acceptEnergyFromNetwork(EnumFacing side, long voltage, long amperage) {
         EnergyNet energyNet = getEnergyNet();
         if (energyNet == null) {
-            return 0L;
+            return 0;
         }
-        List<RoutePath> paths = getPaths();
-        long amperesUsed = 0;
+
+        List<RoutePath> paths = getPaths(energyNet);
+        World world = tileEntityCable.getPipeWorld();
+
+        long now = world.getTotalWorldTime();
+        long ampsUsed = 0;
+
         for (RoutePath routePath : paths) {
             if (routePath.totalLoss >= voltage) {
                 continue;
             }
 
-            BlockPos destinationPos = routePath.destination;
-            Node<WireProperties> destinationNode = energyNet.getAllNodes().get(destinationPos);
-            if (destinationNode == null) {
-                continue;
-            }
+            long ampsOnPath = dispatchEnergyToNode(routePath.destination, routePath.destinationNode.blockedConnections,
+                    voltage - routePath.totalLoss, amperage - ampsUsed
+            );
 
-            amperesUsed += dispatchEnergyToNode(destinationPos, destinationNode.blockedConnections, voltage - routePath.totalLoss, amperage - amperesUsed);
+            ampsUsed += ampsOnPath;
 
-            if (voltage > routePath.minVoltage || amperesUsed > routePath.maxAmperage) {
-                burnAllPaths(paths, voltage, amperage, amperesUsed);
+            if (routePath.addAmperageAndBurn(world, now, voltage, ampsOnPath)) {
                 break;
             }
-            if (amperesUsed == amperage) {
+
+            if (ampsUsed == amperage) {
                 break;
             }
         }
+
         energyNet.incrementCurrentAmperage(amperage, voltage);
-        return amperesUsed;
+        return ampsUsed;
     }
 
-    private void burnAllPaths(List<RoutePath> paths, long voltage, long amperage, long lastAmperage) {
-        for (RoutePath pathToBurn : paths) {
-            if (voltage > pathToBurn.minVoltage || amperage > pathToBurn.maxAmperage || lastAmperage > pathToBurn.maxAmperage) {
-                pathToBurn.burnCablesInPath(tileEntityCable.getPipeWorld(), voltage, Math.max(amperage, lastAmperage));
-            }
-        }
-    }
 
-    private long dispatchEnergyToNode(BlockPos nodePos, int nodeBlockedConnections,  long voltage, long amperage) {
-        long amperesUsed = 0L;
+    private long dispatchEnergyToNode(BlockPos nodePos, int nodeBlockedConnections, long volt, long amp) {
+        long ampsUsed = 0L;
         World world = tileEntityCable.getPipeWorld();
         PooledMutableBlockPos blockPos = PooledMutableBlockPos.retain();
-        for (EnumFacing facing : EnumFacing.VALUES) {
-            if ((nodeBlockedConnections & 1 << facing.getIndex()) > 0) {
-                continue;
-            }
-            blockPos.setPos(nodePos).move(facing);
-            if (!world.isBlockLoaded(nodePos)) {
-                continue;
-            }
-            TileEntity tileEntity = world.getTileEntity(blockPos);
-            if (tileEntity == null || tileEntityCable.getPipeBlock().getPipeTileEntity(tileEntity) != null) {
-                continue;
-            }
 
-            IEnergyContainer energyContainer = tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, facing.getOpposite());
-            if (energyContainer == null) continue;
-            amperesUsed += energyContainer.acceptEnergyFromNetwork(facing.getOpposite(), voltage, amperage - amperesUsed);
-            if (amperesUsed == amperage) break;
+        try {
+            for (EnumFacing facing : EnumFacing.VALUES) {
+                if ((nodeBlockedConnections & 1 << facing.getIndex()) != 0) {
+                    continue;
+                }
+
+                blockPos.setPos(nodePos).move(facing);
+
+                Chunk chunk = world.getChunkProvider().getLoadedChunk(blockPos.getX() >> 4, blockPos.getZ() >> 4);
+                if (chunk == null) {
+                    continue;
+                }
+
+                TileEntity tileEntity = chunk.getTileEntity(blockPos, Chunk.EnumCreateEntityType.IMMEDIATE);
+                if (tileEntity == null || tileEntityCable.getPipeBlock().getPipeTileEntity(tileEntity) != null) {
+                    continue;
+                }
+
+                IEnergyContainer energyContainer = tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, facing.getOpposite());
+                if (energyContainer == null) {
+                    continue;
+                }
+
+                ampsUsed += energyContainer.acceptEnergyFromNetwork(facing.getOpposite(), volt, amp - ampsUsed);
+                if (ampsUsed == amp) {
+                    break;
+                }
+            }
+        } finally {
+            blockPos.release();
         }
-        blockPos.release();
-        return amperesUsed;
+
+        return ampsUsed;
     }
 
     @Override
@@ -115,9 +125,17 @@ public class CableEnergyContainer implements IEnergyContainer {
     @Override
     public long changeEnergy(long energyToAdd) {
         //just a fallback case if somebody will call this method
-        return acceptEnergyFromNetwork(EnumFacing.UP,
-            energyToAdd / getInputVoltage(),
-            energyToAdd / getInputAmperage()) * getInputVoltage();
+        long volt = getInputVoltage();
+        if (energyToAdd <= 0 || volt == 0) {
+            return 0;
+        }
+
+        long amp = energyToAdd / volt;
+        if (amp <= 0) {
+            return 0;
+        }
+
+        return acceptEnergyFromNetwork(EnumFacing.UP, volt, amp) * volt;
     }
 
     @Override
@@ -135,32 +153,28 @@ public class CableEnergyContainer implements IEnergyContainer {
         return 0;
     }
 
-    private void recomputePaths(EnergyNet energyNet) {
-        this.lastCachedUpdate = energyNet.getLastUpdate();
-        this.pathsCache = energyNet.computePatches(tileEntityCable.getPipePos());
-    }
+    private List<RoutePath> getPaths(EnergyNet energyNet) {
+        if (pathsCache == null || energyNet.getLastUpdate() != lastCachedUpdate) {
+            lastCachedUpdate = energyNet.getLastUpdate();
+            pathsCache = energyNet.computePatches(tileEntityCable.getPipePos());
+        }
 
-    private List<RoutePath> getPaths() {
-        EnergyNet energyNet = getEnergyNet();
-        if (energyNet == null) {
-            return Collections.emptyList();
-        }
-        if (pathsCache == null || energyNet.getLastUpdate() > lastCachedUpdate) {
-            recomputePaths(energyNet);
-        }
         return pathsCache;
     }
 
     private EnergyNet getEnergyNet() {
         EnergyNet currentEnergyNet = this.currentEnergyNet.get();
-        if (currentEnergyNet != null && currentEnergyNet.isValid() &&
-            currentEnergyNet.containsNode(tileEntityCable.getPipePos()))
-            return currentEnergyNet; //return current net if it is still valid
+        if (currentEnergyNet != null && currentEnergyNet.isValid() && currentEnergyNet.containsNode(tileEntityCable.getPipePos())) {
+            return currentEnergyNet;  //return current net if it is still valid
+        }
+
         WorldENet worldENet = (WorldENet) tileEntityCable.getPipeBlock().getWorldPipeNet(tileEntityCable.getPipeWorld());
         currentEnergyNet = worldENet.getNetFromPos(tileEntityCable.getPipePos());
+
         if (currentEnergyNet != null) {
             this.currentEnergyNet = new WeakReference<>(currentEnergyNet);
         }
+
         return currentEnergyNet;
     }
 
