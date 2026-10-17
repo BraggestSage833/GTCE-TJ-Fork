@@ -56,6 +56,7 @@ public class ProgressWidget extends Widget {
     public void updateScreen() {
         if (this.updateOnClient) {
             double progress = Minecraft.getMinecraft().world.getTotalWorldTime() % this.maxProgress;
+            progress += this.maxProgress == 1 ? 1 : 0; // show full bar if 1 ticking
             this.lastProgressValue = this.maxProgress == 0 ? 0 : progress / this.maxProgress;
         }
     }
