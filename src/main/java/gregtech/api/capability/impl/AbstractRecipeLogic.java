@@ -306,9 +306,9 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         IMultipleTankHandler exportFluids = getOutputTank();
         return (totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
                 (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())) &&
-                recipe.matchesFound(true, importInventory, importFluids) &&
                 (!this.checkOutputsFitBeforeStarting || (MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
-                        MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs())));
+                        MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs()))) &&
+                recipe.matchesFound(true, importInventory, importFluids);
     }
 
     protected int[] calculateOverclock(int EUt, int duration) {
