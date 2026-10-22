@@ -1,6 +1,8 @@
 package gregtech.common.gui.widget.appeng.slot;
 
 import appeng.api.storage.data.IAEItemStack;
+import gregtech.api.capability.IInventoryNotifiable;
+import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.slot.ExportOnlyAESlot;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.stack.WrappedItemStack;
 import net.minecraft.item.ItemStack;
@@ -10,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> implements IItemHandlerModifiable {
+public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> implements IItemHandlerModifiable, IInventoryNotifiable {
 
-    protected Consumer<Integer> trigger;
+    protected MetaTileEntity metaTileEntity;
 
     public ExportOnlyAEItemSlot(IAEItemStack config, IAEItemStack stock) {
         super(config, stock);
@@ -23,7 +25,6 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
     }
 
     public void setTrigger(Consumer<Integer> trigger) {
-        this.trigger = trigger;
     }
 
     @Override
@@ -79,9 +80,7 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
                     this.stock = null;
                 }
             }
-            if (this.trigger != null) {
-                this.trigger.accept(0);
-            }
+            this.metaTileEntity.setInventoryNotified(true);
             return result;
         }
         return ItemStack.EMPTY;
@@ -114,7 +113,7 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
         } else {
             this.stock.add(stack);
         }
-        this.trigger.accept(0);
+        this.metaTileEntity.setInventoryNotified(true);
     }
 
     @Override
@@ -127,11 +126,16 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
             // todo this could maybe be improved with better comparison check
             this.stock = WrappedItemStack.fromItemStack(stack.createItemStack());
         }
-        this.trigger.accept(0);
+        this.metaTileEntity.setInventoryNotified(true);
     }
 
     @Override
     public int getSlotLimit(int slot) {
         return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
+        this.metaTileEntity = metaTileEntity;
     }
 }

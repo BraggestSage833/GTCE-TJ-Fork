@@ -176,7 +176,6 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected boolean trySearchNewRecipe() {
-        System.out.println("Searching Recipe"); // TODO remove this after testing
         long maxVoltage = getMaxVoltage();
         Recipe currentRecipe = null;
         IItemHandlerModifiable importInventory = getInputInventory();

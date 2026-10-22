@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> implements IFluidTank, IFluidHandler, IInventoryNotifiable {
 
+    protected MetaTileEntity metaTileEntity;
     private MetaTileEntity holder;
 
     public ExportOnlyAEFluidSlot(MetaTileEntity holder, IAEFluidStack config, IAEFluidStack stock) {
@@ -58,7 +59,7 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
         } else {
             this.stock.add(stack);
         }
-        this.holder.setInventoryNotified(true);
+        this.metaTileEntity.setInventoryNotified(true);
     }
 
     @Override
@@ -72,7 +73,7 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
         } else if (this.stock.getStackSize() != stack.getStackSize()) {
             this.stock.setStackSize(stack.getStackSize());
         } else return;
-        this.holder.setInventoryNotified(true);
+        this.metaTileEntity.setInventoryNotified(true);
     }
 
     @Override
@@ -144,7 +145,7 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
             if (this.stock.getStackSize() == 0) {
                 this.stock = null;
             }
-            this.holder.setInventoryNotified(true);
+            this.metaTileEntity.setInventoryNotified(true);
         }
         return result;
     }
@@ -163,6 +164,6 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
 
     @Override
     public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
-        this.holder = metaTileEntity;
+        this.metaTileEntity = metaTileEntity;
     }
 }

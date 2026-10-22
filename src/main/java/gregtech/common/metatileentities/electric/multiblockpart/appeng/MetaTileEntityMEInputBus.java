@@ -183,7 +183,12 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
 
         builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_GT_LOGO, this::isWorkingEnabled, this::setWorkingEnabled));
         // Ghost circuit slot
-        builder.widget(new GhostCircuitWidget(this.circuitInventory, 7 + 18 * 4, 45 + 18 * 3));
+        builder.widget(new GhostCircuitWidget(this.circuitInventory, 7 + 18 * 4, 45 + 18 * 3)
+                .setChangeListener(() -> {
+                    MultiblockControllerBase controllerBase = this.getController();
+                    if (controllerBase != null)
+                        controllerBase.setInventoryNotified(true);
+                }));
 
         // Config slots
         builder.widget(new AEItemConfigWidget(7, 45, this.getAEItemHandler()));

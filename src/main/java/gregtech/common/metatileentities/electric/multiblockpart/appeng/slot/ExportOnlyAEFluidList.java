@@ -64,8 +64,8 @@ public class ExportOnlyAEFluidList implements IInventoryNotifiable {
     @Override
     public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
         for (ExportOnlyAEFluidSlot slot : this.inventory) {
-            if (slot instanceof IInventoryNotifiable)
-                ((IInventoryNotifiable) slot).setMetaTileEntity(metaTileEntity);
+            if (slot != null)
+                slot.setMetaTileEntity(metaTileEntity);
         }
     }
 }

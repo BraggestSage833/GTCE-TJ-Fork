@@ -119,7 +119,12 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
             }
         }
         if (!this.isExportHatch)
-            builder.widget(new GhostCircuitWidget(this.ghostCircuitInventory, 151 + xOffset, 12 + 18 * rowSize));
+            builder.widget(new GhostCircuitWidget(this.ghostCircuitInventory, 151 + xOffset, 12 + 18 * rowSize)
+                    .setChangeListener(() -> {
+                        MultiblockControllerBase controllerBase = this.getController();
+                        if (controllerBase != null)
+                            controllerBase.setInventoryNotified(true);
+                    }));
         return builder.bindPlayerInventory(player.inventory, GuiTextures.SLOT, 7 + xOffset, 18 + 18 * rowSize + 12);
     }
 
