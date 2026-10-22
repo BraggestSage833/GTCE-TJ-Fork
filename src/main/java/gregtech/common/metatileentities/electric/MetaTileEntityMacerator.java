@@ -1,7 +1,7 @@
 package gregtech.common.metatileentities.electric;
 
 import gregtech.api.GTValues;
-import gregtech.api.capability.impl.ItemHandlerList;
+import gregtech.api.capability.impl.NotifiableItemHandlerList;
 import gregtech.api.capability.impl.RecipeLogicEnergy;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -18,13 +18,13 @@ import java.util.Arrays;
 
 public class MetaTileEntityMacerator extends SimpleMachineMetaTileEntity {
 
-    private int outputAmount;
+    private final int outputAmount;
 
     public MetaTileEntityMacerator(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, int outputAmount, OrientedOverlayRenderer renderer, int tier) {
         super(metaTileEntityId, recipeMap, renderer, tier);
         this.outputAmount = outputAmount;
         initializeInventory();
-        this.combinedInputInventory = new ItemHandlerList(Arrays.asList(this.ghostCircuitInventory, this.importItems));
+        this.combinedInputInventory = new NotifiableItemHandlerList(this, Arrays.asList(this.ghostCircuitInventory, this.importItems));
     }
 
     @Override

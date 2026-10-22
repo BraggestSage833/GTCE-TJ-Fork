@@ -66,10 +66,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     protected boolean hasProblems;
     private final long[] V;
     private final String[] VN;
-
-    private int sleepTimer = 0;
-    private int sleepTime = 1;
-    private int failCount = 0;
+    
     private int itemOutputIndex;
     private int fluidOutputIndex;
 
@@ -140,33 +137,19 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
 
     @Override
     public void update() {
-        if (!getMetaTileEntity().getWorld().isRemote) {
-            if (workingEnabled) {
-                if (progressTime > 0) {
-                    updateRecipeProgress();
+        if (!this.getMetaTileEntity().getWorld().isRemote) {
+            if (this.workingEnabled) {
+                if (this.progressTime > 0) {
+                    this.updateRecipeProgress();
                 }
-                if (progressTime == 0 && sleepTimer == 0) {
-                    boolean result = trySearchNewRecipe();
-                    if (!result) {
-                        failCount++;
-                        if (failCount == 5) {
-
-                            sleepTime = Math.min(sleepTime * 2, (ConfigHolder.maxSleepTime >= 0 && ConfigHolder.maxSleepTime <= 400) ? ConfigHolder.maxSleepTime : 20);
-                            failCount = 0;
-
-                        }
-                        sleepTimer = sleepTime;
-                    } else {
-                        sleepTime = 1;
-                        failCount = 0;
-                    }
+                if (this.progressTime == 0 && this.metaTileEntity.isInventoryNotified()) {
+                    this.metaTileEntity.setInventoryNotified(false);
+                    this.trySearchNewRecipe();
                 }
-                if (sleepTimer > 0)
-                    sleepTimer--;
             }
-            if (wasActiveAndNeedsUpdate) {
+            if (this.wasActiveAndNeedsUpdate) {
                 this.wasActiveAndNeedsUpdate = false;
-                setActive(false);
+                this.setActive(false);
             }
         }
     }
@@ -193,6 +176,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected boolean trySearchNewRecipe() {
+        System.out.println("Searching Recipe"); // TODO remove this after testing
         long maxVoltage = getMaxVoltage();
         Recipe currentRecipe = null;
         IItemHandlerModifiable importInventory = getInputInventory();
@@ -410,6 +394,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         //force recipe recheck because inputs could have changed since last time
         //we checked them before starting our recipe, especially if recipe took long time
         this.forceRecipeRecheck = true;
+        this.metaTileEntity.setInventoryNotified(true);
         if (this.hasProblems) {
             this.hasProblems = false;
             this.hasProblemsReason = "";

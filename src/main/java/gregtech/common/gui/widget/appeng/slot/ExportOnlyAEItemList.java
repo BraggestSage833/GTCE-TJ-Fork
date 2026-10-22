@@ -1,19 +1,19 @@
 package gregtech.common.gui.widget.appeng.slot;
 
 import appeng.api.storage.data.IAEItemStack;
+import gregtech.api.capability.impl.NotifiableItemStackHandler;
 import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ExportOnlyAEItemList extends ItemStackHandler {
+public class ExportOnlyAEItemList extends NotifiableItemStackHandler {
 
     protected final int size;
     protected ExportOnlyAEItemSlot[] inventory;
 
-    public ExportOnlyAEItemList(MetaTileEntity holder, int slots, MetaTileEntity entityToNotify) {
-        super(slots);
+    public ExportOnlyAEItemList(MetaTileEntity holder, int slots) {
+        super(holder, slots);
         this.size = slots;
         createInventory(holder);
     }

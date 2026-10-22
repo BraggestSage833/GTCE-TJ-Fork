@@ -57,7 +57,7 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
     @Override
     protected ExportOnlyAEStockingFluidList getAEFluidHandler() {
         if (this.aeFluidHandler == null) {
-            this.aeFluidHandler = new ExportOnlyAEStockingFluidList(this, this.configSlots, getController());
+            this.aeFluidHandler = new ExportOnlyAEStockingFluidList(this, this.configSlots);
         }
         return (ExportOnlyAEStockingFluidList) this.aeFluidHandler;
     }
@@ -321,11 +321,11 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
 
         public ExportOnlyAEStockingFluidSlot(MetaTileEntityMEStockingHatch holder, IAEFluidStack config,
                                              IAEFluidStack stock, MetaTileEntity entityToNotify) {
-            super(holder, config, stock, entityToNotify);
+            super(holder, config, stock);
         }
 
-        public ExportOnlyAEStockingFluidSlot(MetaTileEntityMEStockingHatch holder, MetaTileEntity entityToNotify) {
-            super(holder, entityToNotify);
+        public ExportOnlyAEStockingFluidSlot(MetaTileEntityMEStockingHatch holder) {
+            super(holder);
         }
 
         @Override
@@ -378,20 +378,19 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
 
         private final MetaTileEntityMEStockingHatch holder;
 
-        public ExportOnlyAEStockingFluidList(MetaTileEntityMEStockingHatch holder, int slots,
-                                             MetaTileEntity entityToNotify) {
-            super(holder, slots, entityToNotify);
+        public ExportOnlyAEStockingFluidList(MetaTileEntityMEStockingHatch holder, int slots) {
+            super(holder, slots);
             this.holder = holder;
         }
 
         @Override
-        protected void createInventory(MetaTileEntity holder, MetaTileEntity entityToNotify) {
+        protected void createInventory(MetaTileEntity holder) {
             if (!(holder instanceof MetaTileEntityMEStockingHatch stocking)) {
                 throw new IllegalArgumentException("Cannot create Stocking Fluid List for nonstocking MetaTileEntity!");
             }
             this.inventory = new ExportOnlyAEStockingFluidSlot[size];
             for (int i = 0; i < size; i++) {
-                this.inventory[i] = new ExportOnlyAEStockingFluidSlot(stocking, entityToNotify);
+                this.inventory[i] = new ExportOnlyAEStockingFluidSlot(stocking);
             }
         }
 

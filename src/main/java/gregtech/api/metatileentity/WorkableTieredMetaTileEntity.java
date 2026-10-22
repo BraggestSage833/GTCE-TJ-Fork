@@ -5,10 +5,7 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
-import gregtech.api.capability.impl.FilteredFluidHandler;
-import gregtech.api.capability.impl.FluidTankList;
-import gregtech.api.capability.impl.ItemHandlerList;
-import gregtech.api.capability.impl.RecipeLogicEnergy;
+import gregtech.api.capability.impl.*;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeMap;
 import gregtech.api.render.OrientedOverlayRenderer;
@@ -41,7 +38,7 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
 
     protected final RecipeLogicEnergy workable;
     protected final OrientedOverlayRenderer renderer;
-    protected final ItemStackHandler ghostCircuitInventory = new ItemStackHandler(1);
+    protected final ItemStackHandler ghostCircuitInventory = new NotifiableItemStackHandler(this, 1);
     protected IItemHandlerModifiable combinedInputInventory;
 
     public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, OrientedOverlayRenderer renderer, int tier) {
@@ -54,7 +51,7 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
         this.workable = createWorkable(recipeMap, recipeCacheSize);
         initializeInventory();
         reinitializeEnergyContainer();
-        this.combinedInputInventory = new ItemHandlerList(Arrays.asList(this.ghostCircuitInventory, this.importItems));
+        this.combinedInputInventory = new NotifiableItemHandlerList(this, Arrays.asList(this.ghostCircuitInventory, this.importItems));
     }
 
     protected RecipeLogicEnergy createWorkable(RecipeMap<?> recipeMap) {
@@ -105,13 +102,13 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
     @Override
     protected IItemHandlerModifiable createImportItemHandler() {
         if (workable == null) return new ItemStackHandler(0);
-        return new ItemStackHandler(workable.recipeMap.getMaxInputs());
+        return new NotifiableItemStackHandler(this, workable.recipeMap.getMaxInputs());
     }
 
     @Override
     protected IItemHandlerModifiable createExportItemHandler() {
         if (workable == null) return new ItemStackHandler(0);
-        return new ItemStackHandler(workable.recipeMap.getMaxOutputs());
+        return new NotifiableItemStackHandler(this, workable.recipeMap.getMaxOutputs());
     }
 
     @Override
@@ -119,11 +116,11 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
         if (workable == null) return new FluidTankList(false);
         FilteredFluidHandler[] fluidImports = new FilteredFluidHandler[workable.recipeMap.getMaxFluidInputs()];
         for (int i = 0; i < fluidImports.length; i++) {
-            FilteredFluidHandler filteredFluidHandler = new FilteredFluidHandler(getInputTankCapacity(i));
+            FilteredFluidHandler filteredFluidHandler = new FilteredFluidHandler(this, getInputTankCapacity(i));
             filteredFluidHandler.setFillPredicate(this::canInputFluid);
             fluidImports[i] = filteredFluidHandler;
         }
-        return new FluidTankList(false, fluidImports);
+        return new NotifiableFluidTankList(this, false, fluidImports);
     }
 
     @Override
@@ -131,9 +128,9 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
         if (workable == null) return new FluidTankList(false);
         FluidTank[] fluidExports = new FluidTank[workable.recipeMap.getMaxFluidOutputs()];
         for (int i = 0; i < fluidExports.length; i++) {
-            fluidExports[i] = new FluidTank(getOutputTankCapacity(i));
+            fluidExports[i] = new NotifiableFluidTank(this, getOutputTankCapacity(i));
         }
-        return new FluidTankList(false, fluidExports);
+        return new NotifiableFluidTankList(this, false, fluidExports);
     }
 
     protected boolean canInputFluid(FluidStack inputFluid) {

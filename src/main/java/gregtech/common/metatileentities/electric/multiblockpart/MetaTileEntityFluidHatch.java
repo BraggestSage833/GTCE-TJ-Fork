@@ -3,7 +3,10 @@ package gregtech.common.metatileentities.electric.multiblockpart;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
+import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.capability.impl.FluidTankList;
+import gregtech.api.capability.impl.NotifiableFluidTank;
+import gregtech.api.capability.impl.NotifiableFluidTankList;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.ModularUI.Builder;
@@ -15,6 +18,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
+import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.SimpleOverlayRenderer;
 import gregtech.api.render.Textures;
 import net.minecraft.client.resources.I18n;
@@ -35,15 +39,15 @@ import java.util.List;
 public class MetaTileEntityFluidHatch extends MetaTileEntityMultiblockPart implements IMultiblockAbilityPart<IFluidTank> {
 
     private static final int INITIAL_INVENTORY_SIZE = 8000;
-    private ItemStackHandler containerInventory;
-    private FluidTank fluidTank;
-    private boolean isExportHatch;
+    private final ItemStackHandler containerInventory;
+    private final FluidTank fluidTank;
+    private final boolean isExportHatch;
 
     public MetaTileEntityFluidHatch(ResourceLocation metaTileEntityId, int tier, boolean isExportHatch) {
         super(metaTileEntityId, tier);
         this.containerInventory = new ItemStackHandler(2);
         this.isExportHatch = isExportHatch;
-        this.fluidTank = new FluidTank(getInventorySize());
+        this.fluidTank = new NotifiableFluidTank(this, getInventorySize());
         initializeInventory();
     }
 
@@ -80,7 +84,7 @@ public class MetaTileEntityFluidHatch extends MetaTileEntityMultiblockPart imple
                 pushFluidsIntoNearbyHandlers(getFrontFacing());
             } else {
                 fillInternalTankFromFluidContainer(containerInventory, containerInventory, 0, 1);
-                if(fluidTank.getFluidAmount() < fluidTank.getCapacity()) {
+                if (fluidTank.getFluidAmount() < fluidTank.getCapacity()) {
                     pullFluidsFromNearbyHandlers(getFrontFacing());
                 }
             }
@@ -104,12 +108,12 @@ public class MetaTileEntityFluidHatch extends MetaTileEntityMultiblockPart imple
 
     @Override
     protected FluidTankList createImportFluidHandler() {
-        return isExportHatch ? new FluidTankList(false) : new FluidTankList(false, fluidTank);
+        return isExportHatch ? new FluidTankList(false) : new NotifiableFluidTankList(this, false, fluidTank);
     }
 
     @Override
     protected FluidTankList createExportFluidHandler() {
-        return isExportHatch ? new FluidTankList(false, fluidTank) : new FluidTankList(false);
+        return isExportHatch ? new NotifiableFluidTankList(this, false, fluidTank) : new FluidTankList(false);
     }
 
 
@@ -121,6 +125,24 @@ public class MetaTileEntityFluidHatch extends MetaTileEntityMultiblockPart imple
     @Override
     public void registerAbilities(List<IFluidTank> abilityList) {
         abilityList.addAll(isExportHatch ? this.exportFluids.getFluidTanks() : this.importFluids.getFluidTanks());
+    }
+
+    @Override
+    public void addToMultiBlock(MultiblockControllerBase controllerBase) {
+        super.addToMultiBlock(controllerBase);
+        if (this.importFluids instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.importFluids).setMetaTileEntity(controllerBase);
+        if (this.exportFluids instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.exportFluids).setMetaTileEntity(controllerBase);
+    }
+
+    @Override
+    public void removeFromMultiBlock(MultiblockControllerBase controllerBase) {
+        super.removeFromMultiBlock(controllerBase);
+        if (this.importFluids instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.importFluids).setMetaTileEntity(this);
+        if (this.exportFluids instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.exportFluids).setMetaTileEntity(this);
     }
 
     @Override
