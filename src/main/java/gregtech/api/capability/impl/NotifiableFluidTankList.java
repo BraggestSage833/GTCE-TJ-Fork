@@ -6,9 +6,16 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class NotifiableFluidTankList extends FluidTankList implements IInventoryNotifiable {
 
     public NotifiableFluidTankList(MetaTileEntity metaTileEntity, boolean allowSameFluidFill, IFluidTank... fluidTanks) {
+        super(allowSameFluidFill, fluidTanks);
+        this.setMetaTileEntity(metaTileEntity);
+    }
+
+    public NotifiableFluidTankList(MetaTileEntity metaTileEntity, boolean allowSameFluidFill, List<? extends IFluidTank> fluidTanks) {
         super(allowSameFluidFill, fluidTanks);
         this.setMetaTileEntity(metaTileEntity);
     }
