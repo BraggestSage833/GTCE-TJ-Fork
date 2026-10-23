@@ -45,6 +45,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     protected ItemStack[] lastItemInputs;
     protected FluidStack[] lastFluidInputs;
     public RecipeLRUCache previousRecipe;
+    protected Recipe lastRecipe;
     public int recipeCacheSize;
     protected boolean useOptimizedRecipeLookUp = true;
     protected boolean allowOverclocking = true;
@@ -142,7 +143,10 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
                 if (this.progressTime > 0) {
                     this.updateRecipeProgress();
                 }
-                if (this.progressTime == 0 && this.metaTileEntity.isInventoryNotified()) {
+                // lastRecipe field is used to bypass this check once a recipe is found so the recipe logic can continue to check for
+                // other conditions such as fusion reactor has enough heat or energy to prevent recipe logic from locking up
+                // it'll be cleared once recipe is finished
+                if (this.progressTime == 0 && (this.metaTileEntity.isInventoryNotified() || this.lastRecipe != null)) {
                     this.metaTileEntity.setInventoryNotified(false);
                     this.trySearchNewRecipe();
                 }
@@ -281,6 +285,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected boolean setupAndConsumeRecipeInputs(Recipe recipe) {
+        this.lastRecipe = recipe;
         int[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
         long totalEUt = (long) resultOverclock[0] * resultOverclock[1];
         IItemHandlerModifiable importInventory = getInputInventory();
@@ -394,6 +399,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         //we checked them before starting our recipe, especially if recipe took long time
         this.forceRecipeRecheck = true;
         this.metaTileEntity.setInventoryNotified(true);
+        this.lastRecipe = null;
         if (this.hasProblems) {
             this.hasProblems = false;
             this.hasProblemsReason = "";
