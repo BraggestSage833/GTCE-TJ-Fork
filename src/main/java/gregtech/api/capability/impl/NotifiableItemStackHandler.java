@@ -2,13 +2,14 @@ package gregtech.api.capability.impl;
 
 import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.metatileentity.MetaTileEntity;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraftforge.items.ItemStackHandler;
 
 import java.util.List;
 
 public class NotifiableItemStackHandler extends ItemStackHandler implements IInventoryNotifiable {
 
-    protected List<MetaTileEntity> metaTileEntitiesToNotify;
+    protected final List<MetaTileEntity> metaTileEntitiesToNotify = new ObjectArrayList<>();
 
     public NotifiableItemStackHandler(MetaTileEntity metaTileEntity, int slots) {
         super(slots);

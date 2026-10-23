@@ -19,7 +19,7 @@ import java.util.List;
 
 public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> implements IFluidTank, IFluidHandler, IInventoryNotifiable {
 
-    protected List<MetaTileEntity> metaTileEntitiesToNotify = new ObjectArrayList<>();
+    protected final List<MetaTileEntity> metaTileEntitiesToNotify = new ObjectArrayList<>();
     private MetaTileEntity holder;
 
     public ExportOnlyAEFluidSlot(MetaTileEntity holder, IAEFluidStack config, IAEFluidStack stock) {
