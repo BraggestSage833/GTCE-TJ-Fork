@@ -288,15 +288,19 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         this.lastRecipe = recipe;
         int[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
         long totalEUt = (long) resultOverclock[0] * resultOverclock[1];
+        if (!(totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
+                (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())))
+            return false;
         IItemHandlerModifiable importInventory = getInputInventory();
         IItemHandlerModifiable exportInventory = getOutputInventory();
         IMultipleTankHandler importFluids = getInputTank();
         IMultipleTankHandler exportFluids = getOutputTank();
-        return (totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
-                (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())) &&
-                (!this.checkOutputsFitBeforeStarting || (MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
-                        MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs()))) &&
+        boolean canFit = (!this.checkOutputsFitBeforeStarting || (MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
+                MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs()))) &&
                 recipe.matchesFound(true, importInventory, importFluids);
+        if (!canFit)
+            this.lastRecipe = null; // prevent back stuffing lag
+        return canFit;
     }
 
     protected int[] calculateOverclock(int EUt, int duration) {
