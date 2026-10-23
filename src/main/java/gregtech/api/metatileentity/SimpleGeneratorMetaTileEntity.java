@@ -4,12 +4,7 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
-import gregtech.api.GregTechAPI;
-import gregtech.api.capability.IControllable;
-import gregtech.api.capability.impl.EnergyContainerHandler;
-import gregtech.api.capability.impl.FilteredFluidHandler;
-import gregtech.api.capability.impl.FluidTankList;
-import gregtech.api.capability.impl.FuelRecipeLogic;
+import gregtech.api.capability.impl.*;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.ModularUI.Builder;
@@ -44,10 +39,10 @@ import java.util.List;
 
 public class SimpleGeneratorMetaTileEntity extends TieredMetaTileEntity {
 
-    private  FuelRecipeLogic workableHandler;
-    private  ItemStackHandler containerInventory;
-    private  OrientedOverlayRenderer overlayRenderer;
-    private  FuelRecipeMap recipeMap;
+    private final FuelRecipeLogic workableHandler;
+    private final ItemStackHandler containerInventory;
+    private final OrientedOverlayRenderer overlayRenderer;
+    private final FuelRecipeMap recipeMap;
 
 
     public SimpleGeneratorMetaTileEntity(ResourceLocation metaTileEntityId, FuelRecipeMap recipeMap, OrientedOverlayRenderer renderer, int tier) {
@@ -65,7 +60,7 @@ public class SimpleGeneratorMetaTileEntity extends TieredMetaTileEntity {
 
     @Override
     protected FluidTankList createImportFluidHandler() {
-        return new FluidTankList(false, new FilteredFluidHandler(16000)
+        return new NotifiableFluidTankList(this, false, new FilteredFluidHandler(this, 16000)
                 .setFillPredicate(this::canInputFluid));
     }
 

@@ -335,7 +335,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
                 .widget(new ImageWidget(79, 42, 18, 18, GuiTextures.CAUTION_ICON)
                         .setHoverTooltip(this.workable::getHasProblemsReason)
                         .setPredicate(this.workable::isHasProblems))
-                .widget(new GhostCircuitWidget(ghostCircuitInventory, 151, 62))
+                .widget(new GhostCircuitWidget(ghostCircuitInventory, 151, 62)
+                        .setChangeListener(() -> this.setInventoryNotified(true)))
                 .bindPlayerInventory(player.inventory);
 
         int leftButtonStartX = 7;

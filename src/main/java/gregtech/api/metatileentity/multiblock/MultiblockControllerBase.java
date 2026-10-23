@@ -279,6 +279,7 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     }
 
     protected void formStructure(PatternMatchContext context) {
+        this.setInventoryNotified(true);
     }
 
     public void invalidateStructure() {
@@ -286,6 +287,7 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
         this.multiblockAbilities.clear();
         this.multiblockParts.clear();
         this.structureFormed = false;
+        this.setInventoryNotified(true);
         writeCustomData(400, buf -> buf.writeBoolean(false));
     }
 

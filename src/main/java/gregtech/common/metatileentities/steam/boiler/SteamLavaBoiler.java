@@ -6,6 +6,7 @@ import gregtech.api.capability.IFuelable;
 import gregtech.api.capability.impl.FilteredFluidHandler;
 import gregtech.api.capability.impl.FluidFuelInfo;
 import gregtech.api.capability.impl.FluidTankList;
+import gregtech.api.capability.impl.NotifiableFluidTankList;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.TankWidget;
 import gregtech.api.metatileentity.MetaTileEntity;
@@ -38,9 +39,9 @@ public class SteamLavaBoiler extends SteamBoiler implements IFuelable {
     @Override
     protected FluidTankList createImportFluidHandler() {
         FluidTankList superHandler = super.createImportFluidHandler();
-        this.lavaFluidTank = new FilteredFluidHandler(16000)
+        this.lavaFluidTank = new FilteredFluidHandler(this, 16000)
                 .setFillPredicate(ModHandler::isLava);
-        return new FluidTankList(false, superHandler, lavaFluidTank);
+        return new NotifiableFluidTankList(this, false, superHandler, lavaFluidTank);
 
     }
 

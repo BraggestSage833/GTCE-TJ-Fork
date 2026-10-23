@@ -7,6 +7,7 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.capability.impl.FilteredFluidHandler;
 import gregtech.api.capability.impl.FluidTankList;
+import gregtech.api.capability.impl.NotifiableFluidTankList;
 import gregtech.api.capability.impl.RecipeLogicSteam;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.resources.TextureArea;
@@ -126,9 +127,9 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
 
     @Override
     public FluidTankList createImportFluidHandler() {
-        this.steamFluidTank = new FilteredFluidHandler(getSteamCapacity())
+        this.steamFluidTank = new FilteredFluidHandler(this, getSteamCapacity())
             .setFillPredicate(ModHandler::isSteam);
-        return new FluidTankList(false, steamFluidTank);
+        return new NotifiableFluidTankList(this, false, steamFluidTank);
     }
 
     public int getSteamCapacity() {

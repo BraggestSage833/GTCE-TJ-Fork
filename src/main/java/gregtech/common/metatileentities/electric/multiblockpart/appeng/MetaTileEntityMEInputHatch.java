@@ -10,7 +10,9 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
 import gregtech.api.capability.GregtechTileCapabilities;
+import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.capability.impl.FluidTankList;
+import gregtech.api.capability.impl.NotifiableFluidTankList;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.ToggleButtonWidget;
@@ -18,6 +20,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
+import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.Textures;
 import gregtech.common.gui.widget.appeng.AEFluidConfigWidget;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.slot.ExportOnlyAEFluidList;
@@ -67,7 +70,7 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
 
     protected ExportOnlyAEFluidList getAEFluidHandler() {
         if (this.aeFluidHandler == null) {
-            this.aeFluidHandler = new ExportOnlyAEFluidList(this, this.configSlots, this.getController());
+            this.aeFluidHandler = new ExportOnlyAEFluidList(this, this.configSlots);
         }
         return this.aeFluidHandler;
     }
@@ -79,7 +82,7 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
 
     @Override
     protected FluidTankList createImportFluidHandler() {
-        return new FluidTankList(false, getAEFluidHandler().getInventory());
+        return new NotifiableFluidTankList(this, false, getAEFluidHandler().getInventory());
     }
 
     @Override
@@ -294,6 +297,24 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
             configStacks.setTag(Integer.toString(i), stackNbt);
         }
         return tag;
+    }
+
+    @Override
+    public void addToMultiBlock(MultiblockControllerBase controllerBase) {
+        super.addToMultiBlock(controllerBase);
+        if (this.importFluids instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.importFluids).addMetaTileEntityToNotifiable(controllerBase);
+        if (this.getAEFluidHandler() != null)
+            this.getAEFluidHandler().addMetaTileEntityToNotifiable(controllerBase);
+    }
+
+    @Override
+    public void removeFromMultiBlock(MultiblockControllerBase controllerBase) {
+        super.removeFromMultiBlock(controllerBase);
+        if (this.importFluids instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.importFluids).removeMetaTileEntityFromNotifiable(controllerBase);
+        if (this.getAEFluidHandler() != null)
+            this.getAEFluidHandler().removeMetaTileEntityFromNotifiable(controllerBase);
     }
 
     public final void onDataStickPaste(EntityPlayer player, ItemStack dataStick) {

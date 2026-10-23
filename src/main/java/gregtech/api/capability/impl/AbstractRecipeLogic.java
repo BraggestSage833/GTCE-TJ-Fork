@@ -45,6 +45,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     protected ItemStack[] lastItemInputs;
     protected FluidStack[] lastFluidInputs;
     public RecipeLRUCache previousRecipe;
+    protected Recipe lastRecipe;
     public int recipeCacheSize;
     protected boolean useOptimizedRecipeLookUp = true;
     protected boolean allowOverclocking = true;
@@ -66,10 +67,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     protected boolean hasProblems;
     private final long[] V;
     private final String[] VN;
-
-    private int sleepTimer = 0;
-    private int sleepTime = 1;
-    private int failCount = 0;
+    
     private int itemOutputIndex;
     private int fluidOutputIndex;
 
@@ -140,33 +138,22 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
 
     @Override
     public void update() {
-        if (!getMetaTileEntity().getWorld().isRemote) {
-            if (workingEnabled) {
-                if (progressTime > 0) {
-                    updateRecipeProgress();
+        if (!this.getMetaTileEntity().getWorld().isRemote) {
+            if (this.workingEnabled) {
+                if (this.progressTime > 0) {
+                    this.updateRecipeProgress();
                 }
-                if (progressTime == 0 && sleepTimer == 0) {
-                    boolean result = trySearchNewRecipe();
-                    if (!result) {
-                        failCount++;
-                        if (failCount == 5) {
-
-                            sleepTime = Math.min(sleepTime * 2, (ConfigHolder.maxSleepTime >= 0 && ConfigHolder.maxSleepTime <= 400) ? ConfigHolder.maxSleepTime : 20);
-                            failCount = 0;
-
-                        }
-                        sleepTimer = sleepTime;
-                    } else {
-                        sleepTime = 1;
-                        failCount = 0;
-                    }
+                // lastRecipe field is used to bypass this check once a recipe is found so the recipe logic can continue to check for
+                // other conditions such as fusion reactor has enough heat or energy to prevent recipe logic from locking up
+                // it'll be cleared once recipe is finished
+                if (this.progressTime == 0 && (this.metaTileEntity.isInventoryNotified() || this.lastRecipe != null)) {
+                    this.metaTileEntity.setInventoryNotified(false);
+                    this.trySearchNewRecipe();
                 }
-                if (sleepTimer > 0)
-                    sleepTimer--;
             }
-            if (wasActiveAndNeedsUpdate) {
+            if (this.wasActiveAndNeedsUpdate) {
                 this.wasActiveAndNeedsUpdate = false;
-                setActive(false);
+                this.setActive(false);
             }
         }
     }
@@ -298,17 +285,22 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     }
 
     protected boolean setupAndConsumeRecipeInputs(Recipe recipe) {
+        this.lastRecipe = recipe;
         int[] resultOverclock = calculateOverclock(recipe.getEUt(), recipe.getDuration());
         long totalEUt = (long) resultOverclock[0] * resultOverclock[1];
+        if (!(totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
+                (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())))
+            return false;
         IItemHandlerModifiable importInventory = getInputInventory();
         IItemHandlerModifiable exportInventory = getOutputInventory();
         IMultipleTankHandler importFluids = getInputTank();
         IMultipleTankHandler exportFluids = getOutputTank();
-        return (totalEUt >= 0 ? getEnergyStored() >= (totalEUt > getEnergyCapacity() / 2 ? resultOverclock[0] : totalEUt) :
-                (getEnergyStored() - resultOverclock[0] <= getEnergyCapacity())) &&
-                (!this.checkOutputsFitBeforeStarting || (MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
-                        MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs()))) &&
+        boolean canFit = (!this.checkOutputsFitBeforeStarting || (MetaTileEntity.addItemsToItemHandler(exportInventory, true, recipe.getAllItemOutputs(exportInventory.getSlots())) &&
+                MetaTileEntity.addFluidsToFluidHandler(exportFluids, true, recipe.getFluidOutputs()))) &&
                 recipe.matchesFound(true, importInventory, importFluids);
+        if (!canFit)
+            this.lastRecipe = null; // prevent back stuffing lag
+        return canFit;
     }
 
     protected int[] calculateOverclock(int EUt, int duration) {
@@ -410,6 +402,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         //force recipe recheck because inputs could have changed since last time
         //we checked them before starting our recipe, especially if recipe took long time
         this.forceRecipeRecheck = true;
+        this.metaTileEntity.setInventoryNotified(true);
+        this.lastRecipe = null;
         if (this.hasProblems) {
             this.hasProblems = false;
             this.hasProblemsReason = "";

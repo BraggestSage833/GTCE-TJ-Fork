@@ -10,7 +10,10 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.GTValues;
 import gregtech.api.capability.GregtechTileCapabilities;
+import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.capability.impl.ItemHandlerList;
+import gregtech.api.capability.impl.NotifiableItemHandlerList;
+import gregtech.api.capability.impl.NotifiableItemStackHandler;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.SlotWidget;
@@ -19,6 +22,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
+import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
 import gregtech.common.gui.widget.GhostCircuitWidget;
@@ -74,7 +78,7 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
 
     protected ExportOnlyAEItemList getAEItemHandler() {
         if (this.aeItemHandler == null) {
-            this.aeItemHandler = new ExportOnlyAEItemList(this, this.configSlots, this.getController());
+            this.aeItemHandler = new ExportOnlyAEItemList(this, this.configSlots);
         }
         return this.aeItemHandler;
     }
@@ -83,9 +87,9 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
     protected void initializeInventory() {
         super.initializeInventory();
         this.aeItemHandler = this.getAEItemHandler();
-        this.circuitInventory = new ItemStackHandler(1);
-        this.extraSlotInventory = new ItemStackHandler(1);
-        this.actualImportItems = new ItemHandlerList(Arrays.asList(this.aeItemHandler, this.circuitInventory, this.extraSlotInventory));
+        this.circuitInventory = new NotifiableItemStackHandler(this, 1);
+        this.extraSlotInventory = new NotifiableItemStackHandler(this, 1);
+        this.actualImportItems = new NotifiableItemHandlerList(this, Arrays.asList(this.aeItemHandler, this.circuitInventory, this.extraSlotInventory));
         this.importItems = this.actualImportItems;
     }
 
@@ -179,7 +183,12 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
 
         builder.widget(new ToggleButtonWidget(151, 5, 18, 18, GuiTextures.BUTTON_GT_LOGO, this::isWorkingEnabled, this::setWorkingEnabled));
         // Ghost circuit slot
-        builder.widget(new GhostCircuitWidget(this.circuitInventory, 7 + 18 * 4, 45 + 18 * 3));
+        builder.widget(new GhostCircuitWidget(this.circuitInventory, 7 + 18 * 4, 45 + 18 * 3)
+                .setChangeListener(() -> {
+                    MultiblockControllerBase controllerBase = this.getController();
+                    if (controllerBase != null)
+                        controllerBase.setInventoryNotified(true);
+                }));
 
         // Config slots
         builder.widget(new AEItemConfigWidget(7, 45, this.getAEItemHandler()));
@@ -355,5 +364,23 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
         }
        if (tag.hasKey("GhostCircuit"))
            this.circuitInventory.deserializeNBT(tag.getCompoundTag("GhostCircuit"));
+    }
+
+    @Override
+    public void addToMultiBlock(MultiblockControllerBase controllerBase) {
+        super.addToMultiBlock(controllerBase);
+        if (this.importItems instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.importItems).addMetaTileEntityToNotifiable(controllerBase);
+        if (this.getAEItemHandler() != null)
+            this.getAEItemHandler().addMetaTileEntityToNotifiable(controllerBase);
+    }
+
+    @Override
+    public void removeFromMultiBlock(MultiblockControllerBase controllerBase) {
+        super.removeFromMultiBlock(controllerBase);
+        if (this.importItems instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.importItems).removeMetaTileEntityFromNotifiable(controllerBase);
+        if (this.getAEItemHandler() != null)
+            this.getAEItemHandler().removeMetaTileEntityFromNotifiable(controllerBase);
     }
 }

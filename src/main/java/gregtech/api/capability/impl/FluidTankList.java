@@ -15,7 +15,7 @@ import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTSerializable<NBTTagCompound> {
+public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTSerializable<NBTTagCompound>{
 
     protected final List<IFluidTank> fluidTanks;
     protected IFluidTankProperties[] properties;

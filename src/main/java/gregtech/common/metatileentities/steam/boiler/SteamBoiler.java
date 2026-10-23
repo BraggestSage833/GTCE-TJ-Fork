@@ -6,6 +6,8 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.capability.impl.FilteredFluidHandler;
 import gregtech.api.capability.impl.FluidTankList;
+import gregtech.api.capability.impl.NotifiableFluidTank;
+import gregtech.api.capability.impl.NotifiableFluidTankList;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.resources.TextureArea;
 import gregtech.api.gui.widgets.*;
@@ -63,7 +65,7 @@ public abstract class SteamBoiler extends MetaTileEntity {
 
     private boolean isBurning;
     private boolean wasBurningAndNeedsUpdate;
-    private ItemStackHandler containerInventory;
+    private final ItemStackHandler containerInventory;
 
     public SteamBoiler(ResourceLocation metaTileEntityId, boolean isHighPressure, OrientedOverlayRenderer renderer, int baseSteamOutput) {
         super(metaTileEntityId);
@@ -250,14 +252,15 @@ public abstract class SteamBoiler extends MetaTileEntity {
 
     @Override
     protected FluidTankList createImportFluidHandler() {
-        this.waterFluidTank = new FilteredFluidHandler(16000).setFillPredicate(ModHandler::isWater);
-        return new FluidTankList(false, waterFluidTank);
+        this.waterFluidTank = new FilteredFluidHandler(this, 16000)
+                .setFillPredicate(ModHandler::isWater);
+        return new NotifiableFluidTankList(this, false, waterFluidTank);
     }
 
     @Override
     protected FluidTankList createExportFluidHandler() {
-        this.steamFluidTank = new FluidTank(16000);
-        return new FluidTankList(false, steamFluidTank);
+        this.steamFluidTank = new NotifiableFluidTank(this, 16000);
+        return new NotifiableFluidTankList(this, false, steamFluidTank);
     }
 
     protected TextureArea getGuiTexture(String pathTemplate) {

@@ -1,18 +1,19 @@
 package gregtech.common.gui.widget.appeng.slot;
 
 import appeng.api.storage.data.IAEItemStack;
+import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ExportOnlyAEItemList extends ItemStackHandler {
+public class ExportOnlyAEItemList extends ItemStackHandler implements IInventoryNotifiable {
 
     protected final int size;
     protected ExportOnlyAEItemSlot[] inventory;
 
-    public ExportOnlyAEItemList(MetaTileEntity holder, int slots, MetaTileEntity entityToNotify) {
+    public ExportOnlyAEItemList(MetaTileEntity holder, int slots) {
         super(slots);
         this.size = slots;
         createInventory(holder);
@@ -120,5 +121,21 @@ public class ExportOnlyAEItemList extends ItemStackHandler {
 
     public boolean isStocking() {
         return false;
+    }
+
+    @Override
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
+        for (ExportOnlyAEItemSlot slot : this.inventory) {
+            if (slot != null)
+                slot.addMetaTileEntityToNotifiable(metaTileEntity);
+        }
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        for (ExportOnlyAEItemSlot slot : this.inventory) {
+            if (slot != null)
+                slot.removeMetaTileEntityFromNotifiable(metaTileEntity);
+        }
     }
 }

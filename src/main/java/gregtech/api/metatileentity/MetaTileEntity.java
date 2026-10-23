@@ -100,6 +100,7 @@ public abstract class MetaTileEntity implements ICoverable {
     private int cachedComparatorValue;
     private int cachedLightValue;
     protected boolean isFragile = false;
+    private boolean isInventoryNotified = true;
 
     protected boolean muffled = false;
     private final CoverBehavior[] coverBehaviors = new CoverBehavior[6];
@@ -1344,7 +1345,13 @@ public abstract class MetaTileEntity implements ICoverable {
         return 6.0f;
     }
 
+    public void setInventoryNotified(boolean inventoryNotified) {
+        this.isInventoryNotified = inventoryNotified;
+    }
 
+    public boolean isInventoryNotified() {
+        return this.isInventoryNotified;
+    }
 
     public void refreshSideRenderer(EnumFacing side) {
         CoverBehavior cover = coverBehaviors[side.getIndex()];

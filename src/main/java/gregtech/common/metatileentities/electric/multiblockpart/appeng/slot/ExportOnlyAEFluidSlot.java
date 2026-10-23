@@ -1,8 +1,10 @@
 package gregtech.common.metatileentities.electric.multiblockpart.appeng.slot;
 
 import appeng.api.storage.data.IAEFluidStack;
+import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.stack.WrappedFluidStack;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTankInfo;
@@ -12,22 +14,21 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> implements IFluidTank, IFluidHandler {
 
-    private final List<MetaTileEntity> notifiableEntities = new ArrayList<>();
+public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> implements IFluidTank, IFluidHandler, IInventoryNotifiable {
+
+    protected final List<MetaTileEntity> metaTileEntitiesToNotify = new ObjectArrayList<>();
     private MetaTileEntity holder;
 
-    public ExportOnlyAEFluidSlot(MetaTileEntity holder, IAEFluidStack config, IAEFluidStack stock, MetaTileEntity mte) {
+    public ExportOnlyAEFluidSlot(MetaTileEntity holder, IAEFluidStack config, IAEFluidStack stock) {
         super(config, stock);
         this.holder = holder;
-        this.notifiableEntities.add(mte);
     }
 
-    public ExportOnlyAEFluidSlot(MetaTileEntity holder, MetaTileEntity entityToNotify) {
-        this(holder, null, null, entityToNotify);
+    public ExportOnlyAEFluidSlot(MetaTileEntity holder) {
+        this(holder, null, null);
     }
 
     public ExportOnlyAEFluidSlot() {
@@ -61,6 +62,7 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
         } else {
             this.stock.add(stack);
         }
+        this.notifyMetaTileEntities();
     }
 
     @Override
@@ -74,6 +76,7 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
         } else if (this.stock.getStackSize() != stack.getStackSize()) {
             this.stock.setStackSize(stack.getStackSize());
         } else return;
+        this.notifyMetaTileEntities();
     }
 
     @Override
@@ -145,6 +148,7 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
             if (this.stock.getStackSize() == 0) {
                 this.stock = null;
             }
+            this.notifyMetaTileEntities();
         }
         return result;
     }
@@ -154,11 +158,25 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
         return new ExportOnlyAEFluidSlot(
                 this.holder,
                 this.config == null ? null : this.config.copy(),
-                this.stock == null ? null : this.stock.copy(),
-                null);
+                this.stock == null ? null : this.stock.copy());
     }
 
     protected MetaTileEntity getHolder() {
         return holder;
+    }
+
+    protected void notifyMetaTileEntities() {
+        for (MetaTileEntity metaTileEntity : this.metaTileEntitiesToNotify)
+            metaTileEntity.setInventoryNotified(true);
+    }
+
+    @Override
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
+        this.metaTileEntitiesToNotify.add(metaTileEntity);
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        this.metaTileEntitiesToNotify.remove(metaTileEntity);
     }
 }

@@ -3,7 +3,9 @@ package gregtech.common.metatileentities.electric.multiblockpart;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.capability.impl.ItemHandlerList;
+import gregtech.api.capability.IInventoryNotifiable;
+import gregtech.api.capability.impl.NotifiableItemHandlerList;
+import gregtech.api.capability.impl.NotifiableItemStackHandler;
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.ModularUI.Builder;
@@ -12,6 +14,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
+import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
 import gregtech.api.render.SimpleOverlayRenderer;
 import gregtech.api.render.Textures;
 import gregtech.common.gui.widget.GhostCircuitWidget;
@@ -39,7 +42,7 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
         super(metaTileEntityId, tier);
         this.isExportHatch = isExportHatch;
         initializeInventory();
-        this.combinedInventory = new ItemHandlerList(Arrays.asList(this.ghostCircuitInventory, this.importItems));
+        this.combinedInventory = new NotifiableItemHandlerList(this, Arrays.asList(this.ghostCircuitInventory, this.importItems));
     }
 
     @Override
@@ -77,12 +80,12 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
 
     @Override
     protected IItemHandlerModifiable createExportItemHandler() {
-        return isExportHatch ? new ItemStackHandler(getInventorySize()) : new ItemStackHandler(0);
+        return isExportHatch ? new NotifiableItemStackHandler(this, getInventorySize()) : new ItemStackHandler(0);
     }
 
     @Override
     protected IItemHandlerModifiable createImportItemHandler() {
-        return isExportHatch ? new ItemStackHandler(0) : new ItemStackHandler(getInventorySize());
+        return isExportHatch ? new ItemStackHandler(0) : new NotifiableItemStackHandler(this, getInventorySize());
     }
 
     @Override
@@ -116,7 +119,12 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
             }
         }
         if (!this.isExportHatch)
-            builder.widget(new GhostCircuitWidget(this.ghostCircuitInventory, 151 + xOffset, 12 + 18 * rowSize));
+            builder.widget(new GhostCircuitWidget(this.ghostCircuitInventory, 151 + xOffset, 12 + 18 * rowSize)
+                    .setChangeListener(() -> {
+                        MultiblockControllerBase controllerBase = this.getController();
+                        if (controllerBase != null)
+                            controllerBase.setInventoryNotified(true);
+                    }));
         return builder.bindPlayerInventory(player.inventory, GuiTextures.SLOT, 7 + xOffset, 18 + 18 * rowSize + 12);
     }
 
@@ -139,5 +147,23 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
         super.readFromNBT(data);
         if (data.hasKey("GhostCircuit"))
             this.ghostCircuitInventory.deserializeNBT(data.getCompoundTag("GhostCircuit"));
+    }
+
+    @Override
+    public void addToMultiBlock(MultiblockControllerBase controllerBase) {
+        super.addToMultiBlock(controllerBase);
+        if (this.combinedInventory instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.combinedInventory).addMetaTileEntityToNotifiable(controllerBase);
+        if (this.exportItems instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.exportItems).addMetaTileEntityToNotifiable(controllerBase);
+    }
+
+    @Override
+    public void removeFromMultiBlock(MultiblockControllerBase controllerBase) {
+        super.removeFromMultiBlock(controllerBase);
+        if (this.combinedInventory instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.combinedInventory).removeMetaTileEntityFromNotifiable(controllerBase);
+        if (this.exportItems instanceof IInventoryNotifiable)
+            ((IInventoryNotifiable) this.exportItems).removeMetaTileEntityFromNotifiable(controllerBase);
     }
 }

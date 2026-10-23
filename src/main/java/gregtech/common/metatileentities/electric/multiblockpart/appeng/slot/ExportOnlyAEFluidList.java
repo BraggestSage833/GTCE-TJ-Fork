@@ -1,23 +1,24 @@
 package gregtech.common.metatileentities.electric.multiblockpart.appeng.slot;
 
 import appeng.api.storage.data.IAEFluidStack;
+import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraftforge.fluids.FluidStack;
 
-public class ExportOnlyAEFluidList {
+public class ExportOnlyAEFluidList implements IInventoryNotifiable {
 
     protected final int size;
     protected ExportOnlyAEFluidSlot[] inventory;
 
-    public ExportOnlyAEFluidList(MetaTileEntity holder, int slots, MetaTileEntity entityToNotify) {
+    public ExportOnlyAEFluidList(MetaTileEntity holder, int slots) {
         this.size = slots;
-        createInventory(holder, entityToNotify);
+        createInventory(holder);
     }
 
-    protected void createInventory(MetaTileEntity holder, MetaTileEntity entityToNotify) {
+    protected void createInventory(MetaTileEntity holder) {
         this.inventory = new ExportOnlyAEFluidSlot[size];
         for (int i = 0; i < size; i++) {
-            this.inventory[i] = new ExportOnlyAEFluidSlot(holder, entityToNotify);
+            this.inventory[i] = new ExportOnlyAEFluidSlot(holder);
         }
     }
 
@@ -58,5 +59,21 @@ public class ExportOnlyAEFluidList {
             }
         }
         return false;
+    }
+
+    @Override
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
+        for (ExportOnlyAEFluidSlot slot : this.inventory) {
+            if (slot != null)
+                slot.addMetaTileEntityToNotifiable(metaTileEntity);
+        }
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        for (ExportOnlyAEFluidSlot slot : this.inventory) {
+            if (slot != null)
+                slot.removeMetaTileEntityFromNotifiable(metaTileEntity);
+        }
     }
 }
