@@ -15,7 +15,8 @@ public class NotifiableFluidTank extends FluidTank implements IInventoryNotifiab
 
     public NotifiableFluidTank(MetaTileEntity metaTileEntity, int capacity) {
         super(capacity);
-        this.metaTileEntitiesToNotify.add(metaTileEntity);
+        if (metaTileEntity != null)
+            this.metaTileEntitiesToNotify.add(metaTileEntity);
     }
 
     public NotifiableFluidTank(MetaTileEntity metaTileEntity, FluidStack fluidStack, int amount) {
@@ -36,7 +37,8 @@ public class NotifiableFluidTank extends FluidTank implements IInventoryNotifiab
 
     @Override
     public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
-        this.metaTileEntitiesToNotify.add(metaTileEntity);
+        if (metaTileEntity != null)
+            this.metaTileEntitiesToNotify.add(metaTileEntity);
     }
 
     @Override

@@ -172,7 +172,8 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot<IAEFluidStack> imple
 
     @Override
     public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
-        this.metaTileEntitiesToNotify.add(metaTileEntity);
+        if (metaTileEntity != null)
+            this.metaTileEntitiesToNotify.add(metaTileEntity);
     }
 
     @Override
