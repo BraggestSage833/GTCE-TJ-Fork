@@ -13,7 +13,8 @@ public class NotifiableItemStackHandler extends ItemStackHandler implements IInv
 
     public NotifiableItemStackHandler(MetaTileEntity metaTileEntity, int slots) {
         super(slots);
-        this.metaTileEntitiesToNotify.add(metaTileEntity);
+        if (metaTileEntity != null)
+            this.metaTileEntitiesToNotify.add(metaTileEntity);
     }
 
     @Override
@@ -24,7 +25,8 @@ public class NotifiableItemStackHandler extends ItemStackHandler implements IInv
 
     @Override
     public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
-        this.metaTileEntitiesToNotify.add(metaTileEntity);
+        if (metaTileEntity != null)
+            this.metaTileEntitiesToNotify.add(metaTileEntity);
     }
 
     @Override

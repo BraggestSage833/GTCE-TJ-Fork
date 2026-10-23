@@ -147,7 +147,8 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
 
     @Override
     public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
-        this.metaTileEntitiesToNotify.add(metaTileEntity);
+        if (metaTileEntity != null)
+            this.metaTileEntitiesToNotify.add(metaTileEntity);
     }
 
     @Override
