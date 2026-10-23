@@ -120,14 +120,18 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
 
     @Override
     public void setStack(IAEItemStack stack) {
+        ItemStack stockItem, itemToStock = null;
         if (this.stock == null && stack == null) {
             return;
         } else if (stack == null) {
             this.stock = null;
-        } else {
-            // todo this could maybe be improved with better comparison check
-            this.stock = WrappedItemStack.fromItemStack(stack.createItemStack());
-        }
+        } else if (this.stock == null || (stockItem = this.stock.createItemStack()).getItem() != (itemToStock = stack.createItemStack()).getItem() ||
+                stockItem.getMetadata() != itemToStock.getMetadata() || stockItem.getTagCompound() != itemToStock.getTagCompound()) {
+            // TODO NBT comparison not yet supported. GT machines don't handle NBT very well anyways.
+            this.stock = WrappedItemStack.fromItemStack(itemToStock != null ? itemToStock : stack.createItemStack());
+        } else if (stockItem.getCount() != itemToStock.getCount()) {
+            this.stock.setStackSize(stack.getStackSize());
+        } else return;
         this.notifyMetaTileEntities();
     }
 
