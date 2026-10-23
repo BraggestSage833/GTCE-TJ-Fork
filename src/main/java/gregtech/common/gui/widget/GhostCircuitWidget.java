@@ -68,9 +68,12 @@ public class GhostCircuitWidget extends SlotWidget {
             this.slotReference.putStack(circuitStack);
         } else if (MetaItems.INTEGRATED_CIRCUIT.isItemEqual(stack)) {
             int config = IntCircuitIngredient.getCircuitConfiguration(stack) + num;
-            if (config > 32 || config < 0)
+            if (config > 32 || config < 0) {
                 this.slotReference.putStack(ItemStack.EMPTY);
-            else IntCircuitIngredient.setCircuitConfiguration(stack, config);
+            } else {
+                IntCircuitIngredient.setCircuitConfiguration(stack, config);
+                this.slotReference.putStack(stack);
+            }
         }
     }
 }
