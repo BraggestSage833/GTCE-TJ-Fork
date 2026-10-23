@@ -105,13 +105,13 @@ public class MaterialRecipeHandler {
                             .input(dustPrefix, material)
                             .outputs(ingotStack)
                             .blastFurnaceTemp(metalMaterial.blastFurnaceTemperature)
-                            .duration(duration).EUt(getTieredVoltageMultiplier(material));
+                            .duration(duration).EUt(Math.max(getTieredVoltageMultiplier(material), 100));
                     if (circuitRequiringMaterials.contains(material)) {
                         ingotSmeltingBuilder.inputs(new CountableIngredient(new IntCircuitIngredient(0), 0));
                     }
                     ingotSmeltingBuilder.buildAndRegister();
 
-                    if (!hasHotIngot) {
+                    /*if (!hasHotIngot) {
                         BlastRecipeBuilder nuggetSmeltingBuilder = RecipeMaps.BLAST_RECIPES.recipeBuilder()
                                 .input(OrePrefix.dustTiny, material)
                                 .outputs(nuggetStack)
@@ -122,6 +122,8 @@ public class MaterialRecipeHandler {
                         }
                         nuggetSmeltingBuilder.buildAndRegister();
                     }
+
+                     */
 
                     if (hasHotIngot) {
                         RecipeMaps.VACUUM_RECIPES.recipeBuilder()

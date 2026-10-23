@@ -12,6 +12,7 @@ import gregtech.api.gui.impl.ModularUIContainer;
 import gregtech.api.items.IToolItem;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.api.unification.material.Materials;
 import gregtech.api.unification.material.type.IngotMaterial;
 import gregtech.api.unification.material.type.Material;
 import gregtech.common.ConfigHolder;
@@ -923,6 +924,7 @@ public class GTUtility {
     public static int getTieredVoltageMultiplier(Material material) {
         int eut = 16;
         int heat = ((IngotMaterial) material).blastFurnaceTemperature;
+
         if (heat < 2700) {
             eut = 28;
         }
@@ -958,6 +960,9 @@ public class GTUtility {
         }
         if (heat >= 14200 && heat < 56800) {
             eut = 134000000;
+        }
+        if (material == Materials.StainlessSteel){
+            eut = 480;
         }
         return eut;
     }
