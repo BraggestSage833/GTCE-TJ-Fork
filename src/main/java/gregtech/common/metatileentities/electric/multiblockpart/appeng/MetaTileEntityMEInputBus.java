@@ -370,17 +370,17 @@ public class MetaTileEntityMEInputBus extends MetaTileEntityAEHostablePart<IAEIt
     public void addToMultiBlock(MultiblockControllerBase controllerBase) {
         super.addToMultiBlock(controllerBase);
         if (this.importItems instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.importItems).setMetaTileEntity(controllerBase);
+            ((IInventoryNotifiable) this.importItems).addMetaTileEntityToNotifiable(controllerBase);
         if (this.getAEItemHandler() != null)
-            this.getAEItemHandler().setMetaTileEntity(controllerBase);
+            this.getAEItemHandler().addMetaTileEntityToNotifiable(controllerBase);
     }
 
     @Override
     public void removeFromMultiBlock(MultiblockControllerBase controllerBase) {
         super.removeFromMultiBlock(controllerBase);
         if (this.importItems instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.importItems).setMetaTileEntity(this);
+            ((IInventoryNotifiable) this.importItems).removeMetaTileEntityFromNotifiable(controllerBase);
         if (this.getAEItemHandler() != null)
-            this.getAEItemHandler().setMetaTileEntity(this);
+            this.getAEItemHandler().removeMetaTileEntityFromNotifiable(controllerBase);
     }
 }

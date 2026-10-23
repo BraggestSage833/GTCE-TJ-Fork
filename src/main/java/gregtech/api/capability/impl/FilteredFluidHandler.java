@@ -43,7 +43,7 @@ public class FilteredFluidHandler extends NotifiableFluidTank {
 
     @Override
     protected void onContentsChanged() {
-        if (this.metaTileEntity != null)
+        if (this.metaTileEntitiesToNotify != null)
             super.onContentsChanged();
     }
 }

@@ -153,17 +153,17 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockPart implemen
     public void addToMultiBlock(MultiblockControllerBase controllerBase) {
         super.addToMultiBlock(controllerBase);
         if (this.combinedInventory instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.combinedInventory).setMetaTileEntity(controllerBase);
+            ((IInventoryNotifiable) this.combinedInventory).addMetaTileEntityToNotifiable(controllerBase);
         if (this.exportItems instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.exportItems).setMetaTileEntity(controllerBase);
+            ((IInventoryNotifiable) this.exportItems).addMetaTileEntityToNotifiable(controllerBase);
     }
 
     @Override
     public void removeFromMultiBlock(MultiblockControllerBase controllerBase) {
         super.removeFromMultiBlock(controllerBase);
         if (this.combinedInventory instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.combinedInventory).setMetaTileEntity(this);
+            ((IInventoryNotifiable) this.combinedInventory).removeMetaTileEntityFromNotifiable(controllerBase);
         if (this.exportItems instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.exportItems).setMetaTileEntity(this);
+            ((IInventoryNotifiable) this.exportItems).removeMetaTileEntityFromNotifiable(controllerBase);
     }
 }

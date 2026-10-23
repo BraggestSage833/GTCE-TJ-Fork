@@ -13,14 +13,22 @@ public class NotifiableItemHandlerList extends ItemHandlerList implements IInven
     public NotifiableItemHandlerList(MetaTileEntity metaTileEntity, List<? extends IItemHandler> itemHandlerList) {
         super(itemHandlerList);
         this.itemHandlers = itemHandlerList;
-        this.setMetaTileEntity(metaTileEntity);
+        this.addMetaTileEntityToNotifiable(metaTileEntity);
     }
 
     @Override
-    public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
         for (IItemHandler itemHandler : this.itemHandlers) {
             if (itemHandler instanceof IInventoryNotifiable)
-                ((IInventoryNotifiable) itemHandler).setMetaTileEntity(metaTileEntity);
+                ((IInventoryNotifiable) itemHandler).addMetaTileEntityToNotifiable(metaTileEntity);
+        }
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        for (IItemHandler itemHandler : this.itemHandlers) {
+            if (itemHandler instanceof IInventoryNotifiable)
+                ((IInventoryNotifiable) itemHandler).removeMetaTileEntityFromNotifiable(metaTileEntity);
         }
     }
 }

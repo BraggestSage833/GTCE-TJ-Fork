@@ -131,18 +131,18 @@ public class MetaTileEntityFluidHatch extends MetaTileEntityMultiblockPart imple
     public void addToMultiBlock(MultiblockControllerBase controllerBase) {
         super.addToMultiBlock(controllerBase);
         if (this.importFluids instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.importFluids).setMetaTileEntity(controllerBase);
+            ((IInventoryNotifiable) this.importFluids).addMetaTileEntityToNotifiable(controllerBase);
         if (this.exportFluids instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.exportFluids).setMetaTileEntity(controllerBase);
+            ((IInventoryNotifiable) this.exportFluids).addMetaTileEntityToNotifiable(controllerBase);
     }
 
     @Override
     public void removeFromMultiBlock(MultiblockControllerBase controllerBase) {
         super.removeFromMultiBlock(controllerBase);
         if (this.importFluids instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.importFluids).setMetaTileEntity(this);
+            ((IInventoryNotifiable) this.importFluids).removeMetaTileEntityFromNotifiable(controllerBase);
         if (this.exportFluids instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.exportFluids).setMetaTileEntity(this);
+            ((IInventoryNotifiable) this.exportFluids).removeMetaTileEntityFromNotifiable(controllerBase);
     }
 
     @Override

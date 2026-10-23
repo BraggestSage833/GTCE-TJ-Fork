@@ -124,10 +124,18 @@ public class ExportOnlyAEItemList extends ItemStackHandler implements IInventory
     }
 
     @Override
-    public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
         for (ExportOnlyAEItemSlot slot : this.inventory) {
             if (slot != null)
-                slot.setMetaTileEntity(metaTileEntity);
+                slot.addMetaTileEntityToNotifiable(metaTileEntity);
+        }
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        for (ExportOnlyAEItemSlot slot : this.inventory) {
+            if (slot != null)
+                slot.removeMetaTileEntityFromNotifiable(metaTileEntity);
         }
     }
 }

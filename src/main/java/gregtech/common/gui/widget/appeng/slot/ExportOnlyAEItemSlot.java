@@ -5,16 +5,18 @@ import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.slot.ExportOnlyAESlot;
 import gregtech.common.metatileentities.electric.multiblockpart.appeng.stack.WrappedItemStack;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> implements IItemHandlerModifiable, IInventoryNotifiable {
 
-    protected MetaTileEntity metaTileEntity;
+    protected final List<MetaTileEntity> metaTileEntitiesToNotify = new ObjectArrayList<>();
 
     public ExportOnlyAEItemSlot(IAEItemStack config, IAEItemStack stock) {
         super(config, stock);
@@ -80,7 +82,7 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
                     this.stock = null;
                 }
             }
-            this.metaTileEntity.setInventoryNotified(true);
+            this.notifyMetaTileEntities();
             return result;
         }
         return ItemStack.EMPTY;
@@ -113,7 +115,7 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
         } else {
             this.stock.add(stack);
         }
-        this.metaTileEntity.setInventoryNotified(true);
+        this.notifyMetaTileEntities();
     }
 
     @Override
@@ -126,7 +128,7 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
             // todo this could maybe be improved with better comparison check
             this.stock = WrappedItemStack.fromItemStack(stack.createItemStack());
         }
-        this.metaTileEntity.setInventoryNotified(true);
+        this.notifyMetaTileEntities();
     }
 
     @Override
@@ -134,8 +136,18 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot<IAEItemStack> impleme
         return Integer.MAX_VALUE;
     }
 
+    protected void notifyMetaTileEntities() {
+        for (MetaTileEntity metaTileEntity : this.metaTileEntitiesToNotify)
+            metaTileEntity.setInventoryNotified(true);
+    }
+
     @Override
-    public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
-        this.metaTileEntity = metaTileEntity;
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
+        this.metaTileEntitiesToNotify.add(metaTileEntity);
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        this.metaTileEntitiesToNotify.remove(metaTileEntity);
     }
 }

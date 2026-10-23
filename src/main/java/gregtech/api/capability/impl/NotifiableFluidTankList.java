@@ -2,9 +2,7 @@ package gregtech.api.capability.impl;
 
 import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.metatileentity.MetaTileEntity;
-import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -12,24 +10,32 @@ public class NotifiableFluidTankList extends FluidTankList implements IInventory
 
     public NotifiableFluidTankList(MetaTileEntity metaTileEntity, boolean allowSameFluidFill, IFluidTank... fluidTanks) {
         super(allowSameFluidFill, fluidTanks);
-        this.setMetaTileEntity(metaTileEntity);
+        this.addMetaTileEntityToNotifiable(metaTileEntity);
     }
 
     public NotifiableFluidTankList(MetaTileEntity metaTileEntity, boolean allowSameFluidFill, List<? extends IFluidTank> fluidTanks) {
         super(allowSameFluidFill, fluidTanks);
-        this.setMetaTileEntity(metaTileEntity);
+        this.addMetaTileEntityToNotifiable(metaTileEntity);
     }
 
     public NotifiableFluidTankList(MetaTileEntity metaTileEntity, boolean allowSameFluidFill, FluidTankList parent, IFluidTank... fluidTanks) {
         super(allowSameFluidFill, parent, fluidTanks);
-        this.setMetaTileEntity(metaTileEntity);
+        this.addMetaTileEntityToNotifiable(metaTileEntity);
     }
 
     @Override
-    public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
         for (IFluidTank tank : this.fluidTanks) {
             if (tank instanceof IInventoryNotifiable)
-                ((IInventoryNotifiable) tank).setMetaTileEntity(metaTileEntity);
+                ((IInventoryNotifiable) tank).addMetaTileEntityToNotifiable(metaTileEntity);
+        }
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        for (IFluidTank tank : this.fluidTanks) {
+            if (tank instanceof IInventoryNotifiable)
+                ((IInventoryNotifiable) tank).removeMetaTileEntityFromNotifiable(metaTileEntity);
         }
     }
 }

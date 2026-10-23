@@ -320,7 +320,7 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
     private static class ExportOnlyAEStockingFluidSlot extends ExportOnlyAEFluidSlot {
 
         public ExportOnlyAEStockingFluidSlot(MetaTileEntityMEStockingHatch holder, IAEFluidStack config,
-                                             IAEFluidStack stock, MetaTileEntity entityToNotify) {
+                                             IAEFluidStack stock) {
             super(holder, config, stock);
         }
 
@@ -338,8 +338,7 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
             return new ExportOnlyAEStockingFluidSlot(
                     this.getHolder(),
                     this.config == null ? null : this.config.copy(),
-                    this.stock == null ? null : this.stock.copy(),
-                    null);
+                    this.stock == null ? null : this.stock.copy());
         }
 
         @Override
@@ -366,7 +365,7 @@ public class MetaTileEntityMEStockingHatch extends MetaTileEntityMEInputHatch {
                     if (extracted != 0) {
                         FluidStack resultStack = this.config.getFluidStack();
                         resultStack.amount = extracted;
-                        this.metaTileEntity.setInventoryNotified(true);
+                        this.notifyMetaTileEntities();
                         return resultStack;
                     }
                 }

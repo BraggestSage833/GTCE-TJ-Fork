@@ -62,10 +62,18 @@ public class ExportOnlyAEFluidList implements IInventoryNotifiable {
     }
 
     @Override
-    public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
         for (ExportOnlyAEFluidSlot slot : this.inventory) {
             if (slot != null)
-                slot.setMetaTileEntity(metaTileEntity);
+                slot.addMetaTileEntityToNotifiable(metaTileEntity);
+        }
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        for (ExportOnlyAEFluidSlot slot : this.inventory) {
+            if (slot != null)
+                slot.removeMetaTileEntityFromNotifiable(metaTileEntity);
         }
     }
 }

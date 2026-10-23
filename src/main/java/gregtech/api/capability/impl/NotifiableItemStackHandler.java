@@ -2,34 +2,32 @@ package gregtech.api.capability.impl;
 
 import gregtech.api.capability.IInventoryNotifiable;
 import gregtech.api.metatileentity.MetaTileEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
-import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class NotifiableItemStackHandler extends ItemStackHandler implements IInventoryNotifiable {
 
-    protected MetaTileEntity metaTileEntity;
+    protected List<MetaTileEntity> metaTileEntitiesToNotify;
 
     public NotifiableItemStackHandler(MetaTileEntity metaTileEntity, int slots) {
         super(slots);
-        this.metaTileEntity = metaTileEntity;
-    }
-
-    @Override
-    public void setStackInSlot(int slot, @NotNull ItemStack stack) {
-        if (!stack.isEmpty())
-            this.metaTileEntity.setInventoryNotified(true);
-        super.setStackInSlot(slot, stack);
+        this.metaTileEntitiesToNotify.add(metaTileEntity);
     }
 
     @Override
     protected void onContentsChanged(int slot) {
-        super.onContentsChanged(slot);
-        this.metaTileEntity.setInventoryNotified(true);
+        for (MetaTileEntity metaTileEntity : this.metaTileEntitiesToNotify)
+            metaTileEntity.setInventoryNotified(true);
     }
 
     @Override
-    public void setMetaTileEntity(MetaTileEntity metaTileEntity) {
-        this.metaTileEntity = metaTileEntity;
+    public void addMetaTileEntityToNotifiable(MetaTileEntity metaTileEntity) {
+        this.metaTileEntitiesToNotify.add(metaTileEntity);
+    }
+
+    @Override
+    public void removeMetaTileEntityFromNotifiable(MetaTileEntity metaTileEntity) {
+        this.metaTileEntitiesToNotify.remove(metaTileEntity);
     }
 }

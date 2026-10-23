@@ -303,18 +303,18 @@ public class MetaTileEntityMEInputHatch extends MetaTileEntityAEHostablePart<IAE
     public void addToMultiBlock(MultiblockControllerBase controllerBase) {
         super.addToMultiBlock(controllerBase);
         if (this.importFluids instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.importFluids).setMetaTileEntity(controllerBase);
+            ((IInventoryNotifiable) this.importFluids).addMetaTileEntityToNotifiable(controllerBase);
         if (this.getAEFluidHandler() != null)
-            this.getAEFluidHandler().setMetaTileEntity(controllerBase);
+            this.getAEFluidHandler().addMetaTileEntityToNotifiable(controllerBase);
     }
 
     @Override
     public void removeFromMultiBlock(MultiblockControllerBase controllerBase) {
         super.removeFromMultiBlock(controllerBase);
         if (this.importFluids instanceof IInventoryNotifiable)
-            ((IInventoryNotifiable) this.importFluids).setMetaTileEntity(this);
+            ((IInventoryNotifiable) this.importFluids).removeMetaTileEntityFromNotifiable(controllerBase);
         if (this.getAEFluidHandler() != null)
-            this.getAEFluidHandler().setMetaTileEntity(this);
+            this.getAEFluidHandler().removeMetaTileEntityFromNotifiable(controllerBase);
     }
 
     public final void onDataStickPaste(EntityPlayer player, ItemStack dataStick) {
