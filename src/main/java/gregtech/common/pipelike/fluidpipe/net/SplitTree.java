@@ -1,29 +1,22 @@
 package gregtech.common.pipelike.fluidpipe.net;
 
-import gregtech.api.pipenet.Bucket;
-import gregtech.api.pipenet.RoutePath;
+import gregtech.api.pipenet.RouteStep;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.*;
 
 public final class SplitTree {
-    private static final SplitTree EMPTY = new SplitTree(-1, new BlockPos[0], new Bucket[0], new int[0],
-            new int[0], new int[0], new boolean[0]);
+    private static final SplitTree EMPTY = new SplitTree(-1, new RouteStep[0], new int[0], new int[0], new boolean[0]);
 
     private final int root;
-    private final BlockPos[] positions;
-    private final Bucket[] buckets;
-    private final int[] limits;
-
+    private final RouteStep[] steps;
     private final int[] firstChild;
     private final int[] nextSibling;
     private final boolean[] destination;
 
-    private SplitTree(int root, BlockPos[] positions, Bucket[] buckets, int[] limits, int[] firstChild, int[] nextSibling, boolean[] destination) {
+    private SplitTree(int root, RouteStep[] steps, int[] firstChild, int[] nextSibling, boolean[] destination) {
         this.root = root;
-        this.positions = positions;
-        this.buckets = buckets;
-        this.limits = limits;
+        this.steps = steps;
         this.firstChild = firstChild;
         this.nextSibling = nextSibling;
         this.destination = destination;
@@ -38,7 +31,7 @@ public final class SplitTree {
     }
 
     public BlockPos pos(int node) {
-        return positions[node];
+        return steps[node].pos;
     }
 
     boolean isDestination(int node) {
@@ -55,66 +48,60 @@ public final class SplitTree {
     }
 
     public int available(int node, long now) {
-        return buckets[node].available(now, limits[node]);
+        return steps[node].available(now);
     }
 
     public void consume(int node, long now, int amount) {
-        buckets[node].consume(now, amount);
+        steps[node].consume(now, amount);
     }
 
-    static SplitTree build(List<RoutePath> routes) {
-        if (routes.isEmpty()) {
+    static SplitTree build(List<RouteStep> destinations) {
+        if (destinations.isEmpty()) {
             return EMPTY;
         }
 
-        Map<RoutePath.Step, Integer> indices = new IdentityHashMap<>();
-        List<RoutePath.Step> steps = new ArrayList<>();
-        for (RoutePath route : routes) {
-            for (RoutePath.Step step = route.last(); step != null && !indices.containsKey(step); step = step.parent) {
-                indices.put(step, steps.size());
-                steps.add(step);
+        // number every pipe on the way from each destination back to the source, once
+        Map<RouteStep, Integer> indices = new IdentityHashMap<>();
+        List<RouteStep> ordered = new ArrayList<>();
+        for (RouteStep destinationStep : destinations) {
+            for (RouteStep step = destinationStep; step != null && !indices.containsKey(step); step = step.parent) {
+                indices.put(step, ordered.size());
+                ordered.add(step);
             }
         }
 
-        int size = steps.size();
-        BlockPos[] positions = new BlockPos[size];
-        Bucket[] buckets = new Bucket[size];
-        int[] limits = new int[size];
+        int size = ordered.size();
         int[] firstChild = new int[size];
         int[] nextSibling = new int[size];
         int[] lastChild = new int[size];
-        boolean[] destination = new boolean[size];
         Arrays.fill(firstChild, -1);
         Arrays.fill(nextSibling, -1);
         Arrays.fill(lastChild, -1);
 
+        // link each pipe to its parent, keeping children in the order they were numbered
         int root = -1;
         for (int i = 0; i < size; i++) {
-            RoutePath.Step step = steps.get(i);
-            positions[i] = step.pos;
-            buckets[i] = step.bucket;
-            limits[i] = step.limit;
-
-            if (step.parent == null) {
+            RouteStep parentStep = ordered.get(i).parent;
+            if (parentStep == null) {
                 root = i;
                 continue;
             }
 
-            int parent = indices.get(step.parent);
+            int parent = indices.get(parentStep);
             if (firstChild[parent] < 0) {
                 firstChild[parent] = i;
             } else {
                 nextSibling[lastChild[parent]] = i;
             }
-
             lastChild[parent] = i;
         }
 
-        for (RoutePath route : routes) {
-            destination[indices.get(route.last())] = true;
+        boolean[] destination = new boolean[size];
+        for (RouteStep destinationStep : destinations) {
+            destination[indices.get(destinationStep)] = true;
         }
 
-        return new SplitTree(root, positions, buckets, limits, firstChild, nextSibling, destination);
+        return new SplitTree(root, ordered.toArray(new RouteStep[0]), firstChild, nextSibling, destination);
     }
 
 }

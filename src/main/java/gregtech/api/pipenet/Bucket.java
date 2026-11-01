@@ -6,9 +6,9 @@ public class Bucket {
     private long window = Long.MIN_VALUE;
     private int used;
 
-    public int available(long now, int itemsPerSecond) {
+    public int available(long now, int limit) {
         rollWindow(now);
-        return Math.max(0, itemsPerSecond - used);
+        return Math.max(0, limit - used);
     }
 
     public void consume(long now, int amount) {

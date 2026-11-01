@@ -40,21 +40,4 @@ public class CableRoutePath {
 
         return tree.load(leaf, world, now, voltage, amperes, overVoltage);
     }
-
-    public static void burnCable(World world, BlockPos blockPos) {
-        if (world.isRemote) {
-            return;
-        }
-
-        TileEntity tileEntity = world.getTileEntity(blockPos);
-
-        if (tileEntity instanceof TileEntityCable) {
-            world.setBlockToAir(blockPos);
-            world.setBlockState(blockPos, Blocks.FIRE.getDefaultState());
-
-            ((WorldServer) world).spawnParticle(EnumParticleTypes.SMOKE_LARGE,
-                    blockPos.getX() + 0.5, blockPos.getY() + 0.5, blockPos.getZ() + 0.5,
-                    5 + world.rand.nextInt(3), 0.0, 0.0, 0.0, 0.1);
-        }
-    }
 }

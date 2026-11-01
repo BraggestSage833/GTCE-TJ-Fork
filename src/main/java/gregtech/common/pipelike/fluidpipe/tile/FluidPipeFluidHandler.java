@@ -63,7 +63,8 @@ public class FluidPipeFluidHandler implements IFluidHandler {
         return null;
     }
 
-    protected FluidPipeNet getFluidPipeNet() {
+    @Nullable
+    private FluidPipeNet getFluidPipeNet() {
         FluidPipeNet cached = this.currentPipeNet.get();
         if (cached != null && cached.isValid() && cached.containsNode(pipeTile.getPipePos())) {
             return cached;

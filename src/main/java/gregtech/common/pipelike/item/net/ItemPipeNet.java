@@ -42,26 +42,25 @@ public class ItemPipeNet extends RoutedPipeNet<ItemPipeProperties> {
         World world = worldData.getWorld();
         long now = world.getTotalWorldTime();
         Bucket sourceBucket = getPipeBucket(sourcePipePos);
-        int sourceRate = sourceNode.data.getItemsPerSecond();
+        int sourceRate = getLimit(sourceNode);
         BlockPos sourceInvPos = sourceSide == null ? null : sourcePipePos.offset(sourceSide);
 
         Set<BlockPos> offered = simulate ? new HashSet<>() : null;
         List<Runnable> undo = new ArrayList<>();
 
         ItemStack remaining = stack.copy();
-        for (RoutePath route : getRoutes(sourcePipePos)) {
+        for (RouteStep route : getRoutes(sourcePipePos)) {
             if (remaining.isEmpty() || sourceBucket.available(now, sourceRate) <= 0) {
                 break;
             }
 
             int toSend = Math.min(route.remainingCapacity(now), remaining.getCount());
-
             if (toSend <= 0) {
                 continue;
             }
 
             ItemStack attempt = ItemHandlerHelper.copyStackWithSize(remaining, toSend);
-            ItemStack leftover = insertAtDestination(world, route.destination, sourceInvPos, attempt, simulate, offered);
+            ItemStack leftover = insertAtDestination(world, route.pos, sourceInvPos, attempt, simulate, offered);
 
             int inserted = toSend - leftover.getCount();
             if (inserted <= 0) {

@@ -37,28 +37,23 @@ public class CableEnergyContainer implements IEnergyContainer {
             return 0;
         }
 
-        List<CableRoutePath> paths = getPaths(energyNet);
         World world = tileEntityCable.getPipeWorld();
 
         long now = world.getTotalWorldTime();
         long ampsUsed = 0;
 
-        for (CableRoutePath routePath : paths) {
-            if (routePath.totalLoss >= voltage) {
+        for (CableRoutePath path : getPaths(energyNet)) {
+            if (path.totalLoss >= voltage) {
                 continue;
             }
 
-            long ampsOnPath = dispatchEnergyToNode(routePath.destination, routePath.destinationNode.blockedConnections,
-                    voltage - routePath.totalLoss, amperage - ampsUsed
-            );
-
+            long ampsOnPath = dispatchEnergyToNode(path.destination, path.destinationNode.blockedConnections,
+                    voltage - path.totalLoss, amperage - ampsUsed);
             ampsUsed += ampsOnPath;
 
-            if (routePath.addAmperageAndBurn(world, now, voltage, ampsOnPath)) {
-                break;
-            }
 
-            if (ampsUsed == amperage) {
+            boolean burned = path.addAmperageAndBurn(world, now, voltage, ampsOnPath);
+            if (burned || ampsUsed == amperage) {
                 break;
             }
         }
@@ -155,13 +150,10 @@ public class CableEnergyContainer implements IEnergyContainer {
     }
 
     private List<CableRoutePath> getPaths(EnergyNet energyNet) {
-        if (pathsCache == null
-                || pathsCacheNet.get() != energyNet
-                || energyNet.getLastUpdate() != lastCachedUpdate
-        ) {
+        if (pathsCache == null || pathsCacheNet.get() != energyNet || energyNet.getLastUpdate() != lastCachedUpdate) {
             pathsCacheNet = new WeakReference<>(energyNet);
             lastCachedUpdate = energyNet.getLastUpdate();
-            pathsCache = energyNet.computePatches(tileEntityCable.getPipePos());
+            pathsCache = energyNet.computePaths(tileEntityCable.getPipePos());
         }
 
         return pathsCache;

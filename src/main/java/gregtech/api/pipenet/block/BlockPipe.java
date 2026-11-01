@@ -23,6 +23,7 @@ import gregtech.api.util.GTUtility;
 import gregtech.common.sound.GTSoundEvents;
 import gregtech.common.tools.DamageValues;
 import gregtech.api.render.IBlockAppearance;
+import gregtech.common.tools.ToolBase;
 import gregtech.integration.ctm.IFacadeWrapper;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
@@ -197,9 +198,6 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
         return getDropItem(pipeTile);
     }
 
-    protected boolean isPipeTool(ItemStack item) {
-        return item.getCapability(getConnectionToggleCapability(), null) instanceof IWrenchItem;
-    }
 
     @Override
     public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
@@ -239,20 +237,26 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
     public boolean onPipeActivated(EntityPlayer entityPlayer, EnumHand hand, CuboidRayTraceResult hit, IPipeTile<PipeType, NodeDataType> pipeTile) {
         EnumFacing coverSide = ICoverable.traceCoverSide(hit);
-        if (coverSide == null) return false;
+        if (coverSide == null) {
+            return false;
+        }
 
         CoverBehavior coverBehavior = pipeTile.getCoverableImplementation().getCoverAtSide(coverSide);
-        if (coverBehavior == null) return false;
+        if (coverBehavior == null) {
+            return false;
+        }
 
         ItemStack itemStack = entityPlayer.getHeldItem(hand);
-        IScrewdriverItem screwdriver = itemStack.getCapability(GregtechCapabilities.CAPABILITY_SCREWDRIVER, null);
+        IDamagableToolItem screwdriver = itemStack.getCapability(GregtechCapabilities.CAPABILITY_SCREWDRIVER, null);
         if (screwdriver != null) {
             if (screwdriver.damageItem(DamageValues.DAMAGE_FOR_SCREWDRIVER, true) && coverBehavior.onScrewdriverClick(entityPlayer, hand, hit) == EnumActionResult.SUCCESS) {
                 screwdriver.damageItem(DamageValues.DAMAGE_FOR_SCREWDRIVER, false);
+                entityPlayer.playSound(GTSoundEvents.SCREWDRIVER,1f,1f);
                 return true;
             }
             return false;
         }
+
         return coverBehavior.onRightClick(entityPlayer, hand, hit) == EnumActionResult.SUCCESS;
     }
 

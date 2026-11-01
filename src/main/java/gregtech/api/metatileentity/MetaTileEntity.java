@@ -520,8 +520,6 @@ public abstract class MetaTileEntity implements ICoverable {
             getHolder().markDirty();
         }
 
-        getWorld().playSound(null, getPos(), GTSoundEvents.CROWBAR, SoundCategory.PLAYERS, 1F, 1F);
-
         onCoverPlacementUpdate();
         return true;
     }

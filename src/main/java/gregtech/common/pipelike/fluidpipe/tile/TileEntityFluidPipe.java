@@ -18,7 +18,7 @@ import java.util.Random;
 
 public class TileEntityFluidPipe extends TileEntityMaterialPipeBase<FluidPipeType, FluidPipeProperties> {
 
-    private static final Random random = new Random();
+    private static final Random RANDOM = new Random();
     private final IFluidHandler[] sideHandlers = new FluidPipeFluidHandler[7];
 
     public TileEntityFluidPipe() {}
@@ -53,7 +53,7 @@ public class TileEntityFluidPipe extends TileEntityMaterialPipeBase<FluidPipeTyp
 
     public static void setNeighboursToFire(World world, BlockPos selfPos) {
         for (EnumFacing side : EnumFacing.VALUES) {
-            if (!random.nextBoolean()) {
+            if (!RANDOM.nextBoolean()) {
                 continue;
             }
 

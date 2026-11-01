@@ -10,14 +10,9 @@ import net.minecraft.world.World;
 import java.util.*;
 
 
-public abstract class RoutedPipeNet<T> extends PipeNet<T>{
-
-    private static final Comparator<Candidate<?>> DIJKSTRA_ORDER = Comparator.<Candidate<?>>comparingInt(c -> c.cost)
-            .thenComparingInt(c -> c.hops)
-            .thenComparingInt(c -> c.sequence);
-
+public abstract class RoutedPipeNet<T> extends PipeNet<T> {
     private final Map<BlockPos, Bucket> pipeBuckets = new HashMap<>();
-    private final Map<BlockPos, List<RoutePath>> routeCache = new HashMap<>();
+    private final Map<BlockPos, List<RouteStep>> routeCache = new HashMap<>();
 
     protected RoutedPipeNet(WorldPipeNet<T, ? extends PipeNet<T>> world) {
         super(world);
@@ -26,15 +21,6 @@ public abstract class RoutedPipeNet<T> extends PipeNet<T>{
     protected abstract int getCost(Node<T> node);
 
     protected abstract int getLimit(Node<T> node);
-
-    protected boolean isEntryBlocked(World world, BlockPos pos, EnumFacing travelDirection) {
-        if (!world.isBlockLoaded(pos)) {
-            return false;
-        }
-
-        TileEntity tile = world.getTileEntity(pos);
-        return tile instanceof IPipeTile<?,?> pipe && pipe.isSideBlocked(travelDirection.getOpposite());
-    }
 
     public void invalidateRoutes() {
         routeCache.clear();
@@ -52,28 +38,38 @@ public abstract class RoutedPipeNet<T> extends PipeNet<T>{
         }
     }
 
+
     public Bucket getPipeBucket(BlockPos pipePos) {
         return pipeBuckets.computeIfAbsent(pipePos.toImmutable(), pos -> new Bucket());
     }
 
-    protected List<RoutePath> getRoutes(BlockPos sourcePipePos) {
+    protected boolean isEntryBlocked(World world, BlockPos pos, EnumFacing travelDirection) {
+        if (!world.isBlockLoaded(pos)) {
+            return false;
+        }
+
+        return world.getTileEntity(pos) instanceof IPipeTile<?, ?> pipe && pipe.isSideBlocked(travelDirection.getOpposite());
+    }
+
+    protected List<RouteStep> getRoutes(BlockPos sourcePipePos) {
         return routeCache.computeIfAbsent(sourcePipePos.toImmutable(), this::computeRoutes);
     }
 
-    protected List<RoutePath> computeRoutes(BlockPos startPos) {
+
+    protected List<RouteStep> computeRoutes(BlockPos startPos) {
         Node<T> rootNode = getNodeAt(startPos);
         if (rootNode == null) {
             return Collections.emptyList();
         }
 
         World world = worldData.getWorld();
-        List<RoutePath> routes = new ArrayList<>();
+        List<RouteStep> destinations = new ArrayList<>();
         Set<BlockPos> settled = new HashSet<>();
-        PriorityQueue<Candidate<T>> queue = new PriorityQueue<>(DIJKSTRA_ORDER);
+        PriorityQueue<Candidate<T>> queue = new PriorityQueue<>();
         BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
         int sequence = 0;
 
-        queue.add(new Candidate<>(startPos, rootNode, null, getCost(rootNode), 0, sequence++));
+        queue.add(new Candidate<>(startPos.toImmutable(), rootNode, null, getCost(rootNode), 0, sequence++));
 
         while (!queue.isEmpty()) {
             Candidate<T> candidate = queue.poll();
@@ -81,10 +77,9 @@ public abstract class RoutedPipeNet<T> extends PipeNet<T>{
                 continue;
             }
 
-            RoutePath.Step step = new RoutePath.Step(candidate.pos, getPipeBucket(candidate.pos), getLimit(candidate.node), candidate.parent);
-
+            RouteStep step = new RouteStep(candidate.pos, getPipeBucket(candidate.pos), getLimit(candidate.node), candidate.parent);
             if (candidate.node.isActive) {
-                routes.add(new RoutePath(candidate.pos, step));
+                destinations.add(step);
             }
 
             for (EnumFacing face : EnumFacing.VALUES) {
@@ -94,11 +89,7 @@ public abstract class RoutedPipeNet<T> extends PipeNet<T>{
                 }
 
                 Node<T> next = getNodeAt(probe);
-                if (next == null || !canNodesConnect(candidate.node, face, next, this)) {
-                    continue;
-                }
-
-                if (isEntryBlocked(world, probe, face)) {
+                if (next == null || !canNodesConnect(candidate.node, face, next, this) || isEntryBlocked(world, probe, face)) {
                     continue;
                 }
 
@@ -106,7 +97,7 @@ public abstract class RoutedPipeNet<T> extends PipeNet<T>{
             }
         }
 
-        return routes;
+        return destinations;
     }
 
     @Override
@@ -122,21 +113,37 @@ public abstract class RoutedPipeNet<T> extends PipeNet<T>{
         return super.removeNodeWithoutRebuilding(nodePos);
     }
 
-    private static final class Candidate<T> {
+
+    private static final class Candidate<T> implements Comparable<Candidate<T>> {
         final BlockPos pos;
         final Node<T> node;
-        final RoutePath.Step parent;
+        final RouteStep parent;
         final int cost;
         final int hops;
         final int sequence;
 
-        Candidate(BlockPos pos, Node<T> node, RoutePath.Step parent, int cost, int hops, int sequence) {
+        Candidate(BlockPos pos, Node<T> node, RouteStep parent, int cost, int hops, int sequence) {
             this.pos = pos;
             this.node = node;
             this.parent = parent;
             this.cost = cost;
             this.hops = hops;
             this.sequence = sequence;
+        }
+
+        @Override
+        public int compareTo(Candidate<T> other) {
+            int result = Integer.compare(cost, other.cost);
+            if (result != 0) {
+                return result;
+            }
+
+            result = Integer.compare(hops, other.hops);
+            if (result != 0) {
+                return result;
+            }
+
+            return Integer.compare(sequence, other.sequence);
         }
     }
 

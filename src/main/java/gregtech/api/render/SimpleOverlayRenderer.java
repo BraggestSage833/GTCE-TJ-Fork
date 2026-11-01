@@ -22,7 +22,7 @@ public class SimpleOverlayRenderer implements IIconRegister {
     private TextureAtlasSprite sprite;
 
     @SideOnly(Side.CLIENT)
-    private TextureAtlasSprite emissiveSprite = null;
+    private TextureAtlasSprite emissiveSprite;
 
     public SimpleOverlayRenderer(String basePath) {
         this.basePath = basePath;
@@ -33,6 +33,11 @@ public class SimpleOverlayRenderer implements IIconRegister {
     @SideOnly(Side.CLIENT)
     public void registerIcons(TextureMap textureMap) {
         this.sprite = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/" + basePath));
+
+
+        if (!MetaTileEntityRenderer.useBloom()) {
+            return;
+        }
 
         String emissive = "blocks/" + basePath + EMISSIVE;
         if (ResourceHelper.doResourcepacksHaveTexture(GTValues.MODID, emissive, true)) {

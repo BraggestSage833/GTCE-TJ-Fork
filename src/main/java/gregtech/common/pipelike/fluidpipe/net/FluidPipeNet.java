@@ -32,7 +32,6 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
 
 
     private final Map<BlockPos, RecentFluid> recentFluid = new HashMap<>();
-
     private final Map<BlockPos, SplitTree> treeCache = new HashMap<>();
 
     public FluidPipeNet(WorldPipeNet<FluidPipeProperties, FluidPipeNet> world) {
@@ -48,6 +47,12 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
     @Override
     protected int getLimit(Node<FluidPipeProperties> node) {
         return node.data.throughput;
+    }
+
+    @Override
+    public void invalidateRoutes() {
+        treeCache.clear();
+        super.invalidateRoutes();
     }
 
 
@@ -70,7 +75,7 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
         BlockPos sourceInvPos = sourceSide == null ? null : sourcePipePos.offset(sourceSide);
         Flow flow = new Flow(world, tree, resource, !doFill, sourceInvPos);
 
-        int accepted = run(flow, resource.amount);
+        int accepted = distribute(flow, resource.amount);
 
         flow.undo.forEach(Runnable::run);
 
@@ -84,7 +89,7 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
     }
 
 
-    private int run(Flow flow, int offered) {
+    private int distribute(Flow flow, int offered) {
         Frame first = open(flow, flow.tree.root(), offered);
         if (first == null) {
             return 0;
@@ -104,7 +109,6 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
                 }
             }
 
-            // this pipe is finished
             stack.remove(stack.size() - 1);
             int moved = close(flow, frame);
             if (stack.isEmpty()) {
@@ -114,13 +118,11 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
             Frame parent = stack.get(stack.size() - 1);
             parent.remaining -= moved;
             if (moved < parent.pendingGive) {
-                // took less than its share: its share goes to the others
                 flow.exhausted.add(parent.pendingChild);
                 parent.state.activeChildren--;
             }
         }
     }
-
 
     @Nullable
     private Frame open(Flow flow, int node, int offered) {
@@ -136,8 +138,8 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
         NodeState state = stateOf(flow, node);
         Frame frame = new Frame(node, state, allowed);
 
+
         if (state.failure != null) {
-            // this pipe can't take the fluid: it is lost, the pipe fails, and the flow stops
             flow.failures.add(state.failure);
             flow.aborted = true;
             frame.lost = true;
@@ -166,7 +168,6 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
                 frame.inRound = true;
             }
 
-            // tanks on this pipe first
             if (frame.tanks.hasNext()) {
                 Tank tank = frame.tanks.next();
                 int give = Math.min(frame.share, frame.remaining);
@@ -178,7 +179,6 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
                 continue;
             }
 
-            // then the pipes leading onward, skipping the ones that already dropped out
             if (!frame.pipesStarted) {
                 frame.cursor = tree.firstChild(frame.node);
                 frame.pipesStarted = true;
@@ -195,7 +195,6 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
                 int give = Math.min(frame.share, frame.remaining);
                 Frame child = open(flow, pipe, give);
                 if (child == null) {
-                    // nothing can go through it right now
                     flow.exhausted.add(pipe);
                     state.activeChildren--;
                     continue;
@@ -206,7 +205,6 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
                 return child;
             }
 
-            // end of the round: start another with whatever is left
             frame.inRound = false;
         }
 
@@ -223,8 +221,7 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
             int node = frame.node;
             tree.consume(node, flow.now, moved);
             if (flow.simulate) {
-                final int committed = moved;
-                flow.undo.add(() -> tree.consume(node, flow.now, -committed));
+                flow.undo.add(() -> tree.consume(node, flow.now, -moved));
             } else {
                 markRecentFluid(tree.pos(node), flow.temperature, flow.now);
             }
@@ -265,8 +262,7 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
             return;
         }
 
-        TileEntity pipeTile = world.getTileEntity(pipePos);
-        if (!(pipeTile instanceof IPipeTile<?, ?> pipe)) {
+        if (!(world.getTileEntity(pipePos) instanceof IPipeTile<?, ?> pipe)) {
             return;
         }
 
@@ -275,27 +271,39 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
                 continue;
             }
 
-            BlockPos inventoryPos = pipePos.offset(side);
-            if (inventoryPos.equals(flow.sourceInvPos) || !world.isBlockLoaded(inventoryPos)) {
+            BlockPos neighbourPos = pipePos.offset(side);
+            if (neighbourPos.equals(flow.sourceInvPos) || !world.isBlockLoaded(neighbourPos)) {
                 continue;
             }
 
-            // a tank touching several pipes belongs to the first one that reaches it
-            if (!flow.seen.add(inventoryPos)) {
+            if (!flow.seen.add(neighbourPos)) {
                 continue;
             }
 
-            TileEntity tank = world.getTileEntity(inventoryPos);
-            if (tank == null || tank instanceof IPipeTile) {
+            TileEntity neighbour = world.getTileEntity(neighbourPos);
+            if (neighbour == null || neighbour instanceof IPipeTile) {
                 continue;
             }
 
-            IFluidHandler handler = tank.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side.getOpposite());
+            IFluidHandler handler = neighbour.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side.getOpposite());
             if (handler != null) {
                 out.add(new Tank(handler));
             }
         }
     }
+
+
+    private int fillTank(Flow flow, Tank tank, int give) {
+        if (!flow.simulate) {
+            return tank.handler.fill(new FluidStack(flow.resource, give), true);
+        }
+
+        int total = tank.handler.fill(new FluidStack(flow.resource, tank.promised + give), false);
+        int accepted = Math.max(0, Math.min(give, total - tank.promised));
+        tank.promised += accepted;
+        return accepted;
+    }
+
 
 
     private void markRecentFluid(BlockPos pos, int temp, long now) {
@@ -338,17 +346,6 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
         return leaking || burning ? new Failure(pos.toImmutable(), leaking, burning) : null;
     }
 
-    public int fillTank(Flow flow, Tank tank, int give) {
-        if (!flow.simulate) {
-            return tank.handler.fill(new FluidStack(flow.resource, give), true);
-        }
-
-        int total = tank.handler.fill(new FluidStack(flow.resource, tank.promised + give), false);
-        int accepted = Math.max(0, Math.min(give, total - tank.promised));
-        tank.promised = accepted;
-        return accepted;
-    }
-
 
     private static void destroyPipe(World world, Failure failure) {
         BlockPos pos = failure.pos;
@@ -378,11 +375,6 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
         }
     }
 
-    @Override
-    public void invalidateRoutes() {
-        treeCache.clear();
-        super.invalidateRoutes();
-    }
 
     @Override
     protected void writeNodeData(FluidPipeProperties nodeData, NBTTagCompound tagCompound) {
@@ -405,6 +397,7 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
         final long now;
         final FluidStack resource;
         final boolean simulate;
+
         @Nullable
         final BlockPos sourceInvPos;
         final boolean isGas;
@@ -435,19 +428,15 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
         final int node;
         final NodeState state;
         final int allowed;
-
         int remaining;
         int share;
-        // the child pipe currently being walked, and what it was offered
         int pendingChild;
         int pendingGive;
-        // progress through the current round: tanks first, then child pipes
         Iterator<Tank> tanks;
         int cursor;
         boolean inRound;
         boolean pipesStarted;
         boolean done;
-        // the pipe failed: everything offered to it counts as lost
         boolean lost;
 
         Frame(int node, NodeState state, int allowed) {
