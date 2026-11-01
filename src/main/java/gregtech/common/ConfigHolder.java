@@ -160,7 +160,7 @@ public class ConfigHolder {
     @Config.Comment("What is the max amount of time machines should sleep if they fail a start a recipe in ticks. 20 ticks = 1 second")
     @Config.RangeInt(min = 0, max = 400)
     @Config.RequiresMcRestart
-    public static int maxSleepTime = 0;
+    public static int maxSleepTime = 100;
 
     @Config.Comment("should the controller state the cache miss/catch ratio")
     public static boolean debug_options_for_caching =false;
