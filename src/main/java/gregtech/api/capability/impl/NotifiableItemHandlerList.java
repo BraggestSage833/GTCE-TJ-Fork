@@ -6,6 +6,9 @@ import net.minecraftforge.items.IItemHandler;
 
 import java.util.List;
 
+/**
+ * Meant to hold multiple {@link NotifiableItemStackHandler} or any other item handler that implements {@link IInventoryNotifiable}
+ */
 public class NotifiableItemHandlerList extends ItemHandlerList implements IInventoryNotifiable {
 
     private final List<? extends IItemHandler> itemHandlers;

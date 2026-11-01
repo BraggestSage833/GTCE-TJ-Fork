@@ -67,6 +67,9 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     protected boolean hasProblems;
     private final long[] V;
     private final String[] VN;
+    private int sleepTimer = 0;
+    private int sleepTime = 1;
+    private int failCount = 0;
     
     private int itemOutputIndex;
     private int fluidOutputIndex;
@@ -143,12 +146,29 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
                 if (this.progressTime > 0) {
                     this.updateRecipeProgress();
                 }
-                // lastRecipe field is used to bypass this check once a recipe is found so the recipe logic can continue to check for
-                // other conditions such as fusion reactor has enough heat or energy to prevent recipe logic from locking up
-                // it'll be cleared once recipe is finished
-                if (this.progressTime == 0 && (this.metaTileEntity.isInventoryNotified() || this.lastRecipe != null)) {
-                    this.metaTileEntity.setInventoryNotified(false);
-                    this.trySearchNewRecipe();
+                if (this.progressTime == 0) {
+                    boolean isNotified = this.metaTileEntity.isInventoryNotified();
+                    // lastRecipe field is used to bypass this check once a recipe is found so the recipe logic can continue to check for
+                    // other conditions such as fusion reactor has enough heat or energy to prevent recipe logic from locking up
+                    // it'll be cleared once recipe is finished
+                    if (isNotified || this.lastRecipe != null) {
+                        this.metaTileEntity.setInventoryNotified(false);
+                        if (isNotified || this.sleepTimer == 0) {
+                            if (!this.trySearchNewRecipe()) {
+                                this.failCount++;
+                                if (this.failCount == 5) {
+                                    this.sleepTime = Math.min(this.sleepTime * 2, (ConfigHolder.maxSleepTime >= 0 && ConfigHolder.maxSleepTime <= 400) ? ConfigHolder.maxSleepTime : 20);
+                                    this.failCount = 0;
+                                }
+                                this.sleepTimer = this.sleepTime;
+                            } else {
+                                this.sleepTime = 1;
+                                this.failCount = 0;
+                            }
+                        }
+                        if (this.sleepTimer > 0)
+                            this.sleepTimer--;
+                    }
                 }
             }
             if (this.wasActiveAndNeedsUpdate) {

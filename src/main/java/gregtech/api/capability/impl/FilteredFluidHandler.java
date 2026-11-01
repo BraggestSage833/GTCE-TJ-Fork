@@ -40,10 +40,4 @@ public class FilteredFluidHandler extends NotifiableFluidTank {
     public boolean canFillFluidType(FluidStack fluid) {
         return canFill() && (fillPredicate == null || fillPredicate.test(fluid));
     }
-
-    @Override
-    protected void onContentsChanged() {
-        if (this.metaTileEntitiesToNotify != null)
-            super.onContentsChanged();
-    }
 }

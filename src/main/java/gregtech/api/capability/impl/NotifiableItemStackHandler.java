@@ -7,6 +7,11 @@ import net.minecraftforge.items.ItemStackHandler;
 
 import java.util.List;
 
+/**
+ * Use {@link NotifiableItemStackHandler} to notify {@link MetaTileEntity} that item handler inventory has changed.
+ * Only notify if item amounts have changed since last insertion or extraction.
+ * This can be used to trigger recipe search only when necessary.
+ */
 public class NotifiableItemStackHandler extends ItemStackHandler implements IInventoryNotifiable {
 
     protected final List<MetaTileEntity> metaTileEntitiesToNotify = new ObjectArrayList<>();

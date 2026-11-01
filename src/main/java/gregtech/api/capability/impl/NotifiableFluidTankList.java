@@ -6,6 +6,9 @@ import net.minecraftforge.fluids.IFluidTank;
 
 import java.util.List;
 
+/**
+ * Meant to hold multiple {@link NotifiableFluidTank} or any other fluid tank that implements {@link IInventoryNotifiable}
+ */
 public class NotifiableFluidTankList extends FluidTankList implements IInventoryNotifiable {
 
     public NotifiableFluidTankList(MetaTileEntity metaTileEntity, boolean allowSameFluidFill, IFluidTank... fluidTanks) {
