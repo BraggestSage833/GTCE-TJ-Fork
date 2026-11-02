@@ -4,6 +4,7 @@ import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.cover.ICoverable;
 import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import gregtech.api.util.GTUtility;
+import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRailBase;
 import net.minecraft.block.state.IBlockState;
@@ -13,6 +14,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -56,8 +58,12 @@ public class CrowbarBehaviour implements IItemBehaviour {
                     return EnumActionResult.SUCCESS;
                 }
                 boolean result = coverable.removeCover(coverSide);
-                GTUtility.doDamageItem(stack, cost, false);
-                return result ? EnumActionResult.SUCCESS : EnumActionResult.PASS;
+                if (result) {
+                    GTUtility.doDamageItem(stack, cost, false);
+                    world.playSound(null, blockPos, GTSoundEvents.CROWBAR, SoundCategory.PLAYERS, 1f, 1f);
+                    return EnumActionResult.SUCCESS;
+                }
+                return EnumActionResult.PASS;
             }
         }
         return EnumActionResult.PASS;

@@ -14,6 +14,7 @@ public class FluidPipeProperties {
         this.gasProof = gasProof;
     }
 
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

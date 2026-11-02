@@ -8,6 +8,7 @@ import gregtech.api.cover.CoverDefinition;
 import gregtech.api.cover.ICoverable;
 import gregtech.api.pipenet.block.BlockPipe;
 import gregtech.api.util.GTUtility;
+import gregtech.common.sound.GTSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -16,6 +17,7 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
@@ -74,6 +76,9 @@ public class PipeCoverableImplementation implements ICoverable {
         if (!coverBehavior.canPipePassThrough()) {
             holder.setConnectionBlocked(AttachmentType.COVER, side, true);
         }
+
+        getWorld().playSound(null, getPos(), GTSoundEvents.SCREWDRIVER, SoundCategory.PLAYERS, 1.f, 1.f);
+
         holder.notifyBlockUpdate();
         holder.markAsDirty();
         return true;

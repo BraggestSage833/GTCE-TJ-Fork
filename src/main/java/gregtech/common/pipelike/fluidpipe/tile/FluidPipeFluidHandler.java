@@ -5,8 +5,10 @@ import gregtech.common.pipelike.fluidpipe.FluidPipeProperties;
 import gregtech.common.pipelike.fluidpipe.FluidPipeType;
 import gregtech.common.pipelike.fluidpipe.net.FluidPipeNet;
 import gregtech.common.pipelike.fluidpipe.net.WorldFluidPipeNet;
+import net.minecraft.util.EnumFacing;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
+import net.minecraftforge.fluids.capability.FluidTankProperties;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
@@ -16,54 +18,66 @@ import java.lang.ref.WeakReference;
 public class FluidPipeFluidHandler implements IFluidHandler {
 
     private final IPipeTile<FluidPipeType, FluidPipeProperties> pipeTile;
+
+    @Nullable
+    private final EnumFacing side;
     private WeakReference<FluidPipeNet> currentPipeNet = new WeakReference<>(null);
 
-    public FluidPipeFluidHandler(IPipeTile<FluidPipeType, FluidPipeProperties> pipeTile) {
+    public FluidPipeFluidHandler(IPipeTile<FluidPipeType, FluidPipeProperties> pipeTile, EnumFacing side) {
         this.pipeTile = pipeTile;
+        this.side = side;
     }
 
     @Override
     public IFluidTankProperties[] getTankProperties() {
-        FluidTank fluidTank = getNetFluidTank();
-        return fluidTank == null ? new IFluidTankProperties[0] : fluidTank.getTankProperties();
+        return new IFluidTankProperties[] { new FluidTankProperties(null, pipeTile.getNodeData().throughput, true, false)};
     }
 
     @Override
     public int fill(FluidStack resource, boolean doFill) {
-        FluidTank fluidTank = getNetFluidTank();
-        return fluidTank == null ? 0 : fluidTank.fill(resource, doFill);
+        if (resource == null || resource.amount <= 0) {
+            return 0;
+        }
+
+        if (side != null && pipeTile.isSideBlocked(side)) {
+            return 0;
+        }
+
+        FluidPipeNet net = getFluidPipeNet();
+        if (net == null) {
+            return 0;
+        }
+
+        return net.fill(pipeTile.getPipePos(), side, resource, doFill);
     }
 
     @Nullable
     @Override
     public FluidStack drain(FluidStack resource, boolean doDrain) {
-        FluidTank fluidTank = getNetFluidTank();
-        return fluidTank == null ? null : fluidTank.drain(resource, doDrain);
+        return null;
     }
 
     @Nullable
     @Override
     public FluidStack drain(int maxDrain, boolean doDrain) {
-        FluidTank fluidTank = getNetFluidTank();
-        return fluidTank == null ? null : fluidTank.drain(maxDrain, doDrain);
+        return null;
     }
 
-    protected FluidTank getNetFluidTank() {
-        FluidPipeNet fluidPipeNet = getFluidPipeNet();
-        return fluidPipeNet == null ? null : fluidPipeNet.getFluidNetTank();
-    }
-
-    public FluidPipeNet getFluidPipeNet() {
-        FluidPipeNet currentPipeNet = this.currentPipeNet.get();
-        if (currentPipeNet != null && currentPipeNet.isValid() &&
-            currentPipeNet.containsNode(pipeTile.getPipePos()))
-            return currentPipeNet; //if current net is valid and does contain position, return it
-        WorldFluidPipeNet worldFluidPipeNet = (WorldFluidPipeNet) pipeTile.getPipeBlock().getWorldPipeNet(pipeTile.getPipeWorld());
-        currentPipeNet = worldFluidPipeNet.getNetFromPos(pipeTile.getPipePos());
-        if (currentPipeNet != null) {
-            this.currentPipeNet = new WeakReference<>(currentPipeNet);
+    @Nullable
+    private FluidPipeNet getFluidPipeNet() {
+        FluidPipeNet cached = this.currentPipeNet.get();
+        if (cached != null && cached.isValid() && cached.containsNode(pipeTile.getPipePos())) {
+            return cached;
         }
-        return currentPipeNet;
+
+        WorldFluidPipeNet worldNet = (WorldFluidPipeNet) pipeTile.getPipeBlock().getWorldPipeNet(pipeTile.getPipeWorld());
+        FluidPipeNet found = worldNet.getNetFromPos(pipeTile.getPipePos());
+        if (found != null) {
+            this.currentPipeNet = new WeakReference<>(found);
+        }
+
+        return found;
     }
+
 
 }

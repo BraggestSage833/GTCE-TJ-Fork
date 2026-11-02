@@ -6,7 +6,6 @@ import gregtech.api.pipenet.block.material.BlockMaterialPipe;
 import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.api.pipenet.tile.TileEntityPipeBase;
 import gregtech.api.unification.material.type.Material;
-import gregtech.api.util.GTFluidUtils;
 import gregtech.common.pipelike.fluidpipe.net.FluidPipeNet;
 import gregtech.common.pipelike.fluidpipe.net.WorldFluidPipeNet;
 import gregtech.common.pipelike.fluidpipe.tile.FluidPipeFluidHandler;
@@ -20,6 +19,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.NonNullList;
@@ -94,7 +94,10 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
         for (EnumFacing side : EnumFacing.VALUES) {
             BlockPos offsetPos = selfTile.getPipePos().offset(side);
             TileEntity tileEntity = selfTile.getPipeWorld().getTileEntity(offsetPos);
-            if (tileEntity == null || getPipeTileEntity(tileEntity) != null) continue;
+            if (tileEntity == null || getPipeTileEntity(tileEntity) != null) {
+                continue;
+            }
+
             EnumFacing opposite = side.getOpposite();
             IFluidHandler sourceHandler = getRawFluidHandler(selfTile, side);
             IFluidHandler receivedHandler = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, opposite);
@@ -102,6 +105,7 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
                 activeNodeConnections |= 1 << side.getIndex();
             }
         }
+
         return activeNodeConnections;
     }
 
@@ -111,10 +115,10 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
         for (EnumFacing side : EnumFacing.VALUES) {
             BlockPos offsetPos = selfTileEntity.getPipePos().offset(side);
             TileEntity tileEntity = selfTileEntity.getPipeWorld().getTileEntity(offsetPos);
-            if (tileEntity == null) {
+            if (tileEntity == null || getPipeTileEntity(tileEntity) != null) {
                 continue;
             }
-            if (getPipeTileEntity(tileEntity) != null && !isDifferentPipeNet(selfTileEntity, tileEntity)) continue;
+
             EnumFacing opposite = side.getOpposite();
             IFluidHandler sourceHandler = getRawFluidHandler(selfTileEntity, side);
             IFluidHandler receivedHandler = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, opposite);
@@ -122,6 +126,7 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
                 activeNodeConnections |= 1 << side.getIndex();
             }
         }
+
         return activeNodeConnections;
     }
 
@@ -129,99 +134,44 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
         if (pipeTile instanceof TileEntityPipeBase) {
             return ((TileEntityPipeBase<FluidPipeType, FluidPipeProperties>) pipeTile).getCapabilityInternal(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
         }
+
         return pipeTile.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
-    }
-
-    public boolean canPushIntoFluidHandler(IPipeTile<FluidPipeType, FluidPipeProperties> selfTileEntity, TileEntity otherTileEntity, IFluidHandler sourceHandler, IFluidHandler destinationHandler) {
-        boolean isSourcePipe = sourceHandler instanceof FluidPipeFluidHandler;
-        boolean isDestPipe = destinationHandler instanceof FluidPipeFluidHandler;
-        if(isSourcePipe && isDestPipe) {
-            float sourceThickness = selfTileEntity.getPipeType().getThickness();
-            IPipeTile<FluidPipeType, FluidPipeProperties> otherPipe = getPipeTileEntity(otherTileEntity);
-            if (otherPipe == null) {
-                return false;
-            }
-            float destThickness = otherPipe.getPipeType().getThickness();
-            return sourceThickness > destThickness;
-        }
-        return true;
-    }
-
-
-    public boolean isDifferentPipeNet(IPipeTile<FluidPipeType, FluidPipeProperties> self, TileEntity other) {
-        IPipeTile<FluidPipeType, FluidPipeProperties> otherPipe = getPipeTileEntity(other);
-        return otherPipe != null && !otherPipe.getNodeData().equals(self.getNodeData());
-    }
-    // how much fluid to move from pipe net a to b.
-    public int getAmountToMove(IPipeTile<FluidPipeType, FluidPipeProperties> self, TileEntity other) {
-        IPipeTile<FluidPipeType, FluidPipeProperties> otherPipe = getPipeTileEntity(other);
-        if (otherPipe == null) {
-            return 0;
-        }
-
-        WorldFluidPipeNet worldFluidPipeNet = getWorldPipeNet(self.getPipeWorld());
-
-        FluidPipeNet from = worldFluidPipeNet.getNetFromPos(self.getPipePos());
-        FluidPipeNet to = worldFluidPipeNet.getNetFromPos(otherPipe.getPipePos());
-
-        if (from == null || to == null || from == to) {
-            return 0;
-        }
-
-        FluidTank fromTank = from.getFluidNetTank();
-        FluidTank toTank = to.getFluidNetTank();
-        long fromCap = fromTank.getCapacity();
-        long toCap = toTank.getCapacity();
-        if (fromCap <= 0 || toCap <= 0) {
-            return 0;
-        }
-
-        long diff = (long) fromTank.getFluidAmount() * toCap - (long) toTank.getFluidAmount() * fromCap;
-        return (int) Math.max(0, diff / (fromCap + toCap));
     }
 
     @Override
     public void onEntityCollision(World worldIn, BlockPos pos, IBlockState state, Entity entityIn) {
-        if (entityIn instanceof EntityLivingBase && entityIn.world.getWorldTime() % 20 == 0L) {
-            EntityLivingBase entityLiving = (EntityLivingBase) entityIn;
-            FluidPipeNet pipeNet = getWorldPipeNet(worldIn).getNetFromPos(pos);
-            if (pipeNet != null) {
-                FluidStack fluidStack = pipeNet.getFluidNetTank().getFluid();
-                if (fluidStack == null) {
-                    return; //pipe network is empty
-                }
-                int fluidTemperature = fluidStack.getFluid().getTemperature(fluidStack);
-                if (fluidTemperature >= 373) {
-                    //100C, temperature of boiling water
-                    float damageAmount = (fluidTemperature - 363) / 40.0f;
-                    entityLiving.attackEntityFrom(DamageSources.getHeatDamage(), damageAmount);
+        if (worldIn.isRemote || !(entityIn instanceof  EntityLivingBase)) {
+            return;
+        }
 
-                } else if (fluidTemperature <= 183) {
-                    //-90C, temperature of freezing of most gaseous elements
-                    float damageAmount = fluidTemperature / 10.0f;
-                    entityLiving.attackEntityFrom(DamageSources.getFrostDamage(), damageAmount);
+        long now = worldIn.getTotalWorldTime();
+        if (now % 20 != 0L) {
+            return;
+        }
 
-                }
-            }
+        FluidPipeNet pipeNet = getWorldPipeNet(worldIn).getNetFromPos(pos);
+        if (pipeNet == null) {
+            return;
+        }
+
+        int fluidTemp = pipeNet.getRecentTemp(pos, now);
+        if (fluidTemp == FluidPipeNet.NO_RECENT_FLUID) {
+            return;
+        }
+
+        EntityLivingBase entityLiving = (EntityLivingBase) entityIn;
+        if (fluidTemp >= FluidPipeNet.HOT_VALUE) {
+            float damageAmount = (fluidTemp - 363) / 40.f;
+            entityLiving.attackEntityFrom(DamageSources.getHeatDamage(), damageAmount);
+        } else if (fluidTemp <= FluidPipeNet.COLD_VALUE) {
+            float damageAmount = fluidTemp / 10.f;
+            entityLiving.attackEntityFrom(DamageSources.getFrostDamage(), damageAmount);
         }
     }
 
     @Override
     public TileEntityPipeBase<FluidPipeType, FluidPipeProperties> createNewTileEntity(boolean supportsTicking) {
         return supportsTicking ? new TileEntityFluidPipeTickable() : new TileEntityFluidPipe();
-    }
-
-    @Override
-    protected void onActiveModeChange(World world, BlockPos pos, boolean isActiveNow, boolean isInitialChange) {
-        TileEntityFluidPipe oldTileEntity = (TileEntityFluidPipe) world.getTileEntity(pos);
-        if (!(oldTileEntity instanceof TileEntityFluidPipeTickable) && isActiveNow) {
-            TileEntityFluidPipeTickable newTileEntity = new TileEntityFluidPipeTickable();
-            newTileEntity.transferDataFrom(oldTileEntity);
-            newTileEntity.setActive(true);
-            world.setTileEntity(pos, newTileEntity);
-        } else if (oldTileEntity instanceof TileEntityFluidPipeTickable) {
-            ((TileEntityFluidPipeTickable) oldTileEntity).setActive(isActiveNow);
-        }
     }
 
     @Override

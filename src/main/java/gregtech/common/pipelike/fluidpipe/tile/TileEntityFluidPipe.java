@@ -18,11 +18,10 @@ import java.util.Random;
 
 public class TileEntityFluidPipe extends TileEntityMaterialPipeBase<FluidPipeType, FluidPipeProperties> {
 
-    private static final Random random = new Random();
-    private IFluidHandler fluidHandler;
+    private static final Random RANDOM = new Random();
+    private final IFluidHandler[] sideHandlers = new FluidPipeFluidHandler[7];
 
-    public TileEntityFluidPipe() {
-    }
+    public TileEntityFluidPipe() {}
 
     @Override
     public Class<FluidPipeType> getPipeTypeClass() {
@@ -34,25 +33,30 @@ public class TileEntityFluidPipe extends TileEntityMaterialPipeBase<FluidPipeTyp
         return false;
     }
 
-    protected IFluidHandler getFluidHandler() {
-        if (fluidHandler == null) {
-            this.fluidHandler = new FluidPipeFluidHandler(this);
+    protected IFluidHandler getFluidHandler(@Nullable EnumFacing side) {
+        int index = side == null ? 6 : side.getIndex();
+        if (sideHandlers[index] == null) {
+            sideHandlers[index] = new FluidPipeFluidHandler(this, side);
         }
-        return fluidHandler;
+
+        return sideHandlers[index];
     }
 
     @Nullable
     @Override
     public <T> T getCapabilityInternal(Capability<T> capability, @Nullable EnumFacing facing) {
         if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
-            return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(getFluidHandler());
+            return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(getFluidHandler(facing));
         }
         return super.getCapabilityInternal(capability, facing);
     }
 
     public static void setNeighboursToFire(World world, BlockPos selfPos) {
         for (EnumFacing side : EnumFacing.VALUES) {
-            if (!random.nextBoolean()) continue;
+            if (!RANDOM.nextBoolean()) {
+                continue;
+            }
+
             BlockPos blockPos = selfPos.offset(side);
             IBlockState blockState = world.getBlockState(blockPos);
             if (blockState.getBlock().isAir(blockState, world, blockPos) ||

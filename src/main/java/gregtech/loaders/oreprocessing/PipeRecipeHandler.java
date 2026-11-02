@@ -18,6 +18,12 @@ public class PipeRecipeHandler {
         OrePrefix.pipeSmall.addProcessingHandler(IngotMaterial.class, PipeRecipeHandler::processPipeSmall);
         OrePrefix.pipeMedium.addProcessingHandler(IngotMaterial.class, PipeRecipeHandler::processPipeNormal);
         OrePrefix.pipeLarge.addProcessingHandler(IngotMaterial.class, PipeRecipeHandler::processPipeLarge);
+
+
+        OrePrefix.pipeItemSmall.addProcessingHandler(IngotMaterial.class, PipeRecipeHandler::processPipeSmall);
+        OrePrefix.pipeItemMedium.addProcessingHandler(IngotMaterial.class, PipeRecipeHandler::processPipeNormal);
+        OrePrefix.pipeItemLarge.addProcessingHandler(IngotMaterial.class, PipeRecipeHandler::processPipeLarge);
+        OrePrefix.pipeItemHuge.addProcessingHandler(IngotMaterial.class, PipeRecipeHandler::processPipeHuge);
     }
 
     private static void processPipeTiny(OrePrefix pipePrefix, IngotMaterial material) {
@@ -42,7 +48,8 @@ public class PipeRecipeHandler {
 
         ModHandler.addShapedRecipe(String.format("small_%s_pipe", material.toString()),
             GTUtility.copyAmount(4, pipeStack), "XXX", "h f", "XXX",
-            'X', new UnificationEntry(OrePrefix.plate, material));
+            'X', new UnificationEntry(OrePrefix.plate, material)
+        );
     }
 
     private static void processPipeNormal(OrePrefix pipePrefix, IngotMaterial material) {
@@ -57,17 +64,39 @@ public class PipeRecipeHandler {
 
         ModHandler.addShapedRecipe(String.format("medium_%s_pipe", material.toString()),
             GTUtility.copyAmount(2, pipeStack), "XXX", "f h", "XXX",
-            'X', new UnificationEntry(OrePrefix.plate, material));
+            'X', new UnificationEntry(OrePrefix.plate, material)
+        );
     }
 
     private static void processPipeLarge(OrePrefix pipePrefix, IngotMaterial material) {
+        ItemStack pipeStack = OreDictUnifier.get(pipePrefix, material);
         RecipeMaps.EXTRUDER_RECIPES.recipeBuilder()
             .input(OrePrefix.ingot, material, 6)
             .notConsumable(MetaItems.SHAPE_EXTRUDER_PIPE_LARGE)
-            .outputs(OreDictUnifier.get(pipePrefix, material))
+            .outputs(pipeStack)
             .duration((int) material.getAverageMass())
             .EUt(6 * getVoltageMultiplier(material))
             .buildAndRegister();
+
+        if (material.itemPipeProperties == null) {
+            return;
+        }
+
+        ModHandler.addShapedRecipe(String.format("large_%s_pipe", material.toString()),
+                GTUtility.copyAmount(1, pipeStack), "XXX", "f h", "XXX",
+                'X', new UnificationEntry(OrePrefix.plate, material)
+        );
+    }
+
+    private static void processPipeHuge(OrePrefix pipePrefix, IngotMaterial material) {
+        ItemStack pipeStack = OreDictUnifier.get(pipePrefix, material);
+        RecipeMaps.EXTRUDER_RECIPES.recipeBuilder()
+                .input(OrePrefix.ingot, material, 12)
+                .notConsumable(MetaItems.SHAPE_EXTRUDER_PIPE_HUGE)
+                .outputs(pipeStack)
+                .duration((int) material.getAverageMass())
+                .EUt(6 * getVoltageMultiplier(material))
+                .buildAndRegister();
     }
 
 

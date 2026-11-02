@@ -2,8 +2,12 @@ package gregtech.common.pipelike.cable.net;
 
 
 import gregtech.common.pipelike.cable.WireProperties;
+import gregtech.common.pipelike.cable.tile.TileEntityCable;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +17,6 @@ public final class RouteTree {
     public final int[] parent;
     public final int[] maxVolts;
     public final int[] maxAmps;
-
     private final boolean[] used;
     private TickCounter[] counters;
     public int size;
@@ -62,7 +65,6 @@ public final class RouteTree {
                 if (overloaded == null) {
                     overloaded = new ArrayList<>(4);
                 }
-
                 overloaded.add(positions[i]);
             }
         }
@@ -72,9 +74,23 @@ public final class RouteTree {
         }
 
         for (BlockPos pos : overloaded) {
-            RoutePath.burnCable(world, pos);
+            burnCable(world, pos);
+        }
+        return true;
+    }
+
+    private static void burnCable(World world, BlockPos pos) {
+        if (world.isRemote) {
+            return;
         }
 
-        return true;
+        if (world.getTileEntity(pos) instanceof TileEntityCable) {
+            world.setBlockToAir(pos);
+            world.setBlockState(pos, Blocks.FIRE.getDefaultState());
+
+            ((WorldServer) world).spawnParticle(EnumParticleTypes.SMOKE_LARGE,
+                    pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                    5 + world.rand.nextInt(3), 0.0, 0.0, 0.0, 0.1);
+        }
     }
 }

@@ -46,6 +46,7 @@ import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.model.IModelState;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -62,8 +63,7 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
     public static MetaTileEntityRenderer INSTANCE = new MetaTileEntityRenderer();
     public static EnumBlockRenderType BLOCK_RENDER_TYPE;
 
-
-    // NEW THINGS
+    private static boolean useBloom = false;
 
     private static final ThreadLocal<Int2ObjectMap<ColourMultiplier>> colourCache = ThreadLocal.withInitial(Int2ObjectOpenHashMap::new);
 
@@ -72,6 +72,15 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
         BlockRenderingRegistry.registerRenderer(BLOCK_RENDER_TYPE, INSTANCE);
         MinecraftForge.EVENT_BUS.register(INSTANCE);
         TextureUtils.addIconRegister(Textures::register);
+
+        if (Loader.isModLoaded("lumenized")) {
+            useBloom = true;
+        }
+
+    }
+
+    public static boolean useBloom() {
+        return useBloom;
     }
 
     @SubscribeEvent
@@ -86,10 +95,12 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
         if (!(stack.getItem() instanceof MachineItemBlock)) {
             return;
         }
+
         MetaTileEntity metaTileEntity = MachineItemBlock.getMetaTileEntity(stack);
         if (metaTileEntity == null) {
             return;
         }
+
         GlStateManager.enableBlend();
         CCRenderState renderState = CCRenderState.instance();
         renderState.reset();
@@ -99,8 +110,10 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
         if(metaTileEntity instanceof IFastRenderMetaTileEntity) {
             ((IFastRenderMetaTileEntity) metaTileEntity).renderMetaTileEntityFast(renderState, new Matrix4(), 0.0f);
         }
+
         metaTileEntity.setRenderContextStack(null);
         renderState.draw();
+
         if(metaTileEntity instanceof IRenderMetaTileEntity) {
             ((IRenderMetaTileEntity) metaTileEntity).renderMetaTileEntityDynamic(0.0, 0.0, 0.0, 0.0f);
         }
@@ -109,15 +122,21 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
 
     @Override
     public boolean renderBlock(IBlockAccess world, BlockPos pos, IBlockState state, BufferBuilder buffer) {
+        if (useBloom) {
+            return BloomRenderUtils.renderBlock(world, pos, state, buffer);
+        }
+
         MetaTileEntity metaTileEntity = BlockMachine.getMetaTileEntity(world, pos);
         if (metaTileEntity == null) {
             return false;
         }
+
         CCRenderState renderState = CCRenderState.instance();
         renderState.reset();
         renderState.bind(buffer);
         Matrix4 translation = new Matrix4().translate(pos.getX(), pos.getY(), pos.getZ());
         BlockRenderLayer renderLayer = MinecraftForgeClient.getRenderLayer();
+
         if (metaTileEntity.canRenderInLayer(renderLayer)) {
             renderState.lightMatrix.locate(world, pos);
             IVertexOperation[] pipeline = new IVertexOperation[]{renderState.lightMatrix};
@@ -132,10 +151,12 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
             Random posRand = new Random(MathHelper.getPositionRandom(pos));
             int destroyStage = posRand.nextInt(10);
             TextureAtlasSprite atlasSprite = textureMap.getAtlasSprite("minecraft:blocks/destroy_stage_" + destroyStage);
+
             for (EnumFacing face : EnumFacing.VALUES) {
                 Textures.renderFace(renderState, translation, new IVertexOperation[0], face, Cuboid6.full, atlasSprite);
             }
         }
+
         return true;
     }
 
@@ -166,10 +187,12 @@ public class MetaTileEntityRenderer implements ICCBlockRenderer, IItemRenderer {
             metaTileEntity.addCollisionBoundingBox(boundingBox);
             metaTileEntity.addCoverCollisionBoundingBox(boundingBox);
         }
+
         CCRenderState renderState = CCRenderState.instance();
         renderState.reset();
         renderState.bind(buffer);
         renderState.setPipeline(new Vector3(new Vec3d(pos)).translation(), new IconTransformation(sprite));
+
         for (Cuboid6 cuboid : boundingBox) {
             BlockRenderer.renderCuboid(renderState, cuboid, 0);
         }

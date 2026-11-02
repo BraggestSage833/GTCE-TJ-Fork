@@ -7,6 +7,7 @@ import gregtech.api.unification.stack.MaterialStack;
 import gregtech.common.pipelike.cable.WireProperties;
 import gregtech.common.pipelike.fluidpipe.FluidPipeProperties;
 import crafttweaker.annotations.ZenRegister;
+import gregtech.common.pipelike.item.ItemPipeProperties;
 import stanhebben.zenscript.annotations.*;
 
 import javax.annotation.Nullable;
@@ -83,6 +84,14 @@ public class IngotMaterial extends SolidMaterial {
      */
     @Nullable
     public FluidPipeProperties fluidPipeProperties;
+
+
+    /**
+     * If set, item pipe will be generated for this materials with stats
+     * specified by this field
+     */
+    @Nullable
+    public ItemPipeProperties itemPipeProperties;
 
     public IngotMaterial(int metaItemSubId, String name, int materialRGB, MaterialIconSet materialIconSet, int harvestLevel, ImmutableList<MaterialStack> materialComponents, long materialGenerationFlags, Element element, float toolSpeed, float attackDamage, int toolDurability, int blastFurnaceTemperature) {
         super(metaItemSubId, name, materialRGB, materialIconSet, harvestLevel, materialComponents, materialGenerationFlags, element, toolSpeed, attackDamage, toolDurability);
@@ -166,6 +175,11 @@ public class IngotMaterial extends SolidMaterial {
     @ZenMethod
     public void setFluidPipeProperties(int throughput, int maxTemperature, boolean gasProof) {
         this.fluidPipeProperties = new FluidPipeProperties(maxTemperature, throughput, gasProof);
+    }
+
+    @ZenMethod
+    public void setItemPipeProperties(int priority, float transferRate) {
+        this.itemPipeProperties = new ItemPipeProperties(priority, transferRate);
     }
 
 }

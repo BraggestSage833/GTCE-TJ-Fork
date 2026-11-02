@@ -15,78 +15,14 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 
 public class TileEntityFluidPipeTickable extends TileEntityFluidPipe implements ITickable {
 
-    private boolean isActive;
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
     @Override
     public void update() {
         getCoverableImplementation().update();
-        if (isActive) {
-            pushFluidsFromTank(this);
-        }
     }
 
     @Override
     public boolean supportsTicking() {
         return true;
-    }
-
-    @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-        super.writeToNBT(compound);
-        compound.setBoolean("ActiveNode", isActive);
-        return compound;
-    }
-
-    @Override
-    public void readFromNBT(NBTTagCompound compound) {
-        super.readFromNBT(compound);
-        this.isActive = compound.getBoolean("ActiveNode");
-    }
-
-    public static void pushFluidsFromTank(IPipeTile<FluidPipeType, FluidPipeProperties> pipeTile) {
-        PooledMutableBlockPos blockPos = PooledMutableBlockPos.retain();
-        BlockFluidPipe blockFluidPipe = (BlockFluidPipe) pipeTile.getPipeBlock();
-        for (EnumFacing side : EnumFacing.VALUES) {
-            if (!pipeTile.isConnectionEnabled(side)) {
-                continue; // not connected on this side
-            }
-
-            blockPos.setPos(pipeTile.getPipePos()).move(side);
-            if (!pipeTile.getPipeWorld().isBlockLoaded(blockPos)) {
-                continue; // do not allow pipes to load chunks
-            }
-            TileEntity tileEntity = pipeTile.getPipeWorld().getTileEntity(blockPos);
-            if (tileEntity == null) {
-                continue;
-            }
-            boolean otherIsPipe = blockFluidPipe.getPipeTileEntity(tileEntity) != null;
-            if (otherIsPipe && !blockFluidPipe.isDifferentPipeNet(pipeTile, tileEntity)) {
-                continue; // same net: segments already share the tank
-            }
-            IFluidHandler sourceHandler = pipeTile.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
-            IFluidHandler receiverHandler = tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side.getOpposite());
-            if (sourceHandler == null || receiverHandler == null) {
-                continue;
-            }
-            if (otherIsPipe) {
-                int amount = blockFluidPipe.getAmountToMove(pipeTile, tileEntity);
-                if (amount > 0) {
-                    GTFluidUtils.transferFluids(sourceHandler, receiverHandler, amount);
-                }
-            } else if (blockFluidPipe.canPushIntoFluidHandler(pipeTile, tileEntity, sourceHandler, receiverHandler)) {
-                GTFluidUtils.transferFluids(sourceHandler, receiverHandler, Integer.MAX_VALUE);
-            }
-
-        }
-        blockPos.release();
     }
 
 }

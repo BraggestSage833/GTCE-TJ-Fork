@@ -20,9 +20,7 @@ import gregtech.common.blocks.*;
 import gregtech.common.blocks.surfacerock.BlockSurfaceRockDeprecated;
 import gregtech.common.covers.facade.FacadeRenderer;
 import gregtech.common.items.MetaItems;
-import gregtech.common.render.CableRenderer;
-import gregtech.common.render.FluidPipeRenderer;
-import gregtech.common.render.StoneRenderer;
+import gregtech.common.render.*;
 import gregtech.common.sound.GTSoundSystem;
 import groovyjarjarantlr4.v4.runtime.misc.NotNull;
 import net.minecraft.block.BlockColored;
@@ -124,6 +122,7 @@ public class ClientProxy extends CommonProxy {
 
         CableRenderer.INSTANCE.preInit();
         FluidPipeRenderer.INSTANCE.preInit();
+        ItemPipeRenderer.INSTANCE.preInit();
         StoneRenderer.preInit();
         MetaEntities.initRenderers();
         TextureUtils.addIconRegister(MetaFluids::registerSprites);
@@ -162,8 +161,8 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public static void textureStitchPre(@NotNull TextureStitchEvent.Pre event) {
         TextureMap map = event.getMap();
+        FluidItemPipeTextureHolder.registerIcon(map);
         CableRenderer.INSTANCE.registerIcon(map);
-        FluidPipeRenderer.INSTANCE.registerIcon(map);
     }
 
     @SubscribeEvent

@@ -27,6 +27,11 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     }
 
     @Override
+    public boolean canHaveBlockedSides() {
+        return false;
+    }
+
+    @Override
     public boolean supportsTicking() {
         return false;
     }

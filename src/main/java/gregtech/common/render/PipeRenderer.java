@@ -21,9 +21,12 @@ import gregtech.api.pipenet.block.material.BlockMaterialPipe;
 import gregtech.api.pipenet.block.material.TileEntityMaterialPipeBase;
 import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.api.pipenet.tile.PipeCoverableImplementation;
+import gregtech.api.pipenet.tile.TileEntityPipeBase;
 import gregtech.api.render.Textures;
 import gregtech.api.unification.material.type.Material;
 import gregtech.api.util.GTUtility;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -64,6 +67,44 @@ public abstract class PipeRenderer implements ICCBlockRenderer, IItemRenderer {
     private EnumBlockRenderType renderType;
     protected static final ThreadLocal<BlockRenderer.BlockFace> blockFaces = ThreadLocal.withInitial(BlockRenderer.BlockFace::new);
 
+    private static final EnumMap<EnumFacing, EnumMap<Border, EnumFacing>> FACE_BORDER_MAP = new EnumMap<>(
+            EnumFacing.class);
+    private static final Int2ObjectMap<IVertexOperation[]> RESTRICTOR_MAP = new Int2ObjectOpenHashMap<>();
+
+    public static void initializeRestrictor(TextureMap map) {
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_UP, Border.TOP);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_DOWN, Border.BOTTOM);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_UD, Border.TOP, Border.BOTTOM);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_LEFT, Border.LEFT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_UL, Border.TOP, Border.LEFT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_DL, Border.BOTTOM, Border.LEFT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_NR, Border.TOP, Border.BOTTOM, Border.LEFT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_RIGHT, Border.RIGHT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_UR, Border.TOP, Border.RIGHT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_DR, Border.BOTTOM, Border.RIGHT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_NL, Border.TOP, Border.BOTTOM, Border.RIGHT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_LR, Border.LEFT, Border.RIGHT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_ND, Border.TOP, Border.LEFT, Border.RIGHT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY_NU, Border.BOTTOM, Border.LEFT, Border.RIGHT);
+        addRestrictor(Textures.PIPE_BLOCKED_OVERLAY, Border.TOP, Border.BOTTOM, Border.LEFT, Border.RIGHT);
+    }
+
+    static {
+        FACE_BORDER_MAP.put(EnumFacing.DOWN,
+                borderMap(EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.EAST));
+        FACE_BORDER_MAP.put(EnumFacing.UP,
+                borderMap(EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.EAST));
+        FACE_BORDER_MAP.put(EnumFacing.NORTH,
+                borderMap(EnumFacing.UP, EnumFacing.DOWN, EnumFacing.EAST, EnumFacing.WEST));
+        FACE_BORDER_MAP.put(EnumFacing.SOUTH,
+                borderMap(EnumFacing.UP, EnumFacing.DOWN, EnumFacing.WEST, EnumFacing.EAST));
+        FACE_BORDER_MAP.put(EnumFacing.WEST,
+                borderMap(EnumFacing.UP, EnumFacing.DOWN, EnumFacing.NORTH, EnumFacing.SOUTH));
+        FACE_BORDER_MAP.put(EnumFacing.EAST,
+                borderMap(EnumFacing.UP, EnumFacing.DOWN, EnumFacing.SOUTH, EnumFacing.NORTH));
+    }
+
+
     public PipeRenderer(String name, ModelResourceLocation resourceLocation) {
         this.name = name;
         this.modelResourceLocation = resourceLocation;
@@ -87,7 +128,7 @@ public abstract class PipeRenderer implements ICCBlockRenderer, IItemRenderer {
         return renderType;
     }
 
-    public abstract void registerIcon(TextureMap texMap);
+    public void registerIcon(TextureMap texMap) {}
 
     @SubscribeEvent
     public void onModelsBake(ModelBakeEvent event) {
@@ -110,16 +151,18 @@ public abstract class PipeRenderer implements ICCBlockRenderer, IItemRenderer {
         if (pipeTile == null) {
             return;
         }
+
         IPipeType<?> pipeType = pipeTile.getPipeType();
         if (pipeType == null) {
             return;
         }
+
         float thickness = pipeType.getThickness();
-        int blockedConnections = pipeTile.getBlockedConnections();
+        int unconnectedSides = pipeTile.getUnconnectedSides();
         Cuboid6 baseBox = BlockPipe.getSideBox(null, thickness);
         BlockRenderer.renderCuboid(renderState, baseBox, 0);
         for (EnumFacing renderSide : EnumFacing.VALUES) {
-            if ((blockedConnections & (1 << renderSide.getIndex())) == 0) {
+            if ((unconnectedSides & (1 << renderSide.getIndex())) == 0) {
                 Cuboid6 sideBox = BlockPipe.getSideBox(renderSide, thickness);
                 BlockRenderer.renderCuboid(renderState, sideBox, 0);
             }
@@ -237,9 +280,14 @@ public abstract class PipeRenderer implements ICCBlockRenderer, IItemRenderer {
 
     protected void renderPipeCube(CCRenderState renderState, PipeRenderContext renderContext, EnumFacing side) {
         Cuboid6 cuboid = BlockPipe.getSideBox(side, renderContext.pipeThickness);
+        boolean doRenderBlockedOverlay = (renderContext.blockedConnections & (1 << side.getIndex())) > 0;
         for (EnumFacing renderedSide : EnumFacing.VALUES) {
             if (renderedSide.getAxis() != side.getAxis()) {
                 renderPipeSide(renderState, renderContext, renderedSide, cuboid);
+                if (doRenderBlockedOverlay) {
+                    // render blocked connections
+                    renderFace(renderState, renderContext.blockedOverlay, renderedSide, cuboid);
+                }
             }
         }
         if ((renderContext.connections & 1 << (6 + side.getIndex())) > 0) {
@@ -265,10 +313,28 @@ public abstract class PipeRenderer implements ICCBlockRenderer, IItemRenderer {
             renderFace(renderState, vertexOperations, side, cuboid6);
         }
 
+        int blockedConnections = renderContext.getBlockedConnections();
+        int connections = renderContext.getConnections();
+        if (blockedConnections != 0) {
+            int borderMask = 0;
+            for (Border border : Border.VALUES) {
+                EnumFacing borderSide = getSideAtBorder(side, border);
+                if (TileEntityPipeBase.isSideBlocked(blockedConnections, borderSide) &&
+                        TileEntityPipeBase.isConnected(connections, borderSide)) {
+                    // only render when the side is blocked *and* connected
+                    borderMask |= border.mask;
+                }
+            }
+            if (borderMask != 0) {
+                IVertexOperation[] pipeline = ArrayUtils.addAll(renderContext.getBaseVertexOperation(),
+                        RESTRICTOR_MAP.get(borderMask));
+                renderFace(renderState, pipeline, side, cuboid6);
+            }
+        }
+
     }
 
-    protected void renderFace(CCRenderState renderState, IVertexOperation[] pipeline, EnumFacing side,
-                              Cuboid6 cuboid6) {
+    protected void renderFace(CCRenderState renderState, IVertexOperation[] pipeline, EnumFacing side, Cuboid6 cuboid6) {
         BlockRenderer.BlockFace blockFace = blockFaces.get();
         blockFace.loadCuboidFace(cuboid6, side.getIndex());
         renderState.setPipeline(blockFace, 0, blockFace.verts.length, pipeline);
@@ -332,6 +398,7 @@ public abstract class PipeRenderer implements ICCBlockRenderer, IItemRenderer {
         private final LightMatrix lightMatrix;
         protected final List<IVertexOperation[]> openFaceRenderer = new ArrayList<>();
         protected final List<IVertexOperation[]> pipeSideRenderer = new ArrayList<>();
+        private final IVertexOperation[] blockedOverlay;
         private final float pipeThickness;
         private int color;
         private final int connections;
@@ -344,6 +411,12 @@ public abstract class PipeRenderer implements ICCBlockRenderer, IItemRenderer {
             this.connections = connections;
             this.blockedConnections = blockedConnections;
             this.pipeThickness = thickness;
+            if (pos != null && lightMatrix != null) {
+                blockedOverlay = new IVertexOperation[] { new Translation(pos), lightMatrix,
+                        new IconTransformation(Textures.PIPE_BLOCKED_OVERLAY) };
+            } else {
+                blockedOverlay = new IVertexOperation[] { new IconTransformation(Textures.PIPE_BLOCKED_OVERLAY) };
+            }
         }
 
         public PipeRenderContext(int connections, int blockedConnections, float thickness) {
@@ -409,6 +482,28 @@ public abstract class PipeRenderer implements ICCBlockRenderer, IItemRenderer {
         public float getPipeThickness() {
             return pipeThickness;
         }
+    }
+
+    private static void addRestrictor(TextureAtlasSprite sprite, Border... borders) {
+        int mask = 0;
+        for (Border border : borders) {
+            mask |= border.mask;
+        }
+        RESTRICTOR_MAP.put(mask, new IVertexOperation[] { new IconTransformation(sprite) });
+    }
+
+    protected static EnumFacing getSideAtBorder(EnumFacing side, Border border) {
+        return FACE_BORDER_MAP.get(side).get(border);
+    }
+
+    private static EnumMap<Border, EnumFacing> borderMap(EnumFacing topSide, EnumFacing bottomSide, EnumFacing leftSide,
+                                                         EnumFacing rightSide) {
+        EnumMap<Border, EnumFacing> sideMap = new EnumMap<>(Border.class);
+        sideMap.put(Border.TOP, topSide);
+        sideMap.put(Border.BOTTOM, bottomSide);
+        sideMap.put(Border.LEFT, leftSide);
+        sideMap.put(Border.RIGHT, rightSide);
+        return sideMap;
     }
 
 

@@ -15,6 +15,7 @@ import gregtech.common.items.behaviors.CoverPlaceBehavior;
 import gregtech.common.items.behaviors.CrowbarBehaviour;
 import gregtech.common.pipelike.cable.tile.TileEntityCable;
 import gregtech.common.pipelike.fluidpipe.tile.TileEntityFluidPipe;
+import gregtech.common.pipelike.item.tile.TileEntityItemPipe;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -352,7 +353,7 @@ public class ToolOverlayRenderer {
         if (pipeTile instanceof TileEntityCable) {
             return GuiTextures.TOOL_WIRE_CONNECTIONS.imageLocation;
         }
-        if (pipeTile instanceof TileEntityFluidPipe) {
+        if (pipeTile instanceof TileEntityFluidPipe || pipeTile instanceof TileEntityItemPipe) {
             return GuiTextures.TOOL_PIPE_CONNECTIONS.imageLocation;
         }
         return null;

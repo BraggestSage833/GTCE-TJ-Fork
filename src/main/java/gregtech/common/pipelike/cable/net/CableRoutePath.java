@@ -11,7 +11,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
 
-public class RoutePath {
+public class CableRoutePath {
 
     public final BlockPos destination;
     public final Node<WireProperties> destinationNode;
@@ -22,7 +22,7 @@ public class RoutePath {
     private final int leaf;
 
 
-    public RoutePath(RouteTree tree, int leaf, Node<WireProperties> destinationNode, BlockPos destination, int totalLoss, int minVoltage) {
+    public CableRoutePath(RouteTree tree, int leaf, Node<WireProperties> destinationNode, BlockPos destination, int totalLoss, int minVoltage) {
         this.tree = tree;
         this.leaf = leaf;
         this.destinationNode = destinationNode;
@@ -39,22 +39,5 @@ public class RoutePath {
         }
 
         return tree.load(leaf, world, now, voltage, amperes, overVoltage);
-    }
-
-    public static void burnCable(World world, BlockPos blockPos) {
-        if (world.isRemote) {
-            return;
-        }
-
-        TileEntity tileEntity = world.getTileEntity(blockPos);
-
-        if (tileEntity instanceof TileEntityCable) {
-            world.setBlockToAir(blockPos);
-            world.setBlockState(blockPos, Blocks.FIRE.getDefaultState());
-
-            ((WorldServer) world).spawnParticle(EnumParticleTypes.SMOKE_LARGE,
-                    blockPos.getX() + 0.5, blockPos.getY() + 0.5, blockPos.getZ() + 0.5,
-                    5 + world.rand.nextInt(3), 0.0, 0.0, 0.0, 0.1);
-        }
     }
 }

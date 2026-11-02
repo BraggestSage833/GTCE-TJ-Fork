@@ -11,7 +11,9 @@ import codechicken.lib.vec.uv.IconTransformation;
 import codechicken.lib.vec.uv.UVTransformationList;
 import gregtech.api.GTValues;
 import gregtech.api.util.GTLog;
+import gregtech.api.util.GTUtility;
 import gregtech.common.render.CubeRendererState;
+import gregtech.common.render.PipeRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.BlockRenderLayer;
@@ -159,6 +161,26 @@ public class Textures {
 
     public static SimpleOverlayRenderer PIPE_OUT_OVERLAY = new SimpleOverlayRenderer("overlay/machine/overlay_pipe_out");
     public static SimpleOverlayRenderer PIPE_IN_OVERLAY = new SimpleOverlayRenderer("overlay/machine/overlay_pipe_in");
+
+
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_UP;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_DOWN;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_LEFT;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_RIGHT;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_NU;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_ND;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_NL;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_NR;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_UD;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_UL;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_UR;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_DL;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_DR;
+    public static TextureAtlasSprite PIPE_BLOCKED_OVERLAY_LR;
+
+
+
     public static SimpleOverlayRenderer FLUID_HATCH_OUTPUT_OVERLAY = new SimpleOverlayRenderer("overlay/machine/overlay_fluid_hatch_output");
     public static SimpleOverlayRenderer FLUID_HATCH_INPUT_OVERLAY = new SimpleOverlayRenderer("overlay/machine/overlay_fluid_hatch_input");
     public static SimpleOverlayRenderer FLUID_OUTPUT_OVERLAY = new SimpleOverlayRenderer("overlay/machine/overlay_fluid_output");
@@ -258,20 +280,52 @@ public class Textures {
         for (IIconRegister iconRegister : iconRegisters) {
             iconRegister.registerIcons(textureMap);
         }
+
+        PIPE_BLOCKED_OVERLAY = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked"));
+        PIPE_BLOCKED_OVERLAY_UP = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_up"));
+        PIPE_BLOCKED_OVERLAY_DOWN = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_down"));
+        PIPE_BLOCKED_OVERLAY_LEFT = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_left"));
+        PIPE_BLOCKED_OVERLAY_RIGHT = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_right"));
+        PIPE_BLOCKED_OVERLAY_NU = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_nu"));
+        PIPE_BLOCKED_OVERLAY_ND = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_nd"));
+        PIPE_BLOCKED_OVERLAY_NL = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_nl"));
+        PIPE_BLOCKED_OVERLAY_NR = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_nr"));
+        PIPE_BLOCKED_OVERLAY_UD = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_ud"));
+        PIPE_BLOCKED_OVERLAY_UL = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_ul"));
+        PIPE_BLOCKED_OVERLAY_UR = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_ur"));
+        PIPE_BLOCKED_OVERLAY_DL = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_dl"));
+        PIPE_BLOCKED_OVERLAY_DR = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_dr"));
+        PIPE_BLOCKED_OVERLAY_LR = textureMap.registerSprite(GTUtility.gregtechID("blocks/pipe/blocked/pipe_blocked_lr"));
+
+        PipeRenderer.initializeRestrictor(textureMap);
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops,
-                                  EnumFacing face, Cuboid6 bounds, TextureAtlasSprite sprite, BlockRenderLayer layer) {
-        CubeRendererState state = RENDER_STATE.get();
-        if (layer != null && state != null && state.layer != null && (state.layer != layer || !state.shouldSideBeRendered(face, bounds))) {
+    public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops, EnumFacing face, Cuboid6 bounds, TextureAtlasSprite sprite) {
+        if (MetaTileEntityRenderer.useBloom()) {
+             if (BloomRenderUtils.isBloomPass(RENDER_STATE.get())) {
+                 return;
+             }
+        }
+
+        drawFace(renderState, translation, ops, face, bounds, sprite);
+    }
+
+    public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops, EnumFacing face, Cuboid6 bounds, TextureAtlasSprite sprite, BlockRenderLayer layer) {
+        if (layer == null) {
+            renderFace(renderState, translation, ops, face, bounds, sprite);
             return;
         }
-        renderFace(renderState, translation, ops, face, bounds, sprite);
+
+        CubeRendererState state = RENDER_STATE.get();
+        if (state != null && state.layer != null && (state.layer != layer || !state.shouldSideBeRendered(face, bounds))) {
+            return;
+        }
+
+        drawFace(renderState, translation, ops, face, bounds, sprite);
     }
 
     @SideOnly(Side.CLIENT)
-    public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops,
+    public static void drawFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops,
                                   EnumFacing face, Cuboid6 bounds, TextureAtlasSprite sprite) {
         int side = face.getIndex();
         BlockFace blockFace = isFull(bounds) ? fullCubeFaces.get()[side] : blockFaces.get().loadCuboidFace(bounds, side);

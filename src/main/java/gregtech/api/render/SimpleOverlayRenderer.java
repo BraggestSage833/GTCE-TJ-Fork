@@ -15,10 +15,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class SimpleOverlayRenderer implements IIconRegister {
 
+    private final static String EMISSIVE = "_emissive";
     private final String basePath;
 
     @SideOnly(Side.CLIENT)
     private TextureAtlasSprite sprite;
+
+    @SideOnly(Side.CLIENT)
+    private TextureAtlasSprite emissiveSprite;
 
     public SimpleOverlayRenderer(String basePath) {
         this.basePath = basePath;
@@ -29,16 +33,36 @@ public class SimpleOverlayRenderer implements IIconRegister {
     @SideOnly(Side.CLIENT)
     public void registerIcons(TextureMap textureMap) {
         this.sprite = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/" + basePath));
+
+
+        if (!MetaTileEntityRenderer.useBloom()) {
+            return;
+        }
+
+        String emissive = "blocks/" + basePath + EMISSIVE;
+        if (ResourceHelper.doResourcepacksHaveTexture(GTValues.MODID, emissive, true)) {
+            this.emissiveSprite = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, emissive));
+        }
+
     }
 
     @SideOnly(Side.CLIENT)
     public void renderSided(EnumFacing side, Cuboid6 bounds, CCRenderState renderState, IVertexOperation[] pipeline, Matrix4 translation) {
         Textures.renderFace(renderState, translation, pipeline, side, bounds, sprite);
+
+        if (emissiveSprite == null) {
+            return;
+        }
+
+        if (!MetaTileEntityRenderer.useBloom()) {
+            return;
+        }
+
+        BloomRenderUtils.draw(pipeline, renderState, translation, side, emissiveSprite);
     }
 
     @SideOnly(Side.CLIENT)
     public void renderSided(EnumFacing side, CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
         renderSided(side, Cuboid6.full, renderState, pipeline, translation);
     }
-
 }

@@ -30,13 +30,24 @@ public interface IPipeTile<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
 
     void setInsulationColor(int newInsulationColor);
 
+    boolean isSideBlocked(EnumFacing side);
+
+    void setSideBlocked(EnumFacing side, boolean blocked);
+
+    default boolean canHaveBlockedSides() {
+        return true;
+    }
+
+    int getBlockedConnections();
+
+
     int getConnections();
 
     boolean isConnected(EnumFacing side);
 
     void setConnection(EnumFacing side, boolean connected, boolean fromNeighbor);
 
-    default int getBlockedConnections() {
+    default int getUnconnectedSides() {
         return ~getConnections() & 63;
     }
 

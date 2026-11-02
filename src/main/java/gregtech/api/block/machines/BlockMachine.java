@@ -220,7 +220,7 @@ public class BlockMachine extends BlockCustomParticle implements ITileEntityProv
     public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
         MetaTileEntityHolder holder = (MetaTileEntityHolder) worldIn.getTileEntity(pos);
         MetaTileEntity sampleMetaTileEntity = GregTechAPI.META_TILE_ENTITY_REGISTRY.getObjectById(stack.getItemDamage());
-        if (holder == null && sampleMetaTileEntity == null) {
+        if (holder == null || sampleMetaTileEntity == null) {
             return;
         }
 

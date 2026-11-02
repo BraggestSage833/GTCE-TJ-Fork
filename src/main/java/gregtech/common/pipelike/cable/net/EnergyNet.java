@@ -18,7 +18,8 @@ public class EnergyNet extends PipeNet<WireProperties> {
     private final PerTickLongCounter currentAmperageCounter = new PerTickLongCounter(0L);
     private final PerTickLongCounter currentMaxVoltageCounter = new PerTickLongCounter(0L);
 
-    private final Map<BlockPos, TickCounter> cableAmperage = new HashMap<>();
+
+    private final Map<BlockPos, TickCounter> cableCounters = new HashMap<>();
 
     protected EnergyNet(WorldPipeNet<WireProperties, EnergyNet> world) {
         super(world);
@@ -41,9 +42,9 @@ public class EnergyNet extends PipeNet<WireProperties> {
         }
     }
 
-    public List<RoutePath> computePatches(BlockPos startPos) {
+    public List<CableRoutePath> computePaths(BlockPos startPos) {
         Node<WireProperties> rootNode = getNodeAt(startPos);
-        List<RoutePath> routes = new ArrayList<>();
+        List<CableRoutePath> routes = new ArrayList<>();
 
         if (rootNode == null) {
             return routes;
@@ -56,7 +57,7 @@ public class EnergyNet extends PipeNet<WireProperties> {
         MutableBlockPos probe = new MutableBlockPos();
         int sequence = 0;
 
-        queue.add(new Candidate(startPos, rootNode, -1, Math.max(0,rootNode.data.lossPerBlock), rootNode.data.voltage, 0, sequence++));
+        queue.add(new Candidate(startPos, rootNode, -1, lossOf(rootNode), rootNode.data.voltage, 0, sequence++));
 
         while(!queue.isEmpty()) {
             Candidate candidate = queue.poll();
@@ -68,7 +69,7 @@ public class EnergyNet extends PipeNet<WireProperties> {
 
             if (candidate.parent < 0 || candidate.node.isActive) {
                 tree.markUsed(index);
-                routes.add(new RoutePath(tree, index, candidate.node, candidate.pos, candidate.loss, candidate.minVoltage));
+                routes.add(new CableRoutePath(tree, index, candidate.node, candidate.pos, candidate.loss, candidate.minVoltage));
             }
 
             for (EnumFacing facing : EnumFacing.VALUES) {
@@ -77,19 +78,49 @@ public class EnergyNet extends PipeNet<WireProperties> {
                     continue;
                 }
 
-                Node<WireProperties> secondNode = getNodeAt(probe);
-                if (secondNode == null || !canNodesConnect(candidate.node, facing, secondNode, this)) {
+                Node<WireProperties> next = getNodeAt(probe);
+                if (next == null || !canNodesConnect(candidate.node, facing, next, this)) {
                     continue;
                 }
 
-                queue.add(new Candidate(probe.toImmutable(), secondNode, index, candidate.loss + Math.max(0, secondNode.data.lossPerBlock),
-                        Math.min(candidate.minVoltage, secondNode.data.voltage), candidate.hops + 1, sequence++)
+                queue.add(new Candidate(probe.toImmutable(), next, index, candidate.loss + lossOf(next),
+                        Math.min(candidate.minVoltage, next.data.voltage), candidate.hops + 1, sequence++)
                 );
             }
         }
 
         tree.resolve(this);
         return routes;
+    }
+
+    private static int lossOf(Node<WireProperties> node) {
+        return Math.max(0, node.data.lossPerBlock);
+    }
+
+
+    public TickCounter getCableCounter(BlockPos cablePos) {
+        return cableCounters.computeIfAbsent(cablePos.toImmutable(), pos -> new TickCounter());
+    }
+
+    @Override
+    protected Node<WireProperties> removeNodeWithoutRebuilding(BlockPos nodePos) {
+        cableCounters.remove(nodePos);
+        return super.removeNodeWithoutRebuilding(nodePos);
+    }
+
+    @Override
+    protected void writeNodeData(WireProperties nodeData, NBTTagCompound tagCompound) {
+        tagCompound.setInteger("voltage", nodeData.voltage);
+        tagCompound.setInteger("amperage", nodeData.amperage);
+        tagCompound.setInteger("loss", nodeData.lossPerBlock);
+    }
+
+    @Override
+    protected WireProperties readNodeData(NBTTagCompound tagCompound) {
+        int voltage = tagCompound.getInteger("voltage");
+        int amperage = tagCompound.getInteger("amperage");
+        int lossPerBlock = tagCompound.getInteger("loss");
+        return new WireProperties(voltage, amperage, lossPerBlock);
     }
 
     private static final class Candidate implements Comparable<Candidate> {
@@ -118,42 +149,13 @@ public class EnergyNet extends PipeNet<WireProperties> {
             if (result != 0) {
                 return result;
             }
+
             result = Integer.compare(hops, other.hops);
             if (result != 0) {
                 return result;
             }
+
             return Integer.compare(sequence, other.sequence);
         }
-    }
-
-    public TickCounter getCableCounter(BlockPos cablePos) {
-        TickCounter counter = cableAmperage.get(cablePos);
-        if (counter == null) {
-            counter = new TickCounter();
-            cableAmperage.put(cablePos.toImmutable(), counter);
-        }
-
-        return counter;
-    }
-
-    @Override
-    protected Node<WireProperties> removeNodeWithoutRebuilding(BlockPos nodePos) {
-        cableAmperage.remove(nodePos);
-        return super.removeNodeWithoutRebuilding(nodePos);
-    }
-
-    @Override
-    protected void writeNodeData(WireProperties nodeData, NBTTagCompound tagCompound) {
-        tagCompound.setInteger("voltage", nodeData.voltage);
-        tagCompound.setInteger("amperage", nodeData.amperage);
-        tagCompound.setInteger("loss", nodeData.lossPerBlock);
-    }
-
-    @Override
-    protected WireProperties readNodeData(NBTTagCompound tagCompound) {
-        int voltage = tagCompound.getInteger("voltage");
-        int amperage = tagCompound.getInteger("amperage");
-        int lossPerBlock = tagCompound.getInteger("loss");
-        return new WireProperties(voltage, amperage, lossPerBlock);
     }
 }

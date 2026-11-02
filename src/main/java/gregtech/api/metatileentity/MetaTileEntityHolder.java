@@ -76,6 +76,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IUIH
             //just to update neighbours so cables and other things will work properly
             this.needToUpdateLightning = true;
             world.neighborChanged(getPos(), getBlockType(), getPos());
+            notifyBlockUpdate();
             markDirty();
         }
         return metaTileEntity;

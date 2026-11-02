@@ -431,6 +431,7 @@ public class Materials {
     public static DustMaterial Phosphor = new DustMaterial(239, "phosphor", 0xFFFF00, FLINT, 2, of(new MaterialStack(Calcium, 3), new MaterialStack(Phosphate, 2)), GENERATE_ORE | NO_SMASHING | NO_SMELTING | FLAMMABLE | EXPLOSIVE);
     public static DustMaterial Basalt = new DustMaterial(240, "basalt", 0x1E1414, ROUGH, 1, of(new MaterialStack(Olivine, 1), new MaterialStack(Calcite, 3), new MaterialStack(Flint, 8), new MaterialStack(DarkAsh, 4)), NO_SMASHING);
     public static DustMaterial Andesite = new DustMaterial(241, "andesite", 0xBEBEBE, ROUGH, 2, of(), NO_SMASHING);
+
     public static DustMaterial Diorite = new DustMaterial(242, "diorite", 0xFFFFFF, ROUGH, 2, of(), NO_SMASHING);
     public static DustMaterial Granite = new DustMaterial(449, "granite", 0xCFA18C, ROUGH, 2, of(), NO_SMASHING);
     public static GemMaterial GarnetRed = new GemMaterial(243, "garnet_red", 0xC85050, RUBY, 2, of(new MaterialStack(Pyrope, 3), new MaterialStack(Almandine, 5), new MaterialStack(Spessartine, 8)), STD_SOLID | GENERATE_LENSE | NO_SMASHING | NO_SMELTING | HIGH_SIFTER_OUTPUT | GENERATE_ORE, null, 7.5F, 3.0f, 156);
@@ -835,6 +836,24 @@ public class Materials {
 
         Plastic.setFluidPipeProperties(200, 350, true);
         Polytetrafluoroethylene.setFluidPipeProperties(200, 600, true);
+
+        Americium.setItemPipeProperties(96,32*64);
+        Cobalt.setItemPipeProperties(3840, 64);
+        Nickel.setItemPipeProperties(3072, 32);
+        Osmium.setItemPipeProperties(384, 4*64);
+        Platinum.setItemPipeProperties(768, 2*64);
+        Tin.setItemPipeProperties(6444, 16);
+        Brass.setItemPipeProperties(3072, 32);
+        Cupronickel.setItemPipeProperties(3072, 32);
+        Electrum.setItemPipeProperties(1536, 64);
+        Magnalium.setItemPipeProperties(1536, 64);
+        SterlingSilver.setItemPipeProperties(1536, 64);
+        RoseGold.setItemPipeProperties(1536, 64);
+        BlackBronze.setItemPipeProperties(1536, 64);
+        Ultimet.setItemPipeProperties(192, 8*64);
+        Osmiridium.setItemPipeProperties(96, 16*64);
+        PolyvinylChloride.setItemPipeProperties(768, 2*64);
+        CobaltBrass.setItemPipeProperties(3072,32);
     }
 
 }

@@ -6,7 +6,7 @@ import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.common.pipelike.cable.Insulation;
 import gregtech.common.pipelike.cable.WireProperties;
 import gregtech.common.pipelike.cable.net.EnergyNet;
-import gregtech.common.pipelike.cable.net.RoutePath;
+import gregtech.common.pipelike.cable.net.CableRoutePath;
 import gregtech.common.pipelike.cable.net.WorldENet;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -23,7 +23,8 @@ public class CableEnergyContainer implements IEnergyContainer {
     private final IPipeTile<Insulation, WireProperties> tileEntityCable;
     private WeakReference<EnergyNet> currentEnergyNet = new WeakReference<>(null);
     private long lastCachedUpdate;
-    private List<RoutePath> pathsCache;
+    private List<CableRoutePath> pathsCache;
+    private WeakReference<EnergyNet> pathsCacheNet = new WeakReference<>(null);
 
     public CableEnergyContainer(IPipeTile<Insulation, WireProperties> tileEntityCable) {
         this.tileEntityCable = tileEntityCable;
@@ -36,28 +37,23 @@ public class CableEnergyContainer implements IEnergyContainer {
             return 0;
         }
 
-        List<RoutePath> paths = getPaths(energyNet);
         World world = tileEntityCable.getPipeWorld();
 
         long now = world.getTotalWorldTime();
         long ampsUsed = 0;
 
-        for (RoutePath routePath : paths) {
-            if (routePath.totalLoss >= voltage) {
+        for (CableRoutePath path : getPaths(energyNet)) {
+            if (path.totalLoss >= voltage) {
                 continue;
             }
 
-            long ampsOnPath = dispatchEnergyToNode(routePath.destination, routePath.destinationNode.blockedConnections,
-                    voltage - routePath.totalLoss, amperage - ampsUsed
-            );
-
+            long ampsOnPath = dispatchEnergyToNode(path.destination, path.destinationNode.blockedConnections,
+                    voltage - path.totalLoss, amperage - ampsUsed);
             ampsUsed += ampsOnPath;
 
-            if (routePath.addAmperageAndBurn(world, now, voltage, ampsOnPath)) {
-                break;
-            }
 
-            if (ampsUsed == amperage) {
+            boolean burned = path.addAmperageAndBurn(world, now, voltage, ampsOnPath);
+            if (burned || ampsUsed == amperage) {
                 break;
             }
         }
@@ -153,10 +149,11 @@ public class CableEnergyContainer implements IEnergyContainer {
         return 0;
     }
 
-    private List<RoutePath> getPaths(EnergyNet energyNet) {
-        if (pathsCache == null || energyNet.getLastUpdate() != lastCachedUpdate) {
+    private List<CableRoutePath> getPaths(EnergyNet energyNet) {
+        if (pathsCache == null || pathsCacheNet.get() != energyNet || energyNet.getLastUpdate() != lastCachedUpdate) {
+            pathsCacheNet = new WeakReference<>(energyNet);
             lastCachedUpdate = energyNet.getLastUpdate();
-            pathsCache = energyNet.computePatches(tileEntityCable.getPipePos());
+            pathsCache = energyNet.computePaths(tileEntityCable.getPipePos());
         }
 
         return pathsCache;
