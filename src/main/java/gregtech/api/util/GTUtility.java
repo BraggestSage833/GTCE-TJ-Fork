@@ -961,9 +961,6 @@ public class GTUtility {
         if (heat >= 14200 && heat < 56800) {
             eut = 134000000;
         }
-        if (material == Materials.StainlessSteel){
-            eut = 480;
-        }
         return eut;
     }
 

@@ -1,5 +1,6 @@
 package gregtech.common.metatileentities.steam;
 
+import gregtech.api.capability.impl.NotifiableItemStackHandler;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.resources.TextureArea;
 import gregtech.api.gui.widgets.ProgressWidget;
@@ -33,12 +34,12 @@ public class SteamAlloySmelter extends SteamMetaTileEntity {
 
     @Override
     public IItemHandlerModifiable createImportItemHandler() {
-        return new ItemStackHandler(2);
+        return new NotifiableItemStackHandler(this,2);
     }
 
     @Override
     public IItemHandlerModifiable createExportItemHandler() {
-        return new ItemStackHandler(1);
+        return new NotifiableItemStackHandler(this,1);
     }
 
     @Override

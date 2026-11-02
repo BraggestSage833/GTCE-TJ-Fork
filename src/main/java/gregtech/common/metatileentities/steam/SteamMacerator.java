@@ -1,5 +1,6 @@
 package gregtech.common.metatileentities.steam;
 
+import gregtech.api.capability.impl.NotifiableItemStackHandler;
 import gregtech.api.capability.impl.RecipeLogicSteam;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.ProgressWidget;
@@ -29,12 +30,12 @@ public class SteamMacerator extends SteamMetaTileEntity {
 
     @Override
     public IItemHandlerModifiable createImportItemHandler() {
-        return new ItemStackHandler(1);
+        return new NotifiableItemStackHandler(this,1);
     }
 
     @Override
     public IItemHandlerModifiable createExportItemHandler() {
-        return new ItemStackHandler(1);
+        return new NotifiableItemStackHandler(this,1);
     }
 
     @Override

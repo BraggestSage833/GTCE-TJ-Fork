@@ -147,6 +147,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic {
             return;
         if (this.needsVenting && metaTileEntity.getOffsetTimer() % 10 == 0) {
             tryDoVenting();
+            if(!needsVenting) this.metaTileEntity.setInventoryNotified(true);
         }
         super.update();
     }

@@ -105,7 +105,7 @@ public class MaterialRecipeHandler {
                             .input(dustPrefix, material)
                             .outputs(ingotStack)
                             .blastFurnaceTemp(metalMaterial.blastFurnaceTemperature)
-                            .duration(duration).EUt(Math.max(getTieredVoltageMultiplier(material), 100));
+                            .duration(duration).EUt(Math.max(getTieredVoltageMultiplier2(material), 100));
                     if (circuitRequiringMaterials.contains(material)) {
                         ingotSmeltingBuilder.inputs(new CountableIngredient(new IntCircuitIngredient(0), 0));
                     }
@@ -457,5 +457,52 @@ public class MaterialRecipeHandler {
     private static int getVoltageMultiplier(Material material) {
         return material instanceof IngotMaterial && ((IngotMaterial) material)
                 .blastFurnaceTemperature >= 2800 ? 32 : 8;
+    }
+
+
+    public static int getTieredVoltageMultiplier2(Material material) {
+        int eut = 16;
+        int heat = ((IngotMaterial) material).blastFurnaceTemperature;
+
+        if (heat < 2700) {
+            eut = 28;
+        }
+        if (heat >= 2700 && heat < 3600) {
+            eut = 500;
+        }
+        if (heat >= 3600 && heat < 4500) {
+            eut = 1000;
+        }
+        if (heat >= 4500 && heat < 5400) {
+            eut = 4000;
+        }
+        if (heat >= 5400 && heat < 7200) {
+            eut = 8000;
+        }
+        if (heat >= 7200 && heat < 8600) {
+            eut = 32000;
+        }
+        if (heat >= 8600 && heat < 9600) {
+            eut = 131000;
+        }
+        if (heat >= 9600 && heat < 10700) {
+            eut = 500000;
+        }
+        if (heat >= 10700 && heat < 11200) {
+            eut = 2000000;
+        }
+        if (heat >= 11200 && heat < 12600) {
+            eut = 8000000;
+        }
+        if (heat >= 12600 && heat < 14200) {
+            eut = 33000000;
+        }
+        if (heat >= 14200 && heat < 56800) {
+            eut = 134000000;
+        }
+        if (material == Materials.StainlessSteel){
+            eut = 480;
+        }
+        return eut;
     }
 }
