@@ -175,6 +175,8 @@ public class WireRecipeHandler {
     }
 
     public static void generateCableCombiningRecipe(OrePrefix cablePrefix, Material material) {
+
+        /*
         int cableIndex = ArrayUtils.indexOf(CABLE_DOUBLING_ORDER, cablePrefix);
 
         if (cableIndex < CABLE_DOUBLING_ORDER.length - 1) {
@@ -198,7 +200,10 @@ public class WireRecipeHandler {
                     new UnificationEntry(cablePrefix, material),
                     new UnificationEntry(cablePrefix, material));
         }
+
+         */
     }
+
 
     private static int getMaterialAmount(int cableTier, int insulationTier) {
         if (cableTier > insulationTier) {
