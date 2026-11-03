@@ -1280,12 +1280,10 @@ public abstract class MetaTileEntity implements ICoverable {
     }
 
     /**
-     * Called from breakBlock right before meta tile entity destruction
+     * Called from breakBlock right before meta tile entity destruction both on client and server
      * at this stage tile entity inventory is already dropped on ground, but drops aren't fetched yet
      * tile entity will still get getDrops called after this, if player broke block
      */
-
-
     public void onRemoval() {
         if (!getWorld().isRemote) {
             return;

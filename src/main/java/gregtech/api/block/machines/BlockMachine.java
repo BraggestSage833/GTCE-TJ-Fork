@@ -296,6 +296,16 @@ public class BlockMachine extends BlockCustomParticle implements ITileEntityProv
     }
 
     @Override
+    public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player) {
+        super.onBlockHarvested(worldIn, pos, state, player);
+        if (worldIn.isRemote) {
+            MetaTileEntity metaTileEntity = getMetaTileEntity(worldIn, pos);
+            if (metaTileEntity != null)
+                metaTileEntity.onRemoval();
+        }
+    }
+
+    @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         MetaTileEntity metaTileEntity = getMetaTileEntity(worldIn, pos);
         if (metaTileEntity != null) {
