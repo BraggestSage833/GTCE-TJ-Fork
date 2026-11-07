@@ -39,8 +39,15 @@ public abstract class RoutedPipeNet<T> extends PipeNet<T> {
     }
 
 
+    protected Bucket createBucket() {
+        return new Bucket(20);
+    }
+
     public Bucket getPipeBucket(BlockPos pipePos) {
-        return pipeBuckets.computeIfAbsent(pipePos.toImmutable(), pos -> new Bucket());
+        return pipeBuckets.computeIfAbsent(
+                pipePos.toImmutable(),
+                pos -> createBucket()
+        );
     }
 
     protected boolean isEntryBlocked(World world, BlockPos pos, EnumFacing travelDirection) {

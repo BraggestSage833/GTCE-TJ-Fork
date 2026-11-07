@@ -375,7 +375,10 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
         }
     }
 
-
+    @Override
+    protected Bucket createBucket() {
+        return new Bucket(1);
+    }
     @Override
     protected void writeNodeData(FluidPipeProperties nodeData, NBTTagCompound tagCompound) {
         tagCompound.setInteger("max_temperature", nodeData.maxFluidTemperature);

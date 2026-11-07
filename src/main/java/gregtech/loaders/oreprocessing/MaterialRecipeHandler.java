@@ -105,7 +105,7 @@ public class MaterialRecipeHandler {
                             .input(dustPrefix, material)
                             .outputs(ingotStack)
                             .blastFurnaceTemp(metalMaterial.blastFurnaceTemperature)
-                            .duration(duration).EUt(Math.max(getTieredVoltageMultiplier2(material), 100));
+                            .duration((material == Materials.StainlessSteel) ?  860 : duration).EUt(Math.max(getTieredVoltageMultiplier2(material), 100));
                     if (circuitRequiringMaterials.contains(material)) {
                         ingotSmeltingBuilder.inputs(new CountableIngredient(new IntCircuitIngredient(0), 0));
                     }

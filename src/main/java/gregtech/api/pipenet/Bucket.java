@@ -1,10 +1,14 @@
 package gregtech.api.pipenet;
 
 public class Bucket {
-    private static final int TICKS_PER_SECOND = 20;
+    private final int windowTicks;
 
     private long window = Long.MIN_VALUE;
     private int used;
+
+    public Bucket(int windowTicks) {
+        this.windowTicks = Math.max(1, windowTicks);
+    }
 
     public int available(long now, int limit) {
         rollWindow(now);
@@ -17,7 +21,7 @@ public class Bucket {
     }
 
     private void rollWindow(long now) {
-        long current = now / TICKS_PER_SECOND;
+        long current = now / windowTicks;
         if (current == window) {
             return;
         }
