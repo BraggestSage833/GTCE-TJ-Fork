@@ -82,7 +82,7 @@ public class WireRecipeHandler {
                     .input(OrePrefix.ingot, material, multiplier)
                     .notConsumable(new IntCircuitIngredient((multiplier * 2)))
                     .output(wireSize, material)
-                    .duration((int) (material.getMass() * multiplier))
+                    .duration((int) (material.getAverageMass() * multiplier))
                     .EUt(getTieredVoltageMultiplier(material))
                     .buildAndRegister();
         }
