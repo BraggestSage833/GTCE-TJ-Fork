@@ -18,6 +18,7 @@ import java.util.Map;
 
 public class OrientedOverlayRenderer implements IIconRegister {
 
+    private final static String EMISSIVE = "_emissive";
     public enum OverlayFace {
         FRONT, BACK, TOP, BOTTOM, SIDE;
 
@@ -43,16 +44,26 @@ public class OrientedOverlayRenderer implements IIconRegister {
     @SideOnly(Side.CLIENT)
     private static class ActivePredicate {
 
-        private TextureAtlasSprite normalSprite;
-        private TextureAtlasSprite activeSprite;
 
-        public ActivePredicate(TextureAtlasSprite normalSprite, TextureAtlasSprite activeSprite) {
+        private final TextureAtlasSprite normalSprite;
+        private final TextureAtlasSprite activeSprite;
+        private final TextureAtlasSprite normalEmissiveSprite;
+        private final TextureAtlasSprite activeEmissiveSprite;
+
+        public ActivePredicate(TextureAtlasSprite normalSprite, TextureAtlasSprite activeSprite,
+                               TextureAtlasSprite normalEmissiveSprite, TextureAtlasSprite activeEmissiveSprite) {
             this.normalSprite = normalSprite;
             this.activeSprite = activeSprite;
+            this.normalEmissiveSprite = normalEmissiveSprite;
+            this.activeEmissiveSprite = activeEmissiveSprite;
         }
 
         public TextureAtlasSprite getSprite(boolean active) {
             return active ? activeSprite : normalSprite;
+        }
+
+        public TextureAtlasSprite getEmissiveSprite(boolean active) {
+            return active ? activeEmissiveSprite : normalEmissiveSprite;
         }
     }
 
@@ -66,23 +77,56 @@ public class OrientedOverlayRenderer implements IIconRegister {
     @SideOnly(Side.CLIENT)
     public void registerIcons(TextureMap textureMap) {
         this.sprites = new HashMap<>();
+        boolean bloom = MetaTileEntityRenderer.useBloom();
+
         for (OverlayFace overlayFace : faces) {
             String faceName = overlayFace.name().toLowerCase();
-            ResourceLocation normalLocation = new ResourceLocation(GTValues.MODID, String.format("blocks/%s/overlay_%s", basePath, faceName));
-            ResourceLocation activeLocation = new ResourceLocation(GTValues.MODID, String.format("blocks/%s/overlay_%s_active", basePath, faceName));
-            TextureAtlasSprite normalSprite = textureMap.registerSprite(normalLocation);
-            TextureAtlasSprite activeSprite = textureMap.registerSprite(activeLocation);
-            sprites.put(overlayFace, new ActivePredicate(normalSprite, activeSprite));
+
+            String normalPath = String.format("blocks/%s/overlay_%s", basePath, faceName);
+            String activePath = String.format("blocks/%s/overlay_%s_active", basePath, faceName);
+
+            TextureAtlasSprite normalSprite = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, normalPath));
+            TextureAtlasSprite activeSprite = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, activePath));
+
+            TextureAtlasSprite normalEmissive = null;
+            TextureAtlasSprite activeEmissive = null;
+
+            if (bloom) {
+                String normalEmissivePath = normalPath + EMISSIVE;
+                String activeEmissivePath = activePath + EMISSIVE;
+
+                if (ResourceHelper.doResourcepacksHaveTexture(GTValues.MODID, normalEmissivePath, true)) {
+                    normalEmissive = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, normalEmissivePath));
+                }
+
+                if (ResourceHelper.doResourcepacksHaveTexture(GTValues.MODID, activeEmissivePath, true)) {
+                    activeEmissive = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, activeEmissivePath));
+                }
+            }
+
+            sprites.put(overlayFace, new ActivePredicate(normalSprite, activeSprite, normalEmissive, activeEmissive));
         }
     }
 
+
+
     @SideOnly(Side.CLIENT)
     public void render(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops, Cuboid6 bounds, EnumFacing frontFacing, boolean isActive) {
+        boolean bloom = MetaTileEntityRenderer.useBloom();
+
         for (EnumFacing renderSide : EnumFacing.VALUES) {
             OverlayFace overlayFace = OverlayFace.bySide(renderSide, frontFacing);
-            if (sprites.containsKey(overlayFace)) {
-                TextureAtlasSprite renderSprite = sprites.get(overlayFace).getSprite(isActive);
-                Textures.renderFace(renderState, translation, ops, renderSide, bounds, renderSprite);
+            ActivePredicate predicate = sprites.get(overlayFace);
+            if (predicate == null) {
+                continue;
+            }
+
+            Textures.renderFace(renderState, translation, ops, renderSide, bounds, predicate.getSprite(isActive));
+
+            TextureAtlasSprite emissiveSprite = bloom ? predicate.getEmissiveSprite(isActive) : null;
+
+            if (emissiveSprite != null) {
+                BloomRenderUtils.draw(ops, renderState, translation, renderSide, emissiveSprite);
             }
         }
     }

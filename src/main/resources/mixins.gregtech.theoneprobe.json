@@ -1,0 +1,15 @@
+{
+  "package": "gregtech.mixins",
+  "refmap": "mixins.grgtech.refmap.json",
+  "required": false,
+  "minVersion": "0.8",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "theoneprobe.MixinDefaultProbeInfoProvider",
+    "theoneprobe.MixinPacketGetInfo"
+  ],
+  "server": [],
+  "client": []
+}
+

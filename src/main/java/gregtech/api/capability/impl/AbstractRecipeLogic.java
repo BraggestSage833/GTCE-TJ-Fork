@@ -77,6 +77,10 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     @Nonnull
     protected String hasProblemsReason = "";
 
+
+    private static final int WORKING_ENABLED_ID = 2;
+    private static final int NOT_ENOUGH_ENERGY_ID = 3;
+
     public AbstractRecipeLogic(MetaTileEntity tileEntity, RecipeMap<?> recipeMap) {
         this(tileEntity, recipeMap, 16);
     }
@@ -141,53 +145,56 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
 
     @Override
     public void update() {
-        if (!this.getMetaTileEntity().getWorld().isRemote) {
-            if (this.workingEnabled) {
-                if (this.progressTime > 0) {
-                    this.updateRecipeProgress();
-                }
-                if (this.progressTime == 0) {
-                    boolean isNotified = this.metaTileEntity.isInventoryNotified();
-                    // lastRecipe field is used to bypass this check once a recipe is found so the recipe logic can continue to check for
-                    // other conditions such as fusion reactor has enough heat or energy to prevent recipe logic from locking up
-                    // it'll be cleared once recipe is finished
-                    if (isNotified || this.lastRecipe != null) {
-                        this.metaTileEntity.setInventoryNotified(false);
-                        if (isNotified || this.sleepTimer == 0) {
-                            if (!this.trySearchNewRecipe()) {
-                                this.failCount++;
-                                if (this.failCount == 5) {
-                                    this.sleepTime = Math.min(this.sleepTime * 2, (ConfigHolder.maxSleepTime >= 0 && ConfigHolder.maxSleepTime <= 400) ? ConfigHolder.maxSleepTime : 20);
-                                    this.failCount = 0;
-                                }
-                                this.sleepTimer = this.sleepTime;
-                            } else {
-                                this.sleepTime = 1;
+        if (this.getMetaTileEntity().getWorld().isRemote) {
+            return;
+        }
+
+        if (this.workingEnabled) {
+            if (this.progressTime > 0) {
+                this.updateRecipeProgress();
+            }
+            if (this.progressTime == 0) {
+                boolean isNotified = this.metaTileEntity.isInventoryNotified();
+                // lastRecipe field is used to bypass this check once a recipe is found so the recipe logic can continue to check for
+                // other conditions such as fusion reactor has enough heat or energy to prevent recipe logic from locking up
+                // it'll be cleared once recipe is finished
+                if (isNotified || this.lastRecipe != null) {
+                    this.metaTileEntity.setInventoryNotified(false);
+                    if (isNotified || this.sleepTimer == 0) {
+                        if (!this.trySearchNewRecipe()) {
+                            this.failCount++;
+                            if (this.failCount == 5) {
+                                this.sleepTime = Math.min(this.sleepTime * 2, (ConfigHolder.maxSleepTime >= 0 && ConfigHolder.maxSleepTime <= 400) ? ConfigHolder.maxSleepTime : 20);
                                 this.failCount = 0;
                             }
+                            this.sleepTimer = this.sleepTime;
+                        } else {
+                            this.sleepTime = 1;
+                            this.failCount = 0;
                         }
-                        if (this.sleepTimer > 0)
-                            this.sleepTimer--;
                     }
+                    if (this.sleepTimer > 0)
+                        this.sleepTimer--;
                 }
             }
-            if (this.wasActiveAndNeedsUpdate) {
-                this.wasActiveAndNeedsUpdate = false;
-                this.setActive(false);
-            }
+        }
+        if (this.wasActiveAndNeedsUpdate) {
+            this.wasActiveAndNeedsUpdate = false;
+            this.setActive(false);
         }
     }
 
     protected void updateRecipeProgress() {
         if (this.recipeEUt < 1 || this.drawEnergy(this.recipeEUt)) {
             //as recipe starts with progress on 1 this has to be > only not => to compensate for it
+            setHasNotEnoughEnergy(false);
             if (++progressTime > maxProgressTime) {
                 completeRecipe();
             }
         } else if (recipeEUt > 0) {
             //only set hasNotEnoughEnergy if this recipe is consuming recipe
             //generators always have enough energy
-            this.hasNotEnoughEnergy = true;
+            setHasNotEnoughEnergy(true);
             //if current progress value is greater than 2, decrement it by 2
             if (progressTime >= 2) {
                 if (ConfigHolder.insufficientEnergySupplyWipesRecipeProgress) {
@@ -489,6 +496,21 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
     public void setWorkingEnabled(boolean workingEnabled) {
         this.workingEnabled = workingEnabled;
         metaTileEntity.markDirty();
+
+        if (metaTileEntity.getWorld() != null && !metaTileEntity.getWorld().isRemote) {
+            writeCustomData(WORKING_ENABLED_ID, buf -> buf.writeBoolean(workingEnabled));
+        }
+    }
+
+    protected void setHasNotEnoughEnergy(boolean value) {
+        if (this.hasNotEnoughEnergy == value) {
+            return;
+        }
+
+        this.hasNotEnoughEnergy = value;
+        if (!metaTileEntity.getWorld().isRemote) {
+            writeCustomData(NOT_ENOUGH_ENERGY_ID, buf -> buf.writeBoolean(value));
+        }
     }
 
     public void setAllowOverclocking(boolean allowOverclocking) {
@@ -573,6 +595,10 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         } else if (dataId == HAS_PROBLEMS) {
             this.hasProblems = buf.readBoolean();
             this.hasProblemsReason = buf.readString(Short.MAX_VALUE);
+        } else if (dataId == WORKING_ENABLED_ID) {
+            this.workingEnabled = buf.readBoolean();
+        } else if (dataId == NOT_ENOUGH_ENERGY_ID) {
+            this.hasNotEnoughEnergy = buf.readBoolean();
         }
     }
 
@@ -581,6 +607,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         buf.writeBoolean(this.isActive);
         buf.writeBoolean(this.hasProblems);
         buf.writeString(this.hasProblemsReason);
+        buf.writeBoolean(this.workingEnabled);
+        buf.writeBoolean(this.hasNotEnoughEnergy);
     }
 
     @Override
@@ -588,6 +616,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
         this.isActive = buf.readBoolean();
         this.hasProblems = buf.readBoolean();
         this.hasProblemsReason = buf.readString(Short.MAX_VALUE);
+        this.workingEnabled = buf.readBoolean();
+        this.hasNotEnoughEnergy = buf.readBoolean();
     }
 
     @Override
