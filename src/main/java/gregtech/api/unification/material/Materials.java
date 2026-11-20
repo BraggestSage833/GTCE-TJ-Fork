@@ -850,7 +850,7 @@ public class Materials {
         SterlingSilver.setItemPipeProperties(1536, 64);
         RoseGold.setItemPipeProperties(1536, 64);
         BlackBronze.setItemPipeProperties(1536, 64);
-        Ultimet.setItemPipeProperties(192, 8*64);
+        //Ultimet.setItemPipeProperties(192, 8*64);
         Osmiridium.setItemPipeProperties(96, 16*64);
         PolyvinylChloride.setItemPipeProperties(768, 2*64);
         CobaltBrass.setItemPipeProperties(3072,32);
