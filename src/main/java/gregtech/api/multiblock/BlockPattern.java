@@ -293,5 +293,13 @@ public class BlockPattern {
 
         return matchContext;
     }
+    public boolean hasRepeatableAisles() {
+        for (int[] repetition : aisleRepetitions) {
+            if (repetition[0] != 1 || repetition[1] != 1) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

@@ -392,7 +392,7 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     public void setUseAsync(boolean async){
         this.useAsync = async;
     }
-//in cases we want it in gui's
+//in case we want it in gui's
     public boolean isUseAsync() {
         return useAsync;
     }
@@ -401,6 +401,13 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
 
 
     protected void checkStructurePatternThreaded() {
+        //todo add support for repeatable
+        if (structurePattern.hasRepeatableAisles()) {
+            checkStructurePattern();
+            this.useAsync = false;
+            return;
+        }
+
         if (scanInProgress) return;
 
         scanInProgress = true;
