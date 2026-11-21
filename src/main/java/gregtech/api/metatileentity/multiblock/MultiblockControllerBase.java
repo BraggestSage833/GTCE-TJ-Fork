@@ -2,12 +2,11 @@ package gregtech.api.metatileentity.multiblock;
 
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.render.CCRenderState;
-import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
+import gregtech.api.metatileentity.multiblock.async.asyncPatternLayout;
 import gregtech.api.multiblock.BlockPattern;
 import gregtech.api.multiblock.BlockWorldState;
 import gregtech.api.multiblock.IPatternCenterPredicate;
@@ -17,20 +16,22 @@ import gregtech.api.render.MetaTileEntityRenderer;
 import gregtech.api.render.OrientedOverlayRenderer;
 import gregtech.api.render.Textures;
 import gregtech.api.util.GTUtility;
+import gregtech.api.util.world.DummyWorld;
 import gregtech.common.ConfigHolder;
 import gregtech.common.items.MetaItems;
 import gregtech.common.sound.MachineSoundManager;
-import gregtech.integration.jei.multiblock.MultiblockShapeInfo;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.ArrayUtils;
@@ -38,6 +39,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -53,6 +55,12 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     protected final int maxExtent;
     protected final int minTier; // min tier for machines that might have min voltage tier or tiered block
     protected final int maxTier; // both of these are used for jei previews
+
+    private boolean scanInProgress = false;
+    private asyncPatternLayout cachedLayout = null;
+    private long scanId = 0;
+    //use by default so we better see benefit
+    private  boolean useAsync = true;
 
     public MultiblockControllerBase(ResourceLocation metaTileEntityId) {
         this(metaTileEntityId, 1, 1, 0, 14);
@@ -72,14 +80,30 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
         this.structurePattern = createStructurePattern();
     }
 
+    // I hate it here. use old code for jei use threaded code for in world
     @Override
     public void update() {
         super.update();
+
         if (!getWorld().isRemote) {
-            if (getOffsetTimer() % ConfigHolder.structureCheckOffSetTimer == 0 || getTimer() == 0) {
-                checkStructurePattern();
+
+
+            if (getWorld() instanceof DummyWorld || !useAsync) {
+
+                if (getOffsetTimer() % ConfigHolder.structureCheckOffSetTimer == 0
+                        || getTimer() == 0) {
+
+                    checkStructurePattern();
+                }
+
+            } else {
+
+                if (getOffsetTimer() % ConfigHolder.structureCheckOffSetTimer == 0) {
+                    checkStructurePatternThreaded();
+                }
             }
-            if (isStructureFormed()) {
+
+            if (structureFormed) {
                 updateFormedValid();
             }
         }
@@ -332,18 +356,31 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
 
     @Override
     public boolean onRightClick(EntityPlayer playerIn, EnumHand hand, EnumFacing facing, CuboidRayTraceResult hitResult) {
+        if (hand != EnumHand.OFF_HAND) {
 
-            if(playerIn != null && playerIn.getHeldItemMainhand().isItemEqual(MetaItems.HARD_HAMMER.getStackForm())){
-        if(!getWorld().isRemote) {
-            this.checkStructurePattern();
+            if (playerIn != null && playerIn.getHeldItemMainhand().isItemEqual(MetaItems.HARD_HAMMER.getStackForm())) {
+                if (!getWorld().isRemote) {checkStructurePattern();}
+                return false;
+            }
 
-            return false;
+            if (playerIn != null && playerIn.getHeldItemMainhand().isItemEqual(MetaItems.WIRE_CUTTER.getStackForm()) && playerIn.isSneaking()) {
+                if (!getWorld().isRemote) {
+                    useAsync = !useAsync;
+
+                    cachedLayout = null;
+                    scanInProgress = false;
+
+                    if (structureFormed) {
+                        invalidateStructure();
+                        markDirty();
+                    }
+                    playerIn.sendMessage(new TextComponentString("Structure Checker: " + (useAsync ? "Threaded" : "Classic")));
+                    return false;
+                }
             }
         }
-
         return super.onRightClick(playerIn, hand, facing, hitResult);
     }
-
     public boolean isStructureFormed() {
         return structureFormed;
     }
@@ -351,5 +388,123 @@ public abstract class MultiblockControllerBase extends MetaTileEntity {
     private static <T> MultiblockAbility<Object> cast(MultiblockAbility<T> ability) {
         return (MultiblockAbility<Object>) (Object) ability;
     }
+
+    public void setUseAsync(boolean async){
+        this.useAsync = async;
+    }
+//in cases we want it in gui's
+    public boolean isUseAsync() {
+        return useAsync;
+    }
+
+    //async helpers. seperates the parts that have to be done on thread from what can be done off thread
+
+
+    protected void checkStructurePatternThreaded() {
+        if (scanInProgress) return;
+
+        scanInProgress = true;
+
+        long thisScan = ++scanId;
+
+        EnumFacing facing = getFrontFacing().getOpposite();
+
+        CompletableFuture.supplyAsync(() -> structurePattern.buildLayout(facing)).thenAccept(layout -> {
+            FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> {
+
+                if (thisScan != scanId) {
+                    scanInProgress = false;
+                    return;
+                }
+
+                cachedLayout = layout;
+
+                PatternMatchContext ctx = structurePattern.checkPatternHybrid(getWorld(), getPos(), cachedLayout);
+
+                if (ctx != null && !structureFormed) {
+
+                    Set<IMultiblockPart> rawPartsSet = ctx.getOrCreate("MultiblockParts", HashSet::new);
+
+                    ArrayList<IMultiblockPart> parts = new ArrayList<>(rawPartsSet);
+
+                    parts.sort(Comparator.comparing(it -> ((MetaTileEntity) it).getPos().hashCode()));
+
+                    for (IMultiblockPart part : parts) {
+                        if (part.isAttachedToMultiBlock()) {
+                            if (!canShare() || !part.canPartShare()) {
+                                scanInProgress = false;
+                                return;
+                            }
+                        }
+                    }
+
+                    Map<MultiblockAbility<Object>, List<Object>> abilities = new HashMap<>();
+
+                    for (IMultiblockPart multiblockPart : parts) {
+
+                        // Multi ability hatch copy
+                        if (multiblockPart instanceof IMultiAbilityProvider dual) {
+
+                            for (MultiblockAbility<?> ability : dual.getAbilities()) {
+
+                                MultiblockAbility<Object> key = cast(ability);
+
+                                List<Object> list = abilities.computeIfAbsent(key, k -> new ArrayList<>());
+
+                                dual.registerAbilityFor(ability, list);
+                            }
+
+                            continue;
+                        }
+
+                        if (multiblockPart instanceof IMultiblockAbilityPart) {
+                            IMultiblockAbilityPart<Object> abilityPart =
+                                    (IMultiblockAbilityPart<Object>) multiblockPart;
+
+                            List<Object> list = abilities.computeIfAbsent(abilityPart.getAbility(), k -> new ArrayList<>());
+
+                            abilityPart.registerAbilities(list);
+                        }
+                    }
+
+                    if (checkStructureComponents(parts, abilities)) {
+                        parts.forEach(part -> part.addToMultiBlock(this));
+
+                        this.multiblockParts.addAll(parts);
+                        this.multiblockAbilities.putAll(abilities);
+
+                        this.structureFormed = true;
+
+                        writeCustomData(400, buf -> buf.writeBoolean(true));
+
+                        formStructure(ctx);
+                    }
+
+                } else if (ctx == null && structureFormed) {
+
+                    invalidateStructure();
+                }
+
+                scanInProgress = false;
+            });
+        });
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound data) {
+        super.writeToNBT(data);
+        data.setBoolean("UseAsync", useAsync);
+
+        return data;
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound data) {
+        super.readFromNBT(data);
+        if (data.hasKey("UseAsync")) {
+            this.useAsync = data.getBoolean("UseAsync");
+        }
+    }
+
 
 }

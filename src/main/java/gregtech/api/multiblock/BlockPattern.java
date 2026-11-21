@@ -2,6 +2,8 @@ package gregtech.api.multiblock;
 
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import gregtech.api.metatileentity.multiblock.async.PatternLayoutEntry;
+import gregtech.api.metatileentity.multiblock.async.asyncPatternLayout;
 import gregtech.api.util.IntRange;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -9,6 +11,7 @@ import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -218,6 +221,77 @@ public class BlockPattern {
         public EnumFacing getActualFacing(EnumFacing facing) {
             return actualFacing.apply(facing);
         }
+    }
+
+    //more helpers for asyn
+
+    public asyncPatternLayout buildLayout(EnumFacing facing) {
+        List<PatternLayoutEntry> entries = new ArrayList<>();
+
+        for (int c = 0; c < fingerLength; c++) {
+            for (int b = 0; b < thumbLength; b++) {
+                for (int a = 0; a < palmLength; a++) {
+
+                    MutableBlockPos tmp = new MutableBlockPos();
+
+                    setActualRelativeOffset(tmp, a - centerOffset[0], b - centerOffset[1], c - centerOffset[3], facing);
+
+                    entries.add(new PatternLayoutEntry(c, b, a, tmp.getX(), tmp.getY(), tmp.getZ()));
+                }
+            }
+        }
+
+        return new asyncPatternLayout(facing, entries);
+    }
+
+
+    public PatternMatchContext checkPatternHybrid(World world, BlockPos centerPos, asyncPatternLayout layout) {
+
+        matchContext.reset();
+        layerContext.reset();
+
+        int currentLayer = -1;
+        int[] counts = new int[countMatches.length];
+
+        for (PatternLayoutEntry e : layout.entries) {
+
+            if (e.c != currentLayer) {
+                currentLayer = e.c;
+                layerContext.reset();
+            }
+
+            Predicate<BlockWorldState> predicate = blockMatches[e.c][e.b][e.a];
+
+            blockPos.setPos(centerPos.getX() + e.relX, centerPos.getY() + e.relY, centerPos.getZ() + e.relZ);
+
+            worldState.update(world, blockPos, matchContext, layerContext);
+
+            if (!predicate.test(worldState)) {
+                return null;
+            }
+
+            for (int i = 0; i < countMatches.length; i++) {
+                Predicate<BlockWorldState> countPred = countMatches[i].getLeft();
+                if (countPred.test(worldState)) {
+                    counts[i]++;
+                }
+            }
+        }
+
+        for (int i = 0; i < countMatches.length; i++) {
+            IntRange range = countMatches[i].getRight();
+            if (!range.isInsideOf(counts[i])) {
+                return null;
+            }
+        }
+
+        for (Predicate<PatternMatchContext> validator : validators) {
+            if (!validator.test(matchContext)) {
+                return null;
+            }
+        }
+
+        return matchContext;
     }
 
 }
