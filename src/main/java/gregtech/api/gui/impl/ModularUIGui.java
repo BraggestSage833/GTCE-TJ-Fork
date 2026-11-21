@@ -263,4 +263,8 @@ public class ModularUIGui extends GuiContainer implements IRenderContext {
         }
     }
 
+    @Override
+    protected boolean hasClickedOutside(int mouseX, int mouseY, int guiLeft, int guiTop) {
+        return false;
+    }
 }
