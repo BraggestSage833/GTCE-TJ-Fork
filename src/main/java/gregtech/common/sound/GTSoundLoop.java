@@ -23,9 +23,14 @@ public class GTSoundLoop extends MovingSound {
     boolean fade;
     private float targetVolume = 1;
 
-    public GTSoundLoop(SoundEvent sound, BlockPos pos, boolean stopWhenActive,
-                       boolean stopWhenInactive) {
+    private int startDelay;
+    private static final float SILENT = 0.001f;
+
+    public GTSoundLoop(SoundEvent sound, BlockPos pos, boolean stopWhenActive, boolean stopWhenInactive, int startDelay) {
         super(sound, SoundCategory.PLAYERS);
+
+        this.startDelay = startDelay;
+        this.volume = startDelay > 0 ? SILENT : VOLUME_RAMP;
 
         this.whileActive = stopWhenActive;
         this.whileInactive = stopWhenInactive;
@@ -34,7 +39,6 @@ public class GTSoundLoop extends MovingSound {
         zPosF = pos.getZ();
         dimension = Minecraft.getMinecraft().player.dimension;
         repeat = true;
-        this.volume = VOLUME_RAMP;
         this.pos = pos;
     }
 
@@ -51,6 +55,9 @@ public class GTSoundLoop extends MovingSound {
                 stop();
                 return;
             }
+        } else if (startDelay > 0) {
+            startDelay--;
+            volume = SILENT;
         } else if (volume < targetVolume) {
             volume += VOLUME_RAMP * targetVolume;
         }

@@ -23,7 +23,8 @@ import java.util.*;
 
 public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
 
-    private static final int PIPE_CAN_HURT_TICKS = 100; // 5sec
+    private static final int RECENT_FLUID_TICKS = 25; // random amount of ticks. 5 secs was too much.
+
 
     public static final int NO_RECENT_FLUID = Integer.MIN_VALUE;
 
@@ -223,7 +224,7 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
             if (flow.simulate) {
                 flow.undo.add(() -> tree.consume(node, flow.now, -moved));
             } else {
-                markRecentFluid(tree.pos(node), flow.temperature, flow.now);
+                markRecentFluid(tree.pos(node), flow.resource, flow.temperature, flow.now);
             }
         }
 
@@ -306,26 +307,47 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
 
 
 
-    private void markRecentFluid(BlockPos pos, int temp, long now) {
-        if (temp < HOT_VALUE && temp > COLD_VALUE) {
-            return;
+    private void markRecentFluid(BlockPos pos, FluidStack resource, int temp, long now) {
+
+        RecentFluid recent = recentFluid.get(pos);
+
+        if (recent == null){
+            recent = new RecentFluid();
+            recentFluid.put(pos.toImmutable(), recent);
         }
 
-        recentFluid.put(pos.toImmutable(), new RecentFluid(temp, now + PIPE_CAN_HURT_TICKS));
+        if (recent.fluid == null || !recent.fluid.isFluidEqual(resource)) {
+            recent.fluid = new FluidStack(resource, resource.amount);
+        }
+
+        recent.temperature = temp;
+        recent.until = now + RECENT_FLUID_TICKS;
     }
 
     public int getRecentTemp(BlockPos pos, long now) {
-        RecentFluid fluid = recentFluid.get(pos);
-        if (fluid == null) {
+        RecentFluid recent = getRecent(pos, now);
+        if (recent == null || (recent.temperature < HOT_VALUE && recent.temperature > COLD_VALUE)) {
             return NO_RECENT_FLUID;
         }
 
-        if (fluid.until < now) {
+        return recent.temperature;
+    }
+
+    @Nullable
+    public FluidStack getRecentFluid(BlockPos pos, long now) {
+        RecentFluid recent = getRecent(pos, now);
+        return recent == null ? null : recent.fluid.copy();
+    }
+
+    @Nullable
+    private RecentFluid getRecent(BlockPos pos, long now) {
+        RecentFluid recent = recentFluid.get(pos);
+        if (recent != null && recent.until < now) {
             recentFluid.remove(pos);
-            return NO_RECENT_FLUID;
+            return null;
         }
 
-        return fluid.temperature;
+        return recent;
     }
 
 
@@ -477,13 +499,9 @@ public class FluidPipeNet extends RoutedPipeNet<FluidPipeProperties> {
 
 
     private static final class RecentFluid {
-        final int temperature;
-        final long until;
-
-        RecentFluid(int temperature, long until) {
-            this.temperature = temperature;
-            this.until = until;
-        }
+        FluidStack fluid;
+        int temperature;
+        long until;
     }
 
     private static final class Failure {

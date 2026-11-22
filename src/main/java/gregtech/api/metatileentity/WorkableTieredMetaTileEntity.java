@@ -78,7 +78,7 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
     @SideOnly(Side.CLIENT)
     @Override
     public boolean shouldPlaySound() {
-        return isValid() && workable.isActive();
+        return isValid() && workable.isActive() && workable.isWorkingEnabled() && !workable.isHasNotEnoughEnergy();
     }
 
 

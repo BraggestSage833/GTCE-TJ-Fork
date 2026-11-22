@@ -22,6 +22,7 @@ import gregtech.common.covers.facade.FacadeRenderer;
 import gregtech.common.items.MetaItems;
 import gregtech.common.render.*;
 import gregtech.common.sound.GTSoundSystem;
+import gregtech.common.sound.MachineSoundManager;
 import groovyjarjarantlr4.v4.runtime.misc.NotNull;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
@@ -128,6 +129,7 @@ public class ClientProxy extends CommonProxy {
         TextureUtils.addIconRegister(MetaFluids::registerSprites);
         MinecraftForge.EVENT_BUS.register(ToolRenderHandler.INSTANCE);
         MinecraftForge.EVENT_BUS.register(new SprayCanScrollHandler());
+        MinecraftForge.EVENT_BUS.register(MachineSoundManager.class);
     }
 
     @Override

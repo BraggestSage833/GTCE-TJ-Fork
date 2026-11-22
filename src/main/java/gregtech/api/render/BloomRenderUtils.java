@@ -62,7 +62,7 @@ public class BloomRenderUtils {
         }
         Textures.RENDER_STATE.remove();
 
-        return !bloomPass || startVertices > 0;
+        return !bloomPass || buffer.getVertexCount() > startVertices;
     }
 
     public static void draw(IVertexOperation[] pipeline, CCRenderState renderState, Matrix4 translation, EnumFacing side, TextureAtlasSprite sprite) {
