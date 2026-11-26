@@ -57,7 +57,7 @@ public class CoverFacade extends CoverBehavior implements IFacadeCover {
 
     @Override
     public boolean canRenderInLayer(BlockRenderLayer renderLayer) {
-        return true;
+        return facadeState.getBlock().canRenderInLayer(facadeState, renderLayer);
     }
 
     @Override
